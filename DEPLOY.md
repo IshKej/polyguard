@@ -4,15 +4,47 @@ Goal: a live `https://polyguard.streamlit.app` link you can put in the Congressi
 
 You do the two account steps (they must be under your name); everything else is already set up in this repo.
 
+## 0. Before anything, run preflight
+
+```bash
+python preflight.py
+```
+
+This simulates what Streamlit Cloud does: clean checkout, no environment, no
+secrets. It checks that every required file exists (including `attack_bank.json`,
+which Cloud loads and never regenerates), that no API key literal is sitting in a
+committed file, that `requirements.txt` covers every third-party import, and that
+the app boots with no key at all. Everything must pass before you push.
+
 ## 1. Put the code on GitHub
 
-1. Make a free account at https://github.com if you don't have one.
-2. Create a new **public** repository named `polyguard`.
-3. Upload every file in this folder **except** `.streamlit/secrets.toml` (that holds the key — `.gitignore` already blocks it). The easy way: GitHub repo page → **Add file → Upload files** → drag in `app.py`, `engine.py`, `providers.py`, `defenses.py`, `attack_bank.json`, `generate_attack_bank.py`, `languages_catalog.py`, `expand_languages.py`, `validate_bank.py`, `test_engine.py`, `verify_all.py`, `selection_bias_demo.py`, `requirements.txt`, `README.md`, `DEPLOY.md`, `AUDIT.md`, `PREREGISTRATION.md`, and the `.streamlit/config.toml` file. Commit.
+**The local git repository is already set up and committed.** You do not need to
+drag files anywhere. There are exactly two things only you can do:
 
-> `attack_bank.json` must be in the repo — Streamlit Cloud loads it and does not run the generators. It is already in your local folder (produced by `generate_attack_bank.py`, then expanded by `expand_languages.py`). If you ever regenerate it, re-upload it.
+1. Make a free account at https://github.com if you do not have one.
+2. Create a new **public**, **empty** repository named `polyguard`. Do not let
+   GitHub add a README, a .gitignore or a licence, because the repo already has
+   its own history and an initialised repo would collide with it.
 
-> Double-check: `secrets.toml` must NOT be in the repo. Only `config.toml` and `secrets.toml.example` belong there.
+Then, from the project folder, run these two commands with your username
+substituted:
+
+```bash
+git remote add origin https://github.com/YOUR-USERNAME/polyguard.git
+git push -u origin main
+```
+
+GitHub will ask you to sign in the first time. If it asks for a password, it
+wants a Personal Access Token rather than your account password: GitHub, Settings,
+Developer settings, Personal access tokens, Fine-grained tokens, and give it
+write access to the `polyguard` repository only.
+
+> `attack_bank.json` is committed on purpose. Streamlit Cloud loads it and does
+> not run the generators. If you ever regenerate it, commit the new one.
+
+> `.streamlit/secrets.toml` is gitignored and does not exist in the repo. Only
+> `config.toml` and `secrets.toml.example` are committed. `preflight.py` fails the
+> build if a real key ever appears in a committed file.
 
 ## 2. Deploy on Streamlit Community Cloud
 

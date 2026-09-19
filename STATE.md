@@ -23,6 +23,7 @@ python verify_all.py             # full battery         -> 149/149
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
+python preflight.py              # deploy readiness   -> all pass
 streamlit run app.py             # the app itself
 ```
 
@@ -36,8 +37,12 @@ If any of those fail, something regressed. They all pass as of this writing.
 2. **The 42 low-resource languages.** The bank holds 20 languages: 13 high, 7
    mid, **0 low**. The central hypothesis is therefore untested, not supported.
    `python expand_languages.py --tier low` fills them, needs the key.
-3. **GitHub repo.** Public repo named `polyguard`, then Streamlit Cloud. Steps in
-   `DEPLOY.md`. Also ends the Drive-mirror staleness problem permanently.
+3. **GitHub repo.** The local git repo is **already initialised and committed**,
+   so this is now two commands plus an account action. Create an empty public
+   repo named `polyguard` (no README, no .gitignore, or it will collide), then:
+   `git remote add origin https://github.com/YOUR-USERNAME/polyguard.git`
+   followed by `git push -u origin main`. Full steps in `DEPLOY.md`. This also
+   ends the Drive-mirror staleness problem permanently.
 
 ## First moves once the key exists, in this order
 
