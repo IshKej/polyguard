@@ -1,0 +1,37 @@
+PolyGuard statistical calibration
+Simulating complete scans against known ground truth.
+2000 simulations per cell
+
+check                                                          obs  target  verdict
+--------------------------------------------------------------------------------------------
+Wilson plain coverage (n=15, p=0.3)                          8.6%       -  info   [coverage 91.5%  DIPS BELOW NOMINAL]
+Wilson continuity-corrected coverage (n=15, p=0.3)           2.1%    <=5%  calibrated   [coverage 97.9%]
+Wilson plain coverage (n=15, p=0.15)                         6.0%       -  info   [coverage 94.0%  DIPS BELOW NOMINAL]
+Wilson continuity-corrected coverage (n=15, p=0.15)          1.7%    <=5%  conservative   [coverage 98.2%]
+Wilson plain coverage (n=15, p=0.05)                         3.5%       -  info   [coverage 96.5%]
+Wilson continuity-corrected coverage (n=15, p=0.05)          3.5%    <=5%  calibrated   [coverage 96.5%]
+Wilson plain coverage (n=75, p=0.3)                          4.8%       -  info   [coverage 95.2%]
+Wilson continuity-corrected coverage (n=75, p=0.3)           4.8%    <=5%  calibrated   [coverage 95.2%]
+Wilson plain coverage (n=300, p=0.1)                         4.0%       -  info   [coverage 96.0%]
+Wilson continuity-corrected coverage (n=300, p=0.1)          4.0%    <=5%  calibrated   [coverage 96.0%]
+Wilson sweep WORST plain coverage (n=15, 14 values of p)     8.8%       -  info   [worst 91.2% at p=0.7; below nominal at 8/14 points]
+Wilson sweep WORST continuity-corrected coverage (n=15)      3.8%    <=5%  calibrated   [worst 96.2% at p=0.5]
+Mann-Whitney type I (6 langs/tier, 15 attacks, p=0.3)        3.5%    <=5%  calibrated
+Mann-Whitney type I (14 langs/tier, 15 attacks, p=0.3)       5.1%    <=5%  calibrated
+Mann-Whitney type I (14 langs/tier, 15 attacks, p=0.05)      5.2%    <=5%  calibrated
+Mann-Whitney type I (42 langs/tier, 15 attacks, p=0.3)       5.3%    <=5%  calibrated
+Mann-Whitney type I (14 langs/tier, 5 attacks, p=0.3)        5.3%    <=5%  calibrated
+Mann-Whitney power: 15-point gap, 14 langs/tier             83.2%   >=50%  adequate
+Mann-Whitney power: 15-point gap, 42 low vs 14 high         97.0%   >=80%  adequate
+Mann-Whitney power: 40-point gap, 14 langs/tier            100.0%   >=80%  adequate
+Max-gap permutation type I (20 languages)                    2.7%    <=5%  calibrated
+Max-gap permutation type I (42 languages)                    4.3%    <=5%  calibrated
+Max-gap permutation power: one language at 90% vs 25%       89.0%   >=80%  adequate
+BH-FDR type I across 5 all-null category tests               4.5%    <=5%  calibrated
+(reference) UNCORRECTED 5 category tests                    24.1%       -  info   [this is what BH is protecting against]
+Two-proportion z-test type I (independent draws)             4.9%    <=5%  calibrated
+Pooled attack-level z-test under CLUSTERED null             16.6%       -  info   [inflated by clustering; this is why it is not the headline]
+Clustered Mann-Whitney under CLUSTERED null                  4.2%    <=5%  calibrated   [the headline test, under the realistic null]
+Cliff's delta bootstrap CI covers 0 under the null           5.8%    <=5%  calibrated   [actual coverage 94.2%]
+
+All tests calibrated. None reject more often than alpha under a true null, and every power target was met.

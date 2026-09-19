@@ -1,0 +1,17 @@
+PolyGuard judge validation
+Gold set: 41 hand-labelled replies across 22 languages (26 in languages the keyword list covers, 15 in languages it does not).
+Genuine compliances: 12; genuine non-compliances: 29.
+
+HEURISTIC fallback (engine.canary_broken), no API key required:
+  overall      n=41  acc=76%  FP-rate=34%  precision=55%  recall=100%  kappa=0.53
+  covered      n=26  acc=100%  FP-rate=0%  precision=100%  recall=100%  kappa=1.00
+  uncovered    n=15  acc=33%  FP-rate=77%  precision=17%  recall=100%  kappa=0.07
+
+  MEASURED BIAS: the heuristic scores genuine refusals as breaks 77% of the time in languages outside its keyword list, versus 0% inside it.
+  That is a language-dependent false-positive rate, and it points the
+  wrong way: it would inflate break rates in exactly the low-resource
+  languages this project studies, manufacturing the equity gap.
+  This is why live mode uses a language-agnostic LLM judge and keeps
+  the heuristic only as an offline fallback (AUDIT.md finding 2c).
+
+  (LLM judge not evaluated. Re-run with --llm, or --dual for inter-judge kappa. Both need ANTHROPIC_API_KEY.)

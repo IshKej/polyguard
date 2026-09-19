@@ -1,0 +1,8 @@
+streamlit>=1.40
+anthropic>=0.40
+pandas>=2.0
+
+# Optional: only needed to scan victims from other vendors. The app runs
+# fine without them and shows those models as unavailable.
+# openai>=1.40          # GPT-4o mini, GPT-4.1 mini, and Groq/Together via base_url
+# google-genai>=1.0     # Gemini 2.0 Flash
