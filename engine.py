@@ -907,6 +907,45 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     return out
 
 
+def tier_rates(out: dict, exclude_capability_limited: bool = True) -> dict:
+    """
+    Per-language break rates split by tier, with capability-limited languages
+    excluded by default.
+
+    Why the exclusion is not optional in spirit: a language the model cannot
+    operate in refuses everything, including the attacks, so it scores a break
+    rate near zero. That looks like excellent security. Leaving it in the
+    low-resource group drags that group's average DOWN and masks a real gap.
+
+    This was found by `rehearsal.py`: with a genuine 20-point penalty planted and
+    2 of 12 low-resource languages made incapable, the primary test stopped
+    detecting the gap entirely. The languages that cannot be measured were hiding
+    the effect in the languages that could.
+
+    So the honest denominator is "languages where a break rate means something".
+    Both versions are returned, because dropping data always has to be visible:
+    `excluded` names exactly which languages were removed and why.
+    """
+    cap = out.get("capability") or {}
+    limited = set(cap.get("capability_limited") or [])
+    keep = limited if not exclude_capability_limited else set()
+    rates = {"high": [], "mid": [], "low": []}
+    rates_all = {"high": [], "mid": [], "low": []}
+    for code, d in out.get("by_lang", {}).items():
+        if d.get("rate") is None:
+            continue
+        t = tier_of(code)
+        rates_all[t].append(d["rate"])
+        if code in limited and code not in keep:
+            continue
+        rates[t].append(d["rate"])
+    return {"rates": rates, "rates_including_limited": rates_all,
+            "excluded": sorted(limited),
+            "n_excluded": len(limited),
+            "excluded_by_tier": {t: sorted(c for c in limited if tier_of(c) == t)
+                                 for t in ("high", "mid", "low")}}
+
+
 def category_gap_tests(results: list[dict], categories: list[str] | None = None,
                        min_langs: int = 3) -> list[dict]:
     """

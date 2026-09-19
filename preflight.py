@@ -40,9 +40,11 @@ REQUIRED = [
     "attack_bank.json", "generate_attack_bank.py", "languages_catalog.py",
     "expand_languages.py", "validate_bank.py", "linguistics.py",
     "judge_eval.py", "calibrate_stats.py", "selection_bias_demo.py",
-    "review_sheet.py", "test_engine.py", "verify_all.py", "preflight.py",
+    "review_sheet.py", "rehearsal.py", "test_engine.py", "verify_all.py",
+    "preflight.py",
     "requirements.txt", "README.md", "DEPLOY.md", "AUDIT.md",
     "PREREGISTRATION.md", "RELATED_WORK.md", "NATIVE_REVIEW.md", "STATE.md",
+    "DEMO_VIDEO.md",
     ".streamlit/config.toml", ".gitignore",
 ]
 

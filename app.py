@@ -548,10 +548,14 @@ if "out" in st.session_state:
         # bot in the same language are correlated, so pooling them overstates
         # significance. The clustered (per-language) test is the headline; the
         # attack-level test is reported alongside it for completeness.
-        lo_rates = [d["rate"] for c, d in out["by_lang"].items()
-                    if tier_of(c) == "low" and d["rate"] is not None]
-        hi_rates = [d["rate"] for c, d in out["by_lang"].items()
-                    if tier_of(c) == "high" and d["rate"] is not None]
+        # Capability-limited languages are excluded from the primary test. A
+        # language the bot cannot operate in refuses everything, scores near-zero
+        # breaks, and so drags the low-resource average DOWN, masking a real gap.
+        # Found by rehearsal.py: a planted 20-point gap became undetectable once
+        # 2 of 12 low-resource languages were unusable. See AUDIT.md finding 37.
+        _tr = engine.tier_rates(out, exclude_capability_limited=True)
+        lo_rates = _tr["rates"]["low"]
+        hi_rates = _tr["rates"]["high"]
 
         if out["mock"]:
             st.caption("Illustrative only (mock). A live scan is what produces a real tier gap.")
@@ -609,6 +613,15 @@ if "out" in st.session_state:
                                f"a sample to see one'. Add languages before concluding "
                                f"anything.", icon="📊")
 
+            if _tr["n_excluded"]:
+                st.caption(
+                    f"{_tr['n_excluded']} language(s) excluded from this test "
+                    f"({', '.join(_tr['excluded'])}): the bot cannot follow ordinary "
+                    f"instructions in them, so their near-zero break rate reflects "
+                    f"incapacity rather than defence and would mask a real gap. "
+                    f"Including them, the low-resource group would be "
+                    f"{len(_tr['rates_including_limited']['low'])} languages instead "
+                    f"of {len(lo_rates)}.")
             st.caption(
                 f"Primary test clusters by language (each language contributes one rate), "
                 f"because attacks on the same bot are not independent. For reference, the "

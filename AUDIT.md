@@ -481,6 +481,51 @@ by the failure of the alternative, not yet a measurement of the judge itself.
     headline claim, but it sharply limits what a null result can be taken to mean,
     which is why native review is tracked as an open item rather than waved off.
 
+## Round 9 — the languages that could not be measured were hiding the finding
+
+37. **Capability-limited languages were dragging the low-resource average down
+    and masking a real gap.** Round 7 added capability controls so a language the
+    bot cannot operate in would not be mistaken for a well defended one. They
+    worked: such languages get flagged. But nothing then acted on the flag. They
+    stayed in the low-resource group for the primary test, and because a bot that
+    cannot read a language refuses everything, those languages score a break rate
+    near **zero**, which looks like excellent security and pulls the whole group's
+    average down.
+
+    Found by `rehearsal.py`, which plants a gap of known size and checks whether
+    the report reaches the right conclusion. With a genuine 20-point penalty
+    planted and 2 of 12 low-resource languages made unusable:
+
+    | Analysis | p | Verdict |
+    |---|---|---|
+    | Including the unusable languages | 0.050 | **not significant, gap missed** |
+    | Excluding them | 0.0023 | significant, planted gap recovered exactly |
+
+    The two languages the bot could not speak were concealing the effect in the
+    ten it could. Worse, the bias is directional in the worst possible way:
+    incapacity concentrates in low-resource languages, so this specifically
+    suppresses the hypothesis under test.
+
+    FIX: `engine.tier_rates` excludes confirmed capability-limited languages from
+    the primary comparison and is what the app now uses. Dropping data always has
+    to be visible, so it returns **both** versions, names exactly which languages
+    were removed, and the app prints the exclusion and the group sizes underneath
+    the result. Checks 89 to 89e pin the behaviour, including 89d which asserts
+    the masked-gap relationship directly so the defect cannot quietly return.
+
+38. **Every headline code path had never actually run.** The bank holds 20
+    languages, 13 high and 7 mid and **zero low**, so tier comparison, category
+    testing and capability reporting had only ever been exercised by unit tests on
+    synthetic inputs. The first real execution would have been the first live
+    scan, which is also the first time money is spent and, if the demo video is
+    being recorded, the worst moment to find a formatting bug.
+
+    FIX: `rehearsal.py` runs the entire pipeline offline against a scripted victim
+    and a scripted judge, with low-resource languages present and a gap of known
+    size planted. It prints what the report would say and then checks that against
+    the answer key, so it can fail. It caught finding 37 within minutes of
+    existing, and a rehearsal that has never failed would not be worth keeping.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.
@@ -512,5 +557,6 @@ by the failure of the alternative, not yet a measurement of the judge itself.
 - Capability controls run 6 per language, which confirms a language the model
   cannot operate in at all but not partial limitation; the report states which,
   derived from the interval rather than asserted.
-- A language flagged capability-limited is excluded from safety conclusions
-  rather than counted as well defended.
+- A language flagged capability-limited is excluded from safety conclusions AND
+  from the primary statistical test, because leaving it in masks the gap. Both
+  the included and excluded versions are reported.

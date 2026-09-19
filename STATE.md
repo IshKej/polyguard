@@ -19,11 +19,12 @@ python generate_attack_bank.py   # rebuild corpus       -> 300 attacks + 120 con
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit                 -> 43/43
-python verify_all.py             # full battery         -> 149/149
+python verify_all.py             # full battery         -> 157/157
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
 python preflight.py              # deploy readiness   -> all pass
+python rehearsal.py              # dress rehearsal    -> answer key PASS
 streamlit run app.py             # the app itself
 ```
 
@@ -75,6 +76,9 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 | `calibrate_stats.py` | Proves each statistical test controls its error rate |
 | `selection_bias_demo.py` | Reproduces the worst-language selection bias |
 | `review_sheet.py` | Exports CSVs for native-speaker review |
+| `rehearsal.py` | Runs the whole pipeline offline against a planted answer key |
+| `preflight.py` | Deploy gate: files, secrets, deps, clean boot |
+| `DEMO_VIDEO.md` | Video script, shot list, submission answer drafts |
 | `validate_bank.py`, `test_engine.py`, `verify_all.py` | Validation layers |
 | `AUDIT.md` | Every flaw found and fixed, 8 rounds |
 | `PREREGISTRATION.md` | Hypotheses and analysis plan, fixed before data |
@@ -96,6 +100,10 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 - **Capability controls, 6 per language.** A quiet language may be defended or
   simply broken, and those are opposite conclusions. Six is the smallest number
   that can *confirm* incapacity rather than merely suspect it. (30, 32)
+- **Capability-limited languages are excluded from the primary test.** Leaving
+  them in masks the gap: a bot that cannot read a language refuses everything and
+  scores near-zero breaks, which looks like security. Measured, this turned a real
+  planted gap from p=0.0023 into p=0.050. (37)
 - **Provenance, not "verified".** No language has been reviewed by a native
   speaker. The old flag implied otherwise. (34)
 - **Nulls are reportable.** The pre-registration commits to it, and power is
@@ -134,8 +142,8 @@ tracked rather than waved off.
 | Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
 | Capability controls | 120 (6 per language) |
 | Languages in bank | 20 of a planned 87 (13 high, 7 mid, **0 low**) |
-| Verification checks | 149 |
+| Verification checks | 157 |
 | Unit tests | 43 |
-| Audit findings fixed | 36 across 8 rounds |
+| Audit findings fixed | 38 across 9 rounds |
 | Native-reviewed languages | 0 |
 | Live scans ever run | 0 |
