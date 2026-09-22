@@ -593,6 +593,19 @@ for any of them.
     logged in the deviation table, noting that **no content changed at all**,
     only line endings.
 
+44. **Git would have silently undone finding 43.** Fixing the generator to write
+    LF was not enough, because `core.autocrlf` is on and rewrites LF to CRLF in
+    the working tree on checkout. The committed blob was correct, but a fresh
+    clone on Windows would have produced a bank with different bytes, a different
+    SHA-256, and a failing integrity check against the pre-registered fingerprint,
+    on a file nobody had edited. A reviewer cloning the repo to reproduce the work
+    is exactly the person who would have hit it.
+
+    FIX: `.gitattributes` pins `eol=lf` for the tree and names `attack_bank.json`
+    explicitly, with the reason written in the file so a future tidy-up does not
+    remove it. Verified by cloning the repository and re-hashing: the clone is
+    byte-identical, matches the pre-registered pin, and passes the full battery.
+
 **Also swept, and clean:** every statistic probed with degenerate input (empty
 groups, single observations, all-identical values, zero denominators); the scan
 pipeline with every victim call failing and with the judge permanently down;

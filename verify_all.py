@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 171 independent checks across the data, the
+PolyGuard full verification battery. Runs 174 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1147,6 +1147,19 @@ ck("95c. both bank writers force LF",
 ck("95d. the pre-registered fingerprint matches the shipped bank",
    __import__("hashlib").sha256(_bank_bytes).hexdigest()
    in (HERE / "PREREGISTRATION.md").read_text(encoding="utf-8"))
+
+# 96. Git itself must not undo finding 43. core.autocrlf rewrites LF to CRLF on
+# checkout on Windows, so without .gitattributes a fresh clone produces a bank
+# whose hash does not match the pre-registered fingerprint, and check 95d fails
+# on a file nobody edited. Verified by cloning the repo and re-hashing.
+_ga = HERE / ".gitattributes"
+ck("96. .gitattributes exists so checkout line endings are pinned", _ga.exists())
+if _ga.exists():
+    _gat = _ga.read_text(encoding="utf-8")
+    ck("96b. the pre-registered bank is pinned to LF explicitly",
+       "attack_bank.json" in _gat and "eol=lf" in _gat)
+    ck("96c. the reason is recorded, so a tidy-up does not delete it",
+       "fingerprint" in _gat.lower() and "autocrlf" in _gat.lower())
 
 # report
 passed = sum(1 for _, ok in checks if ok)
