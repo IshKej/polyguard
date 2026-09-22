@@ -1,0 +1,19 @@
+# Line endings are pinned to LF in the working tree, not just in the repository.
+#
+# This is load-bearing, not tidiness. The SHA-256 of attack_bank.json is the
+# pre-registered instrument fingerprint recorded in PREREGISTRATION.md, and
+# verify_all.py checks the shipped file against it. Git's core.autocrlf would
+# rewrite that file to CRLF on checkout on Windows, so a fresh clone would
+# produce a different hash for a file nobody edited and the project's own
+# integrity check would report a violation that did not happen.
+#
+# Pinning eol=lf makes the checkout byte-identical on every platform, which is
+# what "reproducible" has to mean if the fingerprint is going to mean anything.
+* text=auto eol=lf
+
+# Belt and braces on the one file whose exact bytes are pre-registered.
+attack_bank.json text eol=lf
+
+# Committed evidence, compared against the numbers quoted in AUDIT.md.
+calibration_report.txt text eol=lf
+judge_report.txt       text eol=lf
