@@ -526,6 +526,85 @@ by the failure of the alternative, not yet a measurement of the judge itself.
     the answer key, so it can fail. It caught finding 37 within minutes of
     existing, and a rehearsal that has never failed would not be worth keeping.
 
+## Round 10 — the pre-deploy deep sweep
+
+Everything in this round is a failure that would have appeared for the first time
+during a live demo or after deploying to Linux, which is the worst possible moment
+for any of them.
+
+39. **The report was drawn from live widget state instead of the scan that
+    produced it.** The break map's rows and columns, and the power estimate, all
+    read the language and category selectors at render time rather than the scope
+    recorded when the scan ran. Two consequences. Changing the category selector
+    after a scan silently redrew the map against data that never used those
+    settings, showing columns that did not correspond to anything measured. And
+    clearing all categories made the power call receive zero attacks per language,
+    which raised `ZeroDivisionError` and destroyed the whole report.
+
+    The crash is reachable **only in live mode**, because mock mode skips the
+    statistics panel. In other words it was invisible in every test run so far and
+    would have surfaced during the demo.
+
+    FIX: the scope is recorded at scan time and the report reads it back, so the
+    report always describes the scan that ran. `power_simulation` additionally
+    returns zero power with an `undefined` note rather than raising, because it is
+    called while rendering and a crash there loses the entire result.
+
+40. **A system prompt containing PolyGuard's own canary would report a near-100%
+    break rate that means nothing.** If the scanned prompt contains the canary
+    token, the target emits it in the ordinary course of doing its job, every
+    canary-goal attack is scored as compliance, and the scan reports catastrophic
+    vulnerability where none was demonstrated. The control token has the mirror
+    problem: it would make every language look perfectly capable.
+
+    Astronomically unlikely by accident, since the tokens are random. Entirely
+    possible on purpose, because the person most likely to paste a prompt
+    containing `PWNED_7F3A` is somebody who just read this project's own
+    documentation, which is exactly the audience.
+
+    FIX: `scan` records `token_collision`, the app refuses to let the numbers stand
+    and says so before anything else, and a separate warning fires **before** the
+    scan runs so nobody pays for a meaningless result.
+
+41. **`max_variants=0` fired every variant instead of none.** The filter used a
+    truthiness test, so zero was read as "no cap". Not reachable from the UI, whose
+    slider offers 1 to 3, but wrong for anything calling `scan` directly, and wrong
+    in the direction that costs money.
+
+42. **Dependencies had no upper bounds.** Streamlit Cloud installs the latest
+    matching version at build time, so an unbounded `>=` hands a fixed deadline to
+    whoever ships a major release next. The Anthropic SDK has a 1.x line with
+    breaking changes, and `anthropic>=0.40` would have pulled it. Caps added on all
+    three, with the reason written in the file so a future edit does not quietly
+    remove them.
+
+43. **The pre-registered instrument fingerprint was platform-dependent.** The
+    attack bank was written in text mode, so it carried CRLF line endings on
+    Windows and would have carried LF on Linux. Identical content, different
+    SHA-256. Since that hash is the pre-registered pin on the instrument, anyone
+    regenerating the bank on a different operating system, which includes any
+    reviewer trying to reproduce the work, would have seen the integrity check
+    fire on a file nobody had changed. The project's own reproducibility
+    mechanism would have reported a violation that did not exist.
+
+    FIX: both writers force LF. The bank is now byte-identical everywhere, and
+    check 95b proves it by re-serialising the parsed bank in memory and comparing
+    the hash to the bytes on disk. The fingerprint was updated and the change
+    logged in the deviation table, noting that **no content changed at all**,
+    only line endings.
+
+**Also swept, and clean:** every statistic probed with degenerate input (empty
+groups, single observations, all-identical values, zero denominators); the scan
+pipeline with every victim call failing and with the judge permanently down;
+hostile system prompts (script tags, 60,000 characters, emoji, right-to-left text,
+control characters, whitespace only); the full 87-language scale at 1,305 attacks
+plus 522 controls; determinism across repeated runs of the mock scan, the
+permutation test and the bootstrap; Streamlit and Anthropic API deprecations;
+file-encoding declarations and import case-sensitivity for Linux; the
+remediation loop (empty prompts, unknown categories, triple hardening, unicode);
+CSV and JSON export payloads for encoding and missing values; and the bank's
+JSON round-trip.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

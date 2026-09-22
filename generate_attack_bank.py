@@ -831,7 +831,11 @@ def build():
         "controls": controls,
     }
 
-    with open("attack_bank.json", "w", encoding="utf-8") as f:
+    # The newline argument is required, not cosmetic. Text mode emits CRLF on
+    # Windows and LF on Linux, so identical content would hash differently on
+    # the two platforms, and PREREGISTRATION.md pins the SHA-256 of this exact
+    # file. Forcing LF keeps the instrument fingerprint reproducible anywhere.
+    with open("attack_bank.json", "w", encoding="utf-8", newline="\n") as f:
         json.dump(bank, f, ensure_ascii=False, indent=2)
 
     n_variants = sum(len(TEXT[l][c]) for l in LANGUAGES for c in CATEGORIES)

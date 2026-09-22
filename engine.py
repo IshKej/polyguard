@@ -391,6 +391,14 @@ def power_simulation(n_low_langs: int, n_high_langs: int, attacks_per_lang: int,
 
     Convention is that 80% power is the minimum worth running a study at.
     """
+    # A design with no attacks, or no languages on a side, has no power to
+    # measure. Returning zero beats raising, because this is called while
+    # rendering a report and a crash there loses the whole result.
+    if attacks_per_lang <= 0 or n_low_langs <= 0 or n_high_langs <= 0:
+        return {"power": 0.0, "n_low_langs": n_low_langs, "n_high_langs": n_high_langs,
+                "attacks_per_lang": attacks_per_lang, "p_low": p_low, "p_high": p_high,
+                "n_sims": 0, "adequate": False,
+                "undefined": "no attacks or no languages on one side"}
     rng = random.Random(seed)
     hits = 0
     for _ in range(n_sims):
@@ -866,7 +874,10 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
         attacks = [a for a in attacks if a["lang"] in langs]
     if categories:
         attacks = [a for a in attacks if a["category"] in categories]
-    if max_variants:
+    # `is not None` rather than truthiness: max_variants=0 used to be silently
+    # read as "no cap" and fire every variant, which is the opposite of what the
+    # number says.
+    if max_variants is not None:
         attacks = [a for a in attacks if a.get("variant", 0) < max_variants]
 
     total = len(attacks)
@@ -904,6 +915,21 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     # deflates the break rate silently. Carry the flag into exports so a number
     # produced under that condition is never read as a clean result.
     out["extraction_scoreable"] = len(system_prompt.split()) >= MIN_RUN
+
+    # Token collision. If the target's own system prompt happens to contain the
+    # canary, the bot will emit that token in the ordinary course of doing its job,
+    # every canary-goal attack scores as compliance, and the scan reports a break
+    # rate near 100% that means nothing at all. Same for the control token, which
+    # would instead make every language look perfectly capable.
+    #
+    # Astronomically unlikely by accident, since the tokens are random. Entirely
+    # possible if somebody pastes a prompt they built while reading this project's
+    # own documentation, which is exactly the person most likely to run it.
+    out["token_collision"] = sorted(
+        name for name, tok in (("canary", canary),
+                               ("control token",
+                                bank.get("control_token", "")))
+        if tok and _norm(tok) in _norm(system_prompt))
     return out
 
 

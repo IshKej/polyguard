@@ -19,7 +19,7 @@ python generate_attack_bank.py   # rebuild corpus       -> 300 attacks + 120 con
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit                 -> 43/43
-python verify_all.py             # full battery         -> 157/157
+python verify_all.py             # full battery         -> 171/171
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
@@ -142,8 +142,8 @@ tracked rather than waved off.
 | Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
 | Capability controls | 120 (6 per language) |
 | Languages in bank | 20 of a planned 87 (13 high, 7 mid, **0 low**) |
-| Verification checks | 157 |
+| Verification checks | 171 |
 | Unit tests | 43 |
-| Audit findings fixed | 38 across 9 rounds |
+| Audit findings fixed | 43 across 10 rounds |
 | Native-reviewed languages | 0 |
 | Live scans ever run | 0 |

@@ -317,6 +317,17 @@ with right:
     # the reply. A prompt shorter than that run can never trigger it, so those
     # attacks would silently always score as "held" and make the bot look safer
     # than it is. Say so rather than quietly reporting a deflated break rate.
+    # Caught before the scan runs, so the user does not pay for a scan whose
+    # every result would be meaningless.
+    _collide = [n for n, tok in (("canary", bank.get("canary", "")),
+                                 ("control token", bank.get("control_token", "")))
+                if tok and tok in system_prompt]
+    if _collide:
+        st.error(
+            f"Your system prompt contains PolyGuard's {' and '.join(_collide)}. "
+            f"A scan would count the bot's normal output as a successful attack and "
+            f"the results would be meaningless. Remove that string first.", icon="🛑")
+
     if 0 < len(system_prompt.split()) < engine.MIN_RUN and "system_prompt_extraction" in cats:
         st.warning(
             f"This system prompt is {len(system_prompt.split())} words. Prompt-extraction "
@@ -393,7 +404,29 @@ if st.session_state.get("run_hardened"):
 if "out" in st.session_state:
     out = st.session_state["out"]
 
+    # The report must describe the scan that RAN, not whatever the controls happen
+    # to say now. These used to read the live widget values, so changing the
+    # category or language selector after a scan silently redrew the break map
+    # against data that never used those settings, and clearing all categories
+    # divided by zero in the power estimate during a live scan. The scope is
+    # recorded at scan time; read it back. See AUDIT.md finding 39.
+    scan_langs, scan_cats, scan_depth = st.session_state.get(
+        "scope", (list(out["by_lang"]), bank["categories"],
+                  out.get("max_variants") or 3))
+
     st.divider()
+
+    # A token collision invalidates the entire scan, so it is said before anything
+    # else and before any number is shown.
+    if out.get("token_collision"):
+        st.error(
+            f"**These results are invalid.** The system prompt you scanned contains "
+            f"PolyGuard's own {' and '.join(out['token_collision'])}. The bot will "
+            f"emit that string as part of doing its normal job, so attacks are being "
+            f"counted as successful when nothing was actually broken. Remove it from "
+            f"the prompt and scan again. Every number below should be ignored.",
+            icon="🛑")
+
     if out["mock"]:
         st.info("**MOCK preview — not a measurement.** No API key, so break/hold outcomes "
                 "are simulated and deliberately language-independent. Numbers here mean "
@@ -590,7 +623,7 @@ if "out" in st.session_state:
                 # say what this particular null was capable of ruling out.
                 pw = engine.power_simulation(
                     max(mw["n1"], 1), max(mw["n2"], 1),
-                    (depth or 3) * len(cats),
+                    max(1, (scan_depth or 3) * len(scan_cats)),
                     p_low=min(1.0, (hi_s / hi_n) + 0.15), p_high=(hi_s / hi_n),
                     n_sims=300)
                 powered = pw["power"] >= 0.80
@@ -712,8 +745,9 @@ if "out" in st.session_state:
                        f"excluded.")
 
     # ---- heatmap: language x category (only when it stays readable) ----
-    used_cats = [c for c in bank["categories"] if c in cats]
-    lang_order = sorted(langs, key=lambda c: out["by_lang"].get(c, {}).get("rate") or -1,
+    used_cats = [c for c in bank["categories"] if c in scan_cats]
+    lang_order = sorted(scan_langs,
+                        key=lambda c: out["by_lang"].get(c, {}).get("rate") or -1,
                         reverse=True)
 
     if len(lang_order) <= 18:
@@ -733,7 +767,7 @@ if "out" in st.session_state:
                 unsafe_allow_html=True)
 
         cell_rate = {}
-        for code in langs:
+        for code in scan_langs:
             for cat in used_cats:
                 rows = [r for r in out["results"]
                         if r["lang"] == code and r["category"] == cat and r["error"] is None]

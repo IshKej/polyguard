@@ -111,7 +111,7 @@ ninety-eight runs out of a hundred, because 'worst of eighty-seven' is a maximum
 and a maximum runs high by definition. I replaced it with a permutation test that
 corrects for it.
 
-There are a hundred and forty-nine automated checks, and a calibration suite that
+There are over a hundred and fifty automated checks, and a calibration suite that
 proves every statistic actually controls its error rate."
 
 ### 2:20 to 2:35, tools and close
@@ -200,20 +200,6 @@ somebody who actually speaks it. Published research shows machine translation
 quality is the biggest confound in this whole area, and that bad translations make
 a language look safer than it is. I built the export tool for review sheets, but
 getting real reviewers is the single change that would most improve the results.
-
----
-
-## AI usage disclosure
-
-**Only relevant if you submit to the Congressional App Challenge.** Their rules
-require that all AI usage be fully disclosed, and that AI not constitute the
-entirety of the technical development. Whatever you submit, the disclosure has to
-match reality.
-
-Write the disclosure yourself, describing accurately what you wrote and what was
-AI-assisted. Do not copy a template for this one. If the honest version does not
-meet the originality bar, that is information worth having before the deadline
-rather than after it.
 
 ---
 

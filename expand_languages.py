@@ -405,7 +405,10 @@ def main():
     bank["attacks"].sort(key=lambda a: (order.index(a["lang"]),
                                         CATEGORIES.index(a["category"]),
                                         a.get("variant", 0)))
-    BANK_PATH.write_text(json.dumps(bank, ensure_ascii=False, indent=2), encoding="utf-8")
+    # LF newlines for the same reason as the generator: the bank fingerprint is
+    # pre-registered, so the file must be byte-identical on Windows and Linux.
+    BANK_PATH.write_text(json.dumps(bank, ensure_ascii=False, indent=2),
+                         encoding="utf-8", newline="\n")
     print(f"\nAdded {added} languages. Bank now has {len(bank['languages'])} languages, "
           f"{len(bank['attacks'])} attacks, {len(bank.get('controls', []))} capability "
           f"controls.")

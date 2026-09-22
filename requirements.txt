@@ -1,8 +1,13 @@
-streamlit>=1.40
-anthropic>=0.40
-pandas>=2.0
+# Upper bounds are deliberate. Streamlit Cloud installs the latest matching
+# version at build time, so an unbounded ">=" means a major release from any of
+# these could break the deployment on a date nobody chose. The Anthropic SDK in
+# particular has a 1.x line with breaking changes (httpx2, removed parameters),
+# and this project must keep working through a fixed submission deadline.
+streamlit>=1.40,<2
+anthropic>=0.40,<1
+pandas>=2.0,<4
 
-# Optional: only needed to scan victims from other vendors. The app runs
-# fine without them and shows those models as unavailable.
-# openai>=1.40          # GPT-4o mini, GPT-4.1 mini, and Groq/Together via base_url
-# google-genai>=1.0     # Gemini 2.0 Flash
+# Optional: only needed to scan victims from other vendors. The app runs fine
+# without them and shows those models as unavailable.
+# openai>=1.40,<2          # GPT-4o mini, GPT-4.1 mini, and Groq/Together via base_url
+# google-genai>=1.0,<2     # Gemini 2.0 Flash

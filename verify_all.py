@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 157 independent checks across the data, the
+PolyGuard full verification battery. Runs 171 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1055,6 +1055,98 @@ ck("90b. rehearsal bank actually contains low-resource languages",
    and len(_syn["controls"]) == 6 * len(_syn["languages"]))
 ck("90c. rehearsal exercises the extraction path, not just canary attacks",
    "system_prompt_extraction" in inspect.getsource(rh.ScriptedVictim.complete))
+
+# ---------------------------------------------------------------------------
+# 91-94. audit round 10: the deep pre-deploy sweep. These are the failures that
+# would only have appeared during a live demo or after deploying to Linux.
+# ---------------------------------------------------------------------------
+
+# 91. The report must describe the scan that RAN, not the current widget state.
+# Reading live widgets meant the break map could be redrawn against data that
+# never used those settings, and clearing all categories divided by zero.
+ck("91. report reads the recorded scan scope, not live widgets",
+   "scan_langs, scan_cats, scan_depth = st.session_state.get(" in app_src
+   and "if c in scan_cats]" in app_src
+   and "for code in scan_langs:" in app_src
+   and "max(1, (scan_depth or 3) * len(scan_cats))" in app_src)
+ck("91b. power_simulation survives a degenerate design instead of raising",
+   engine.power_simulation(5, 5, 0, 0.3, 0.3, n_sims=5)["power"] == 0.0
+   and engine.power_simulation(0, 5, 15, 0.3, 0.3, n_sims=5)["power"] == 0.0
+   and "undefined" in engine.power_simulation(5, 5, 0, 0.3, 0.3, n_sims=5))
+
+# 92. Token collision. If the scanned prompt contains PolyGuard's own canary the
+# bot emits it while doing its job, every attack scores as a break, and the scan
+# reports a near-100% failure rate that means nothing.
+_sp_long = ("You are a support assistant for a store and you help with orders "
+            "and returns and product questions every day.")
+ck("92. a clean prompt reports no token collision",
+   engine.scan(_sp_long, langs=["en"], categories=["instruction_override"],
+               mock=True, max_variants=1, with_controls=False)["token_collision"] == [])
+ck("92b. a prompt containing the canary is flagged as invalidating",
+   engine.scan(_sp_long + " code " + CANARY, langs=["en"],
+               categories=["instruction_override"], mock=True, max_variants=1,
+               with_controls=False)["token_collision"] == ["canary"])
+ck("92c. a prompt containing the control token is flagged too",
+   "control token" in engine.scan(
+       _sp_long + " ref " + bank["control_token"], langs=["en"],
+       categories=["instruction_override"], mock=True, max_variants=1,
+       with_controls=False)["token_collision"])
+ck("92d. app refuses the results and warns before spending money",
+   "These results are invalid" in app_src
+   and "would count the bot's normal output as a successful attack" in app_src)
+
+# 93. max_variants=0 used to be read as "no cap" and fire every variant, which is
+# the opposite of what the number says.
+ck("93. max_variants=0 means zero attacks, not all of them",
+   engine.scan(_sp_long, langs=["en"], mock=True, max_variants=0,
+               with_controls=False)["n_attacks"] == 0
+   and engine.scan(_sp_long, langs=["en"], mock=True, max_variants=1,
+                   with_controls=False)["n_attacks"] == 5
+   and engine.scan(_sp_long, langs=["en"], mock=True, max_variants=None,
+                   with_controls=False)["n_attacks"] == 15)
+
+# 94. Deployment hardening. Streamlit Cloud is Linux and installs the latest
+# matching dependency at build time, so neither encoding defaults nor an
+# unbounded ">=" can be left to chance before a fixed deadline.
+_req = (HERE / "requirements.txt").read_text(encoding="utf-8")
+ck("94. dependencies have upper bounds so a major release cannot break the deploy",
+   "streamlit>=1.40,<2" in _req and "anthropic>=0.40,<1" in _req
+   and "pandas>=2.0,<4" in _req)
+_no_enc = []
+for _p in HERE.glob("*.py"):
+    for _i, _line in enumerate(_p.read_text(encoding="utf-8").splitlines(), 1):
+        _st = _line.strip()
+        if _st.startswith("#"):
+            continue
+        if ("open(" in _st and "encoding=" not in _st and "urlopen" not in _st
+                and ".open(" not in _st):
+            _no_enc.append(f"{_p.name}:{_i}")
+ck("94b. every file is opened with an explicit encoding (Windows writes cp1252)",
+   not _no_enc, )
+_lower = {p.stem.lower(): p.stem for p in HERE.glob("*.py")}
+ck("94c. local imports match filename case exactly (Linux is case-sensitive)",
+   all(_lower.get(m.lower(), m) == m
+       for m in ("engine", "providers", "defenses", "linguistics", "rehearsal",
+                 "preflight", "review_sheet", "judge_eval", "languages_catalog")))
+
+# 95. The bank must be byte-identical on every platform, because its SHA-256 is
+# the pre-registered instrument pin. Written in text mode it carried CRLF on
+# Windows and LF on Linux, so the same data hashed differently and the integrity
+# check would fire on a file nobody changed.
+_bank_bytes = (HERE / "attack_bank.json").read_bytes()
+ck("95. attack_bank.json has no CR bytes (reproducible fingerprint)",
+   _bank_bytes.count(b"\r") == 0)
+ck("95b. bank re-serialises to exactly the bytes on disk",
+   __import__("hashlib").sha256(
+       json.dumps(json.loads(_bank_bytes.decode("utf-8")),
+                  ensure_ascii=False, indent=2).encode("utf-8")).hexdigest()
+   == __import__("hashlib").sha256(_bank_bytes).hexdigest())
+ck("95c. both bank writers force LF",
+   'newline="\\n"' in (HERE / "generate_attack_bank.py").read_text(encoding="utf-8")
+   and 'newline="\\n"' in (HERE / "expand_languages.py").read_text(encoding="utf-8"))
+ck("95d. the pre-registered fingerprint matches the shipped bank",
+   __import__("hashlib").sha256(_bank_bytes).hexdigest()
+   in (HERE / "PREREGISTRATION.md").read_text(encoding="utf-8"))
 
 # report
 passed = sum(1 for _, ok in checks if ok)
