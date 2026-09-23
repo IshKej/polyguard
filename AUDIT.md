@@ -618,6 +618,65 @@ remediation loop (empty prompts, unknown categories, triple hardening, unicode);
 CSV and JSON export payloads for encoding and missing values; and the bank's
 JSON round-trip.
 
+## Round 11 — the independent variable was an opinion
+
+45. **The resource tier was hand-assigned with no cited basis, and it was wrong
+    for 27 of 87 languages.** Every finding in this project is a comparison
+    between resource tiers. That makes the tier the independent variable, and it
+    had never been audited. It turned out to be inconsistent with the standard
+    taxonomy in the field AND with itself:
+
+    - Joshi class-3 languages sat in **both** the mid tier (Bengali, Tamil) and
+      the low tier (Estonian, Slovenian, Georgian, Kazakh). The same resource
+      level, split across two groups being compared against each other.
+    - **Basque** is class 4, the same class as Hindi and Dutch, and sat in low.
+    - **Telugu** is class 1, among the least resourced, and sat in mid.
+
+    A contaminated independent variable does not produce a noisy result, it
+    produces a meaningless one. And the direction here was toward a null: putting
+    well-resourced European languages into the low tier would make that tier look
+    better defended than it is.
+
+    FIX: every language now carries `joshi`, its class from Joshi et al. (2020),
+    *The State and Fate of Linguistic Diversity and Inclusion in the NLP World*
+    (ACL 2020), read from the paper's own published mapping. The tier is
+    **derived** from that class by a single stated rule, applied with no
+    exceptions: high = class 4-5, mid = class 3, low = class 0-2. Check 97b fails
+    the build if any language's tier stops following the rule, so the variable
+    cannot drift back into being an opinion.
+
+    The catalog moves from 14/31/42 to **28 high / 24 mid / 35 low**, which is
+    also a better-balanced design: simulated power for a 15-point gap rises from
+    0.97 to 0.993.
+
+    **A deliberate non-fix.** Joshi assigns Kyrgyz to class 4, which does not
+    match its real standing. It was left alone and named in the catalog docstring
+    instead. Hand-adjusting the independent variable to match intuition is exactly
+    the freedom that lets a result be steered, and the capability controls already
+    exist to catch a language the model cannot genuinely operate in.
+
+46. **Five checks hardcoded language codes and silently went stale.** The moment
+    tiers were re-derived, checks 63, 70, 89, 89b and 89d began asserting that
+    Estonian and Slovenian were low-resource, which they no longer were. The
+    fixtures were a second copy of the truth, and it drifted, which is the same
+    failure mode as finding 39 reading live widgets instead of the recorded scan.
+    FIX: fixtures now take their codes from the catalog at runtime.
+
+47. **Nothing was checking that the documentation still told the truth.** Eleven
+    rounds of instrument changes left "14 high, 31 mid, 42 low" sitting in three
+    files after the tiers were re-derived, and the DEPLOY cost estimate counted
+    only attack calls after controls had added 522 more to a full scan. A stale
+    number in `AUDIT.md` or `PREREGISTRATION.md` is not a typo: those documents
+    exist to be checked by somebody else, so a wrong figure in them is a false
+    claim about the work.
+
+    FIX: `consistency.py` reads the facts from the code and the bank, then greps
+    every document that asserts current state for claims the code disagrees with.
+    Scope is the important part: `AUDIT.md` is a changelog and `NATIVE_REVIEW.md`
+    explains a flag that was removed, so both are *supposed* to name things that
+    no longer exist, and flagging them would train everyone to ignore the tool.
+    Check 98c proves the checker can fail, because one that cannot is decoration.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

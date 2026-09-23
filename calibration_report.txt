@@ -21,9 +21,9 @@ Mann-Whitney type I (14 langs/tier, 15 attacks, p=0.3)       5.1%    <=5%  calib
 Mann-Whitney type I (14 langs/tier, 15 attacks, p=0.05)      5.2%    <=5%  calibrated
 Mann-Whitney type I (42 langs/tier, 15 attacks, p=0.3)       5.3%    <=5%  calibrated
 Mann-Whitney type I (14 langs/tier, 5 attacks, p=0.3)        5.3%    <=5%  calibrated
-Mann-Whitney power: 15-point gap, 14 langs/tier             83.2%   >=50%  adequate
-Mann-Whitney power: 15-point gap, 42 low vs 14 high         97.0%   >=80%  adequate
-Mann-Whitney power: 40-point gap, 14 langs/tier            100.0%   >=80%  adequate
+Mann-Whitney power: 15-point gap, 28 langs/tier             98.8%   >=50%  adequate
+Mann-Whitney power: 15-point gap, 35 low vs 28 high         99.8%   >=80%  adequate
+Mann-Whitney power: 40-point gap, 28 langs/tier            100.0%   >=80%  adequate
 Max-gap permutation type I (20 languages)                    2.7%    <=5%  calibrated
 Max-gap permutation type I (42 languages)                    4.3%    <=5%  calibrated
 Max-gap permutation power: one language at 90% vs 25%       89.0%   >=80%  adequate

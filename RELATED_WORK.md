@@ -167,5 +167,10 @@ would be reported as the headline.
 - *Round-Trip Translation Reveals What Frontier Multilingual Benchmarks Miss*. https://arxiv.org/pdf/2604.12911
 - *Déjà Vu: Multilingual LLM Evaluation through the Lens of Machine Translation Evaluation*. https://arxiv.org/html/2504.11829
 - Open-Prompt-Injection benchmark. https://github.com/liu00222/Open-Prompt-Injection
+- Joshi, Santy, Budhiraja, Bali, Choudhury. *The State and Fate of Linguistic
+  Diversity and Inclusion in the NLP World*. ACL 2020.
+  https://aclanthology.org/2020.acl-main.560/ — the source of every
+  language's resource class, and therefore of PolyGuard's independent
+  variable. Class data: https://microsoft.github.io/linguisticdiversity/
 - Romano et al. (2006), Cliff's delta magnitude thresholds.
 - Benjamini & Hochberg (1995), false discovery rate control.

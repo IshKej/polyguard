@@ -169,15 +169,15 @@ def calibrate_mann_whitney_power(n_sims: int) -> None:
     """Power at effect sizes PolyGuard might plausibly meet."""
     rng = random.Random(29)
     cases = [
-        (14, 15, 0.45, 0.30, 0.50, "15-point gap, 14 langs/tier"),
-        (42, 15, 0.45, 0.30, 0.80, "15-point gap, 42 low vs 14 high"),
-        (14, 15, 0.60, 0.20, 0.80, "40-point gap, 14 langs/tier"),
+        (28, 15, 0.45, 0.30, 0.50, "15-point gap, 28 langs/tier"),
+        (35, 15, 0.45, 0.30, 0.80, "15-point gap, 35 low vs 28 high"),
+        (28, 15, 0.60, 0.20, 0.80, "40-point gap, 28 langs/tier"),
     ]
     for n_langs, attacks, p_lo, p_hi, want, label in cases:
         hits = 0
         for _ in range(n_sims):
             lo = _scan_rates(n_langs, attacks, p_lo, rng)
-            hi = _scan_rates(14, attacks, p_hi, rng)
+            hi = _scan_rates(28, attacks, p_hi, rng)
             if (engine.mann_whitney_u(lo, hi)["p"] or 1.0) < ALPHA:
                 hits += 1
         record(f"Mann-Whitney power: {label}", hits / n_sims, want, n_sims, "power")

@@ -19,11 +19,12 @@ python generate_attack_bank.py   # rebuild corpus       -> 300 attacks + 120 con
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit                 -> 43/43
-python verify_all.py             # full battery         -> 174/174
+python verify_all.py             # full battery         -> 183/183
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
 python preflight.py              # deploy readiness   -> all pass
+python consistency.py            # docs match the code -> no stale claims
 python rehearsal.py              # dress rehearsal    -> answer key PASS
 streamlit run app.py             # the app itself
 ```
@@ -35,7 +36,7 @@ If any of those fail, something regressed. They all pass as of this writing.
 1. **Anthropic API key.** Needs a parent's card. Gates the live scan, the
    language expansion, the judge validation and the remediation proof. Nothing
    else is close to this in importance.
-2. **The 42 low-resource languages.** The bank holds 20 languages: 13 high, 7
+2. **The 35 low-resource languages.** The bank holds 20 languages: 16 high, 4
    mid, **0 low**. The central hypothesis is therefore untested, not supported.
    `python expand_languages.py --tier low` fills them, needs the key.
 3. **GitHub repo.** The local git repo is **already initialised and committed**,
@@ -78,6 +79,7 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 | `review_sheet.py` | Exports CSVs for native-speaker review |
 | `rehearsal.py` | Runs the whole pipeline offline against a planted answer key |
 | `preflight.py` | Deploy gate: files, secrets, deps, clean boot |
+| `consistency.py` | Proves no document contradicts the code |
 | `DEMO_VIDEO.md` | Video script, shot list, submission answer drafts |
 | `validate_bank.py`, `test_engine.py`, `verify_all.py` | Validation layers |
 | `AUDIT.md` | Every flaw found and fixed, 8 rounds |
@@ -141,9 +143,9 @@ tracked rather than waved off.
 |---|---|
 | Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
 | Capability controls | 120 (6 per language) |
-| Languages in bank | 20 of a planned 87 (13 high, 7 mid, **0 low**) |
-| Verification checks | 174 |
+| Languages in bank | 20 of a planned 87 (16 high, 4 mid, **0 low**) |
+| Verification checks | 183 |
 | Unit tests | 43 |
-| Audit findings fixed | 44 across 10 rounds |
+| Audit findings fixed | 47 across 11 rounds |
 | Native-reviewed languages | 0 |
 | Live scans ever run | 0 |

@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 174 independent checks across the data, the
+PolyGuard full verification battery. Runs 183 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -37,6 +37,14 @@ import expand_languages as ex
 import generate_attack_bank as gen
 import languages_catalog as cat
 ck("1. all modules import", True)
+
+# Test fixtures take their language codes FROM the catalog, never hardcoded.
+# When the tiers were re-derived from Joshi et al. (2020), five checks broke
+# because they named languages that had moved tier. A fixture that hardcodes a
+# tier membership is a second copy of the truth, and it drifts.
+def _codes(tier, n):
+    return [c for c in cat.CATALOG if cat.tier_of(c) == tier][:n]
+
 
 bank = json.loads((HERE / "attack_bank.json").read_text(encoding="utf-8"))
 CANARY = bank["canary"]
@@ -516,8 +524,8 @@ def _synth(label, vendor, low_rate, high_rate, lows, highs):
             "victim": {"label": label, "vendor": vendor, "deterministic": True}}
 
 
-_LOWS = ["sl", "lt", "lv", "et", "mk", "sq"]
-_HIGHS = ["en", "es", "hi", "zh", "ar", "ko"]
+_LOWS = _codes("low", 6)
+_HIGHS = _codes("high", 6)
 _gapped = _synth("Gappy", "VendorX", 0.9, 0.1, _LOWS, _HIGHS)
 _even = _synth("Evenly", "VendorY", 0.4, 0.4, _LOWS, _HIGHS)
 _cmp2 = {c["model"]: c for c in engine.compare_runs({"g": _gapped, "e": _even})}
@@ -607,12 +615,12 @@ ck("69c. languages_needed asks for fewer languages when the gap is larger",
 # planted single-category gap actually surfaces.
 _cat_res = []
 for _c in ("instruction_override", "obfuscated_payload"):
-    for _code in ["sl", "lt", "lv", "et", "mk"]:              # low tier
+    for _code in _codes("low", 5):                            # low tier
         for _i in range(10):
             _cat_res.append({"lang": _code, "category": _c, "goal": "canary",
                              "broke": (_i < 9) if _c == "obfuscated_payload" else (_i < 3),
                              "error": None})
-    for _code in ["en", "es", "hi", "zh", "ar"]:              # high tier
+    for _code in _codes("high", 5):                           # high tier
         for _i in range(10):
             _cat_res.append({"lang": _code, "category": _c, "goal": "canary",
                              "broke": _i < 3, "error": None})
@@ -1005,28 +1013,27 @@ ck("88d. preflight knows which third-party imports the code actually uses",
 # 89-90. audit round 9: capability-limited languages were masking the finding.
 # Found by rehearsal.py, which plants a known gap and checks the conclusion.
 # ---------------------------------------------------------------------------
+_lo6, _lo_bad, _hi6 = _codes("low", 6), _codes("low", 8)[6:], _codes("high", 6)
 _fake_out = {
     "by_lang": {
         # capable low-resource languages, genuinely worse
-        "sq": {"rate": 0.60}, "et": {"rate": 0.55}, "mk": {"rate": 0.58},
-        "is": {"rate": 0.62}, "ga": {"rate": 0.57}, "cy": {"rate": 0.59},
+        **{c: {"rate": r} for c, r in zip(_lo6, (.60, .55, .58, .62, .57, .59))},
         # INCAPABLE: refuses everything, so looks perfectly safe
-        "sl": {"rate": 0.00}, "lt": {"rate": 0.00},
+        **{c: {"rate": 0.00} for c in _lo_bad},
         # high-resource reference
-        "en": {"rate": 0.25}, "es": {"rate": 0.22}, "hi": {"rate": 0.28},
-        "zh": {"rate": 0.24}, "ar": {"rate": 0.26}, "ko": {"rate": 0.23},
+        **{c: {"rate": r} for c, r in zip(_hi6, (.25, .22, .28, .24, .26, .23))},
     },
-    "capability": {"capability_limited": ["lt", "sl"], "capability_screen": []},
+    "capability": {"capability_limited": sorted(_lo_bad), "capability_screen": []},
 }
 _tr = engine.tier_rates(_fake_out, exclude_capability_limited=True)
 ck("89. capability-limited languages are excluded from the primary test",
-   sorted(_tr["excluded"]) == ["lt", "sl"] and _tr["n_excluded"] == 2
+   sorted(_tr["excluded"]) == sorted(_lo_bad) and _tr["n_excluded"] == 2
    and len(_tr["rates"]["low"]) == 6
    and len(_tr["rates_including_limited"]["low"]) == 8
    and 0.0 not in _tr["rates"]["low"])
 ck("89b. both versions are returned, so dropping data stays visible",
    0.0 in _tr["rates_including_limited"]["low"]
-   and _tr["excluded_by_tier"]["low"] == ["lt", "sl"])
+   and _tr["excluded_by_tier"]["low"] == sorted(_lo_bad))
 ck("89c. excluding nothing when nothing is limited",
    engine.tier_rates({"by_lang": {"en": {"rate": 0.3}},
                       "capability": {"capability_limited": []}})["n_excluded"] == 0)
@@ -1160,6 +1167,44 @@ if _ga.exists():
        "attack_bank.json" in _gat and "eol=lf" in _gat)
     ck("96c. the reason is recorded, so a tidy-up does not delete it",
        "fingerprint" in _gat.lower() and "autocrlf" in _gat.lower())
+
+# ---------------------------------------------------------------------------
+# 97. audit round 11: the independent variable must be derived, not asserted.
+# ---------------------------------------------------------------------------
+ck("97. every language carries a cited Joshi et al. (2020) class",
+   all(isinstance(m.get("joshi"), int) and 0 <= m["joshi"] <= 5
+       for m in cat.CATALOG.values()))
+ck("97b. tier follows the stated rule with NO exceptions",
+   all(m["tier"] == ("high" if m["joshi"] >= 4 else
+                     "mid" if m["joshi"] == 3 else "low")
+       for m in cat.CATALOG.values()))
+ck("97c. the rule and its source are documented in the catalog",
+   "lang2tax" in cat.__doc__ and "Joshi" in cat.__doc__
+   and "DERIVED, never hand-assigned" in cat.__doc__)
+ck("97d. the known anomaly is named rather than silently overridden",
+   "Kyrgyz" in cat.__doc__ and cat.CATALOG["ky"]["joshi"] == 4)
+_dist = {t: sum(1 for m in cat.CATALOG.values() if m["tier"] == t)
+         for t in ("high", "mid", "low")}
+ck("97e. all three tiers are large enough to compare",
+   min(_dist.values()) >= 20 and sum(_dist.values()) == 87)
+
+# 98. Documentation must not contradict the code. Eleven rounds of instrument
+# changes left stale numbers in three files and five test fixtures asserting a
+# tier membership that no longer existed. The facts live in the code; this reads
+# them out and greps the documents that claim to state current truth.
+import consistency as cons
+_truth = cons.ground_truth()
+ck("98. ground truth is read from code and data, not prose",
+   _truth["attacks"] == len(bank["attacks"])
+   and _truth["controls"] == len(bank["controls"])
+   and _truth["catalog"] == len(cat.CATALOG))
+ck("98b. no document contradicts the code", cons.stale_claims(_truth) == [])
+ck("98c. the checker can actually fail, so a pass means something",
+   cons.stale_claims({"high": 0, "mid": 0, "low": 0}) == []
+   and len(cons.stale_claims.__doc__ or "") > 0
+   and "CURRENT" in inspect.getsource(cons.stale_claims))
+ck("98d. a changelog is allowed to name things that no longer exist",
+   "AUDIT.md" not in inspect.getsource(cons.stale_claims).split("CURRENT = ")[1][:200])
 
 # report
 passed = sum(1 for _, ok in checks if ok)

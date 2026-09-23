@@ -36,7 +36,7 @@ PolyGuard measures that gap so a builder can see it and fix it **before an attac
 
 ## The languages
 
-**87-language catalog** spanning high-resource (English, Chinese, Arabic, Spanish...), mid-resource (Vietnamese, Swahili, Thai, Bengali...), and low-resource (Amharic, Khmer, Burmese, Yoruba, Kyrgyz...). The resource spectrum is deliberate: the whole finding is that defenses get thinner as a language gets lower-resource.
+**87-language catalog**, 28 high-resource, 24 mid, 35 low. The tier is not an opinion: every language carries its class from Joshi et al. (2020), *The State and Fate of Linguistic Diversity and Inclusion in the NLP World*, and the tier is derived from that class by one stated rule (high = class 4-5, mid = 3, low = 0-2) with no exceptions. The resource spectrum is the independent variable, so it is sourced rather than asserted.
 
 **20 are hand-authored and verified:** English, Spanish, Hindi, Gujarati, Chinese, Tagalog, Vietnamese, Arabic, Korean, French, Russian, Portuguese, German, Italian, Japanese, Polish, Turkish, Indonesian, Ukrainian, Greek. The other 67 are produced by `expand_languages.py`, which translates the seed attacks via Claude and verifies each one kept the canary token, the Base64 payload, and the injection structure.
 
