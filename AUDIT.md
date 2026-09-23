@@ -677,6 +677,43 @@ JSON round-trip.
     no longer exist, and flagging them would train everyone to ignore the tool.
     Check 98c proves the checker can fail, because one that cannot is decoration.
 
+## Round 12 — honest sampling, silent data loss, and an unfair comparison
+
+48. **"Quick (representative)" was neither.** It took a fixed 4 high, 5 mid, 5
+    low. On the shipped bank, which has no low-resource languages yet, that
+    silently returned **8 languages instead of 12** while the caption underneath
+    still read "A spread across resource tiers". Two false claims in one control:
+    the size and the spread.
+
+    FIX: it now fills to its target by round-robin across whatever tiers exist, so
+    the set is as balanced as the bank allows and always the size it claims
+    (4/4/4 once all three tiers are present). It cannot invent a tier that is not
+    there, so the app asks `tiers_covered` and says exactly which tiers it has.
+
+    The app also now warns **before** the scan that with no low-resource languages
+    the headline low-versus-high comparison cannot be computed at all. Learning
+    that after paying for a scan, or while recording a demo, is the wrong time.
+
+49. **Re-hardening silently deleted the user's own text.** `strip_defences`
+    truncated at the header, so anything written after the PolyGuard block was
+    destroyed. Harden, add a line of your own, harden again, and the line was gone
+    with no warning. FIX: the block is bounded to the bullet list it owns, and
+    everything after it survives.
+
+50. **The before/after comparison was not measuring the same thing.** Hardening
+    makes the system prompt many times longer (16.9x on the retail example), and
+    extraction is scored by verbatim overlap with the system prompt. So after
+    hardening, a bot that quoted the security rules **PolyGuard itself had just
+    added** was scored as leaking, against a target that did not exist during the
+    first scan.
+
+    That is a genuine leak of the live prompt, so it should not simply be ignored,
+    but it is not the same measurement, and "how many holes did hardening close"
+    requires measuring the same secret twice. FIX: `scan` takes an
+    `extraction_reference`, and the hardened re-scan passes the ORIGINAL prompt,
+    so before and after compare like with like. The scan output records whether a
+    reference was used.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

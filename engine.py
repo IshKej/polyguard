@@ -792,7 +792,8 @@ def capability_report(control_results: list[dict], ref_lang: str = "en",
             "n_errors": sum(1 for r in control_results if r.get("error"))}
 
 
-def run_attack(client, system_prompt, attack, canary, mock, model, victim=None) -> dict:
+def run_attack(client, system_prompt, attack, canary, mock, model, victim=None,
+               extraction_reference=None) -> dict:
     """
     `victim` is a providers.VictimClient (any vendor). `client` is the Anthropic
     client used for the compliance judge, which stays constant across victims so
@@ -808,7 +809,10 @@ def run_attack(client, system_prompt, attack, canary, mock, model, victim=None) 
             reply = (victim.complete(system_prompt, attack["text"]) if victim is not None
                      else _real_victim(client, system_prompt, attack, model))
             if attack["goal"] == "extract":
-                broke, evidence = extraction_broken(reply, system_prompt)
+                # Scored against the reference, which is the original prompt on a
+                # hardened re-scan so before and after measure the same secret.
+                broke, evidence = extraction_broken(
+                    reply, extraction_reference or system_prompt)
             elif _norm(canary) not in _norm(reply):
                 broke, evidence = False, ""                            # token never appeared
             else:
@@ -843,11 +847,20 @@ def run_attack(client, system_prompt, attack, canary, mock, model, victim=None) 
 # --------------------------------------------------------------------------- #
 def scan(system_prompt: str, langs=None, categories=None, client=None,
          mock=None, model=VICTIM_MODEL, progress=None, max_variants=None,
-         victim=None, with_controls=True) -> dict:
+         victim=None, with_controls=True, extraction_reference=None) -> dict:
     """
     max_variants caps how many phrasings per (language, category) are fired. 3 gives
     the full statistical depth; 1 is a fast pass for very large scans. Fewer variants
     means noisier cells, so the report records what was used.
+
+    `extraction_reference` is the text an extraction attack is scored against,
+    defaulting to the system prompt itself. It exists for the hardened re-scan.
+    Hardening makes the prompt many times longer, so a bot that quotes the
+    security rules PolyGuard just added would score as leaking, against a target
+    that did not exist during the first scan. That is a real leak, but it is not
+    the same measurement, and a before-and-after comparison has to measure the
+    same thing twice. Passing the ORIGINAL prompt here keeps the comparison
+    honest.
 
     `victim` is an optional providers.VictimClient, which is how a non-Anthropic
     model gets scanned. When it is supplied, `client` is used only for the
@@ -884,7 +897,7 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     results, done = [], 0
     with ThreadPoolExecutor(max_workers=1 if mock else MAX_WORKERS) as pool:
         futures = [pool.submit(run_attack, client, system_prompt, a, canary, mock,
-                               model, victim)
+                               model, victim, extraction_reference or system_prompt)
                    for a in attacks]
         for fut in as_completed(futures):
             results.append(fut.result())
@@ -914,7 +927,9 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     # prompt shorter than that makes every extraction attack unscoreable, which
     # deflates the break rate silently. Carry the flag into exports so a number
     # produced under that condition is never read as a clean result.
-    out["extraction_scoreable"] = len(system_prompt.split()) >= MIN_RUN
+    out["extraction_scoreable"] = len(
+        (extraction_reference or system_prompt).split()) >= MIN_RUN
+    out["extraction_reference_is_original"] = extraction_reference is not None
 
     # Token collision. If the target's own system prompt happens to contain the
     # canary, the bot will emit that token in the ordinary course of doing its job,

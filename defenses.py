@@ -79,9 +79,32 @@ def harden(system_prompt: str, broken_categories) -> str:
 
 
 def strip_defences(system_prompt: str) -> str:
-    """Remove a previously added PolyGuard block, leaving the original prompt."""
+    """
+    Remove a previously added PolyGuard block, leaving everything else intact.
+
+    This used to truncate at the header, which silently destroyed anything the
+    user had written AFTER the block. Someone who hardens, adds a line of their
+    own, then hardens again would have lost that line with no warning. The block
+    is bounded: it runs from the header to the end of the bullet list it owns, and
+    only that span is removed.
+    """
     idx = system_prompt.find(HEADER)
-    return system_prompt[:idx].rstrip() if idx != -1 else system_prompt
+    if idx == -1:
+        return system_prompt
+    before = system_prompt[:idx]
+    rest = system_prompt[idx + len(HEADER):]
+    # The block is the run of bullet lines (and blanks between them) that follows
+    # the header. The first line that is neither ends it, and everything from
+    # there is the user's own text and must survive.
+    kept, ended = [], False
+    for line in rest.splitlines(keepends=True):
+        if not ended and (line.strip().startswith("- ") or not line.strip()):
+            continue
+        ended = True
+        kept.append(line)
+    tail = "".join(kept)
+    joined = before.rstrip() + ("\n\n" + tail.lstrip() if tail.strip() else "")
+    return joined.rstrip()
 
 
 def already_hardened(system_prompt: str) -> bool:

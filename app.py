@@ -26,7 +26,9 @@ import streamlit as st
 import defenses
 import engine
 import providers
-from languages_catalog import tier_of
+from languages_catalog import CATALOG, tier_of
+
+CATALOG_TIERS = {k: v["tier"] for k, v in CATALOG.items()}
 
 st.set_page_config(page_title="PolyGuard - Multilingual AI Vulnerability Scanner",
                    page_icon="🛡", layout="wide")
@@ -112,13 +114,41 @@ def heat(rate):
     return f"rgb({r},{g},{b})", f"{rate:.0%}"
 
 
-def representative(available):
-    """A compact set spanning resource tiers, for a fast demo scan."""
-    buckets = {"high": [], "mid": [], "low": []}
+def tier_buckets(available):
+    b = {"high": [], "mid": [], "low": []}
     for c in available:
-        buckets[tier_of(c)].append(c)
-    pick = buckets["high"][:4] + buckets["mid"][:5] + buckets["low"][:5]
-    return pick or list(available)[:12]
+        b[tier_of(c)].append(c)
+    return b
+
+
+def representative(available, target=12):
+    """
+    A compact set spanning the resource tiers that are ACTUALLY in the bank.
+
+    The old version took a fixed 4 high, 5 mid, 5 low. On the shipped bank, which
+    has no low-resource languages yet, that silently returned 8 languages instead
+    of 12 while still being labelled "representative" and captioned as a spread
+    across tiers. It was neither.
+
+    This fills to `target` by round-robin across whatever tiers exist, so the set
+    is as balanced as the bank allows and always the size it claims to be. What it
+    cannot do is invent a tier that is not there, so the caller asks
+    `tiers_covered` and says so rather than claiming a spread it does not have.
+    """
+    buckets = tier_buckets(available)
+    order = [t for t in TIER_ORDER if buckets[t]]
+    pick, i = [], 0
+    while len(pick) < target and any(buckets[t] for t in order):
+        t = order[i % len(order)]
+        if buckets[t]:
+            pick.append(buckets[t].pop(0))
+        i += 1
+    return pick or list(available)[:target]
+
+
+def tiers_covered(codes):
+    """Which resource tiers a selection genuinely contains."""
+    return sorted({tier_of(c) for c in codes}, key=TIER_ORDER.index)
 
 
 bank = get_bank()
@@ -249,7 +279,13 @@ with right:
         label_visibility="collapsed")
     if mode.startswith("Quick"):
         langs = representative(all_langs)
-        st.caption("A spread across resource tiers: " +
+        _cov = tiers_covered(langs)
+        _label = ("A spread across all three resource tiers"
+                  if len(_cov) == 3 else
+                  f"{len(langs)} languages, but only the "
+                  f"{' and '.join(TIER_LABEL[t].lower() for t in _cov)} tier"
+                  f"{'s' if len(_cov) > 1 else ''} exist in the bank so far")
+        st.caption(_label + ": " +
                    ", ".join(bank["languages"][c]["name"] for c in langs))
     elif mode.startswith("All"):
         langs = all_langs
@@ -336,6 +372,21 @@ with right:
             f"broken and the overall break rate will read low. Paste the bot's real "
             f"system prompt, or uncheck that category.", icon="⚠")
 
+    # Say this BEFORE the scan, not after. The tier comparison is the headline
+    # result, and on a bank with no low-resource languages it cannot be computed
+    # at all. Finding that out after paying for a scan, or worse while recording
+    # a demo, is the wrong time.
+    _missing_tiers = [t for t in TIER_ORDER
+                      if not any(tier_of(c) == t for c in langs)]
+    if "low" in _missing_tiers:
+        st.warning(
+            f"This selection has no low-resource languages, so the headline "
+            f"low-versus-high comparison cannot be computed. The scan will still "
+            f"report per-language break rates and the attack-type breakdown. "
+            f"Run `python expand_languages.py --tier low` to fill the "
+            f"{sum(1 for k in CATALOG_TIERS if CATALOG_TIERS[k] == 'low')} "
+            f"low-resource languages in the catalog.", icon="📉")
+
 go = st.button("🚀  Run vulnerability scan", type="primary", width="stretch",
                disabled=not (system_prompt.strip() and langs and cats))
 
@@ -393,9 +444,14 @@ if st.session_state.get("run_hardened"):
             h_vic = get_victim(h_key)
         except Exception:
             h_vic = None
+    # Extraction is scored against the ORIGINAL prompt, not the hardened one.
+    # Hardening makes the prompt many times longer, and quoting the rules
+    # PolyGuard itself added would otherwise count as a leak against a target that
+    # did not exist in the first scan. See AUDIT.md finding 49.
     h_out = engine.scan(st.session_state["hardened_prompt"], langs=h_langs,
                         categories=h_cats, client=client, victim=h_vic,
                         max_variants=h_depth,
+                        extraction_reference=st.session_state.get("scanned_prompt"),
                         progress=lambda d, t: bar.progress(d / t,
                                                            text=f"Re-testing...  {d}/{t}"))
     bar.empty()
