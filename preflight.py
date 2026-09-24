@@ -41,6 +41,7 @@ REQUIRED = [
     "expand_languages.py", "validate_bank.py", "linguistics.py",
     "judge_eval.py", "calibrate_stats.py", "selection_bias_demo.py",
     "review_sheet.py", "rehearsal.py", "consistency.py",
+    "cli.py", "report_html.py",
     "test_engine.py", "verify_all.py",
     "preflight.py",
     "requirements.txt", "README.md", "DEPLOY.md", "AUDIT.md",

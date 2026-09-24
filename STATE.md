@@ -19,7 +19,7 @@ python generate_attack_bank.py   # rebuild corpus       -> 300 attacks + 120 con
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit                 -> 43/43
-python verify_all.py             # full battery         -> 191/191
+python verify_all.py             # full battery         -> 204/204
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
@@ -27,6 +27,7 @@ python preflight.py              # deploy readiness   -> all pass
 python consistency.py            # docs match the code -> no stale claims
 python rehearsal.py              # dress rehearsal    -> answer key PASS
 streamlit run app.py             # the app itself
+python cli.py scan --prompt f --mock   # headless, no key needed
 ```
 
 If any of those fail, something regressed. They all pass as of this writing.
@@ -78,6 +79,8 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 | `selection_bias_demo.py` | Reproduces the worst-language selection bias |
 | `review_sheet.py` | Exports CSVs for native-speaker review |
 | `rehearsal.py` | Runs the whole pipeline offline against a planted answer key |
+| `cli.py` | Headless scan, baseline comparison, CI exit codes |
+| `report_html.py` | Self-contained shareable HTML report |
 | `preflight.py` | Deploy gate: files, secrets, deps, clean boot |
 | `consistency.py` | Proves no document contradicts the code |
 | `DEMO_VIDEO.md` | Video script, shot list, submission answer drafts |
@@ -144,7 +147,7 @@ tracked rather than waved off.
 | Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
 | Capability controls | 120 (6 per language) |
 | Languages in bank | 20 of a planned 87 (16 high, 4 mid, **0 low**) |
-| Verification checks | 191 |
+| Verification checks | 204 |
 | Unit tests | 43 |
 | Audit findings fixed | 50 across 12 rounds |
 | Native-reviewed languages | 0 |

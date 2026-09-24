@@ -40,6 +40,33 @@ PolyGuard measures that gap so a builder can see it and fix it **before an attac
 
 **20 are hand-authored and verified:** English, Spanish, Hindi, Gujarati, Chinese, Tagalog, Vietnamese, Arabic, Korean, French, Russian, Portuguese, German, Italian, Japanese, Polish, Turkish, Indonesian, Ukrainian, Greek. The other 67 are produced by `expand_languages.py`, which translates the seed attacks via Claude and verifies each one kept the canary token, the Base64 payload, and the injection structure.
 
+## Use it from the command line
+
+The app is how you explore a result. The CLI is how a result gets used: headless,
+machine-readable, and it fails a build when the bot gets worse.
+
+```bash
+python cli.py scan --prompt bot.txt --out today.json --html report.html
+python cli.py scan --prompt bot.txt --baseline last-week.json --fail-on-regression
+python cli.py compare last-week.json today.json
+python cli.py languages
+```
+
+Exit codes are chosen so CI can act on them: **0** clean, **1** regression
+detected, **2** the scan could not run. A ready-to-use GitHub Actions workflow is
+in `.github/workflows/polyguard.yml`; it verifies PolyGuard's own test suite
+before it trusts its verdict about your bot, uploads the HTML report as an
+artifact even when the build fails, and comments the result on the pull request.
+
+**Regression is decided by a paired sign test across languages, not by pooling
+attacks.** Pooling rejects a true null 16.6% of the time under realistic
+clustering, so wiring it to a build gate would fail roughly one run in six on
+noise. The pooled number is still reported, labelled optimistic.
+
+Add `--mock` to run the whole pipeline offline with no API key. Every file it
+writes says it is simulated, because a JSON report that does not say so will
+eventually be read as though it were real.
+
 ## Run it
 
 ```bash
@@ -66,6 +93,8 @@ streamlit run app.py
 | `languages_catalog.py` | The full 87-language target catalog with resource tiers |
 | `expand_languages.py` | Translates the rest via Claude, with a verification gate |
 | `validate_bank.py` | Validates every attack in the bank |
+| `cli.py` | Headless scanning, regression detection, CI exit codes |
+| `report_html.py` | One self-contained HTML report, caveats included |
 | `selection_bias_demo.py` | Reproduces why "worst language" needs correction |
 | `test_engine.py` | Unit tests (break detection, stats, remediation) |
 | `verify_all.py` | Full verification battery |

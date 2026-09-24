@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 191 independent checks across the data, the
+PolyGuard full verification battery. Runs 204 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1255,6 +1255,73 @@ ck("101b. scan accepts an extraction reference and records that it used one",
                    with_controls=False)["extraction_reference_is_original"] is False)
 ck("101c. the app scores the hardened re-scan against the original prompt",
    'extraction_reference=st.session_state.get("scanned_prompt")' in app_src)
+
+# ---------------------------------------------------------------------------
+# 102-104. the CLI: the thing that makes this a tool rather than a demo.
+# ---------------------------------------------------------------------------
+import cli
+import report_html
+
+# 102. The exact paired sign test that decides whether a build fails.
+ck("102. sign test matches exact binomial values",
+   abs(engine.sign_test(10, 0)["p"] - 0.001953125) < 1e-9
+   and engine.sign_test(5, 5)["p"] == 1.0
+   and abs(engine.sign_test(8, 1)["p"] - 0.0390625) < 1e-9
+   and engine.sign_test(0, 0)["significant"] is False)
+
+# 103. Regression detection must fire on a real shift and stay quiet on noise.
+def _mk(rates, mock=True, model="m"):
+    return {"mock": mock, "model": model,
+            "by_lang": {c: {"name": c, "broke": int(round(r * 10)), "total": 10,
+                            "rate": r} for c, r in rates.items()}}
+
+
+_codes10 = list(cat.CATALOG)[:10]
+_before = _mk({c: 0.10 for c in _codes10})
+_worse = _mk({c: 0.60 for c in _codes10})
+_noise = _mk({c: (0.10 if i % 2 else 0.20) for i, c in enumerate(_codes10)})
+ck("103. a consistent shift across languages is called a regression",
+   cli.compare_scans(_before, _worse)["regressed"] is True)
+ck("103b. an identical scan is not a regression",
+   cli.compare_scans(_before, _before)["regressed"] is False)
+ck("103c. small mixed wobble does not fail a build",
+   cli.compare_scans(_before, _noise)["sign_test"]["significant"] is False)
+ck("103d. mock and live are refused as incomparable",
+   cli.compare_scans(_mk({"en": .1}), _mk({"en": .5}, mock=False))["comparable"]
+   is False)
+ck("103e. different victim models are refused as incomparable",
+   cli.compare_scans(_mk({"en": .1}), _mk({"en": .5}, model="other"))["comparable"]
+   is False)
+ck("103f. the verdict is the paired test, with the pooled one labelled optimistic",
+   "pooled_test_optimistic" in cli.compare_scans(_before, _worse)
+   and "16.6%" in inspect.getsource(cli.compare_scans))
+
+# 104. The HTML report must carry every caveat the scan carried.
+_payload = {"mock": True, "model": "m", "generated_at": "now",
+            "attacks_fired": 10, "attacks_broke": 3, "overall_break_rate": 0.3,
+            "english_break_rate": 0.2, "by_lang": {}, "by_category": {},
+            "token_collision": ["canary"], "extraction_scoreable": False,
+            "victim": {}, "broken_categories": []}
+_html = report_html.build_report(_payload)
+ck("104. a simulated run says so in the report itself",
+   "Simulated run" in _html and "not a measurement" in _html)
+ck("104b. a token collision invalidates the report visibly",
+   "These results are invalid" in _html)
+ck("104c. an unscoreable extraction is disclosed",
+   "shorter than" in _html)
+ck("104d. the report is self-contained and escapes content",
+   "https://" not in _html.split("<footer>")[0]
+   and "&lt;script&gt;" in report_html.build_report(
+       {**_payload, "by_lang": {"en": {"name": "<script>x</script>", "rate": 0.1,
+                                       "broke": 1, "total": 10, "tier": "high"}}}))
+ck("104e. the native-review limitation travels with every report",
+   "native speaker" in _html)
+
+# 105. CI wiring exists and self-checks before trusting its own verdict.
+_wf = HERE / ".github" / "workflows" / "polyguard.yml"
+ck("105. a CI workflow ships, and verifies PolyGuard before scanning",
+   _wf.exists() and "verify_all.py" in _wf.read_text(encoding="utf-8")
+   and "--fail-on-regression" in _wf.read_text(encoding="utf-8"))
 
 # report
 passed = sum(1 for _, ok in checks if ok)

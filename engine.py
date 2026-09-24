@@ -277,6 +277,35 @@ def classification_metrics(truth: list[bool], predicted: list[bool]) -> dict:
     }
 
 
+def sign_test(worse: int, better: int) -> dict:
+    """
+    Exact two-sided sign test on PAIRED per-language outcomes.
+
+    Used to decide whether a bot regressed between two scans. The unit is the
+    language, consistent with every other test in this project, and the pairing
+    is real because the same languages appear in both scans.
+
+    It exists because the obvious alternative is wrong here. Pooling all attacks
+    and running a proportion test treats correlated attacks as independent, which
+    simulation puts at a 16.6% false-positive rate under a realistic clustered
+    null (AUDIT.md finding 16). Using that to fail a build would mean failing on
+    noise roughly one time in six.
+
+    Ties are dropped, which is the standard treatment: a language that did not
+    change carries no evidence either way. Exact binomial, no approximation, so
+    it is valid at the small language counts a quick scan produces.
+    """
+    n = worse + better
+    if n == 0:
+        return {"n": 0, "worse": 0, "better": 0, "p": 1.0, "significant": False}
+    # P(X >= max(worse,better)) + P(X <= min(...)) under Binomial(n, 0.5)
+    k = max(worse, better)
+    tail = sum(math.comb(n, i) for i in range(k, n + 1)) / (2 ** n)
+    p = min(1.0, 2 * tail)
+    return {"n": n, "worse": worse, "better": better, "p": p,
+            "significant": p < 0.05}
+
+
 def cliffs_delta(xs: list[float], ys: list[float]) -> dict:
     """
     Cliff's delta: the effect SIZE to accompany the Mann-Whitney p-value.
