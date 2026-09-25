@@ -329,6 +329,28 @@ def cmd_report(args) -> int:
     return 0
 
 
+def cmd_models(args) -> int:
+    """Which victim models are usable right now, and what each one still needs."""
+    ready = set(providers.ready_model_keys())
+    print(f"{len(ready)} of {len(providers.MODELS)} victim models are ready.")
+    print()
+    print(f"{'key':<20}{'vendor':<20}{'status':<34}pinnable")
+    for st in providers.available_models():
+        print(f"{st['key']:<20}{st['vendor']:<20}{st['reason']:<34}"
+              f"{'yes' if st['deterministic'] else 'no'}")
+    print()
+    if not ready:
+        print("No model is ready. Set ANTHROPIC_API_KEY, or use --mock to run "
+              "the pipeline offline.")
+    else:
+        print(f"Scan one with:  python cli.py scan --prompt bot.txt "
+              f"--model {sorted(ready)[0]}")
+    print()
+    print("'pinnable' means the model still accepts temperature=0. Where it does")
+    print("not, results are samples rather than fixed values, and the scan says so.")
+    return 0
+
+
 def cmd_languages(args) -> int:
     bank = engine.load_bank()
     in_bank = set(bank["languages"])
@@ -389,6 +411,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     lg = sub.add_parser("languages", help="list the catalog and what is generated")
     lg.set_defaults(func=cmd_languages)
+
+    md = sub.add_parser("models", help="which victim models are usable right now")
+    md.set_defaults(func=cmd_models)
     return p
 
 

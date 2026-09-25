@@ -714,6 +714,41 @@ JSON round-trip.
     so before and after compare like with like. The scan output records whether a
     reference was used.
 
+## Round 13 — the suite people actually run was the one that checked least
+
+51. **The fast test suite covered 8 of 29 engine functions.** `verify_all.py` is
+    thorough but slow: it boots the Streamlit app twice and runs permutation
+    tests, so in practice nobody runs it after every edit. `test_engine.py` is
+    the suite that gets run, and it exercised break detection and little else.
+    Every statistic added since round 5, the whole capability-control layer, the
+    multiple-comparison correction and both judges had no fast test at all. A
+    developer running the fast suite got a green light that meant almost nothing.
+    FIX: expanded to 135 checks covering all 29 public functions, still under a
+    second. Each one asserts a property rather than that the call returned:
+    Benjamini-Hochberg is monotone and never adjusts downward, the sign test
+    matches the exact binomial to twelve decimal places, tier rates keep the
+    language as the unit, a thin capability sample produces a screen and never a
+    confirmed finding, and the capability judge prompt is checked for the words
+    "attack", "injection", "jailbreak" and "adversarial" because priming it with
+    any of them would bias plain compliance toward looking suspicious.
+
+52. **Finding 19 had no regression test.** The selection-bias correction was the
+    single most important fix in this project, and nothing would have caught its
+    removal. FIX: the fast suite now generates a scan from a victim with a
+    deliberately identical break probability in all 20 languages, asserts the raw
+    worst-language gap still exceeds 15 points, and asserts the permutation test
+    refuses to call it significant. If that test ever passes on null data, the
+    project is manufacturing its own conclusion again and the suite says so. A
+    paired positive control with one genuinely broken language confirms the test
+    has not simply been defanged.
+
+53. **`providers.ready_model_keys` was unreachable.** A public function nothing
+    called, so nothing verified it. Deleting it would have been the smaller
+    change, but the information it returns is what a user needs before spending
+    money on a scan. FIX: exposed as `python cli.py models`, which prints each
+    victim model, its vendor, whether its key is present and whether it can be
+    pinned to temperature 0.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

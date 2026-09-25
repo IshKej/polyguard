@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 204 independent checks across the data, the
+PolyGuard full verification battery. Runs 206 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1322,6 +1322,24 @@ _wf = HERE / ".github" / "workflows" / "polyguard.yml"
 ck("105. a CI workflow ships, and verifies PolyGuard before scanning",
    _wf.exists() and "verify_all.py" in _wf.read_text(encoding="utf-8")
    and "--fail-on-regression" in _wf.read_text(encoding="utf-8"))
+
+# 106. The FAST suite is the one that actually gets run after an edit, so it has
+# to be the one that covers everything. This battery is slow enough that a green
+# test_engine.py is what a developer will trust between runs of it.
+import inspect as _insp
+
+_te = (HERE / "test_engine.py").read_text(encoding="utf-8")
+_pub = [n for n, f in vars(engine).items()
+        if not n.startswith("_") and _insp.isfunction(f) and f.__module__ == "engine"]
+_uncovered = [n for n in sorted(_pub) if ("engine." + n) not in _te]
+ck("106. the fast unit suite exercises every public engine function "
+   f"({len(_pub) - len(_uncovered)}/{len(_pub)})", not _uncovered)
+
+# 107. Finding 19 is the most important correction in the project. Its regression
+# test living in the fast suite is itself load-bearing.
+ck("107. the fast suite keeps a null-data guard against the finding-19 bias",
+   "max_gap_permutation_test" in _te
+   and "refuses to call that null gap significant" in _te)
 
 # report
 passed = sum(1 for _, ok in checks if ok)

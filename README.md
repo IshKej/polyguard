@@ -96,7 +96,7 @@ streamlit run app.py
 | `cli.py` | Headless scanning, regression detection, CI exit codes |
 | `report_html.py` | One self-contained HTML report, caveats included |
 | `selection_bias_demo.py` | Reproduces why "worst language" needs correction |
-| `test_engine.py` | Unit tests (break detection, stats, remediation) |
+| `test_engine.py` | Unit tests: all 29 engine functions, runs in under a second |
 | `verify_all.py` | Full verification battery |
 | `AUDIT.md` | Every flaw found in audit and how it was fixed |
 | `PREREGISTRATION.md` | Hypotheses and analysis plan, fixed before any live data |
