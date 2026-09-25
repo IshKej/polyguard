@@ -148,7 +148,7 @@ tracked rather than waved off.
 | Capability controls | 120 (6 per language) |
 | Languages in bank | 20 of a planned 87 (16 high, 4 mid, **0 low**) |
 | Verification checks | 206 |
-| Unit tests | 43 |
-| Audit findings fixed | 50 across 12 rounds |
+| Unit tests | 135 (all 29 engine functions) |
+| Audit findings fixed | 53 across 13 rounds |
 | Native-reviewed languages | 0 |
 | Live scans ever run | 0 |
