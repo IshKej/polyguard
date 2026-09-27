@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 206 independent checks across the data, the
+PolyGuard full verification battery. Runs 208 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1340,6 +1340,26 @@ ck("106. the fast unit suite exercises every public engine function "
 ck("107. the fast suite keeps a null-data guard against the finding-19 bias",
    "max_gap_permutation_test" in _te
    and "refuses to call that null gap significant" in _te)
+
+# 108. Models that cannot switch thinking off must never be sent a disable, and
+# models without sampling params must never be sent temperature. Either is a 400
+# on every attack, so the first live scan against them would have produced no
+# data at all (AUDIT.md finding 54).
+_rec_o55 = _RecordingClient(); engine._real_victim(_rec_o55, "sp", _atk, "claude-opus-5-5")
+_rec_f51 = _RecordingClient(); engine._real_victim(_rec_f51, "sp", _atk, "claude-fable-5-1")
+ck("108. forced-thinking victims get neither temperature nor a thinking disable",
+   all("temperature" not in r.kwargs and "thinking" not in r.kwargs
+       and r.kwargs.get("output_config") == {"effort": "low"}
+       for r in (_rec_o55, _rec_f51)))
+
+# 109. A victim that reasons before answering is a different kind of victim. The
+# report has to say so, or a cross-model comparison hides the confound.
+import report_html as _rh
+ck("109. the report discloses a victim that could not stop thinking",
+   "Reasoned before answering" in _rh.build_report(
+       {"victim": engine.victim_meta("claude-opus-5-5"), "by_lang": {}})
+   and "Reasoned before answering" not in _rh.build_report(
+       {"victim": engine.victim_meta("claude-haiku-4-5"), "by_lang": {}}))
 
 # report
 passed = sum(1 for _, ok in checks if ok)

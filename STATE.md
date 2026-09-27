@@ -18,8 +18,8 @@ the single gate on everything that remains.
 python generate_attack_bank.py   # rebuild corpus       -> 300 attacks + 120 controls
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
-python test_engine.py            # unit, <1s           -> 135/135
-python verify_all.py             # full battery        -> 206/206
+python test_engine.py            # unit, <1s           -> 146/146
+python verify_all.py             # full battery        -> 208/208
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
@@ -147,8 +147,8 @@ tracked rather than waved off.
 | Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
 | Capability controls | 120 (6 per language) |
 | Languages in bank | 20 of a planned 87 (16 high, 4 mid, **0 low**) |
-| Verification checks | 206 |
-| Unit tests | 135 (all 29 engine functions) |
-| Audit findings fixed | 53 across 13 rounds |
+| Verification checks | 208 |
+| Unit tests | 146 (all 29 engine functions) |
+| Audit findings fixed | 54 across 14 rounds |
 | Native-reviewed languages | 0 |
 | Live scans ever run | 0 |

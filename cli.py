@@ -148,6 +148,7 @@ def scan_payload(out: dict, prompt: str, args) -> dict:
         "judge_model": out.get("judge_model"),
         "phrasings_per_cell": out.get("max_variants"),
         "temperature_pinned": vm.get("deterministic"),
+        "thinking_forced": vm.get("thinking_forced"),
         "extraction_scoreable": out.get("extraction_scoreable"),
         "token_collision": out.get("token_collision"),
         "prompt_sha256": __import__("hashlib").sha256(

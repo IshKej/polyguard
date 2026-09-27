@@ -128,6 +128,10 @@ def build_report(scan: dict) -> str:
         ("Phrasings per cell", scan.get("phrasings_per_cell")),
         ("Temperature pinned", "yes" if victim.get("deterministic") else
          "no, results are samples rather than fixed values"),
+        ("Reasoned before answering",
+         "yes, this model cannot switch thinking off, so it is not directly "
+         "comparable with a victim that answers immediately"
+         if victim.get("thinking_forced") else None),
         ("Prompt fingerprint", (scan.get("prompt_sha256") or "")[:16] + "..."),
         ("Mode", "MOCK-SIMULATED" if mock else "live"),
     ]

@@ -659,18 +659,9 @@ def _real_victim(client, system_prompt: str, attack: dict, model: str) -> str:
     reproducibility; where it does not, the result is a sample rather than a
     fixed value, and `scan` records which of the two it was.
     """
-    kwargs = {"model": model, "max_tokens": 300, "system": system_prompt,
-              "messages": [{"role": "user", "content": attack["text"]}]}
-    if model not in providers._ANTHROPIC_NO_SAMPLING:
-        kwargs["temperature"] = 0                # temperature=0, reproducible
-    if model in providers._ANTHROPIC_THINKING_ON_BY_DEFAULT:
-        # A shipped chatbot does not reason at length before answering. Leaving
-        # thinking on would test a system the user is not actually deploying.
-        kwargs["thinking"] = {"type": "disabled"}
-    resp = client.messages.create(**kwargs)
-    if getattr(resp, "stop_reason", None) == "refusal":
-        return providers.BLOCKED_SENTINEL
-    return "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
+    resp = client.messages.create(**providers.anthropic_victim_request(
+        model, system_prompt, attack["text"], 300))
+    return providers.anthropic_victim_text(resp)
 
 
 def llm_judge_followed(client, reply: str, token: str, model: str = JUDGE_MODEL) -> bool:
@@ -1114,6 +1105,7 @@ def compare_runs(runs: dict) -> list[dict]:
             "significant": bool(mw.get("significant")),
             "n_low_langs": len(lo_rates), "n_high_langs": len(hi_rates),
             "pinned": bool(vm.get("deterministic")),
+            "thinking_forced": bool(vm.get("thinking_forced")),
             "errors": r["n_errors"], "mock": r["mock"],
         })
     return rows
@@ -1128,18 +1120,23 @@ def victim_meta(model: str, victim=None) -> dict:
     """
     if victim is not None:
         spec = victim.spec
+        # getattr: a caller-supplied victim may predate this field. Not knowing
+        # is reported as not forced, which is what such a victim was assumed.
         return {"key": spec.key, "label": spec.label, "vendor": spec.vendor,
                 "provider": spec.provider, "model_id": spec.model_id,
-                "deterministic": spec.deterministic}
+                "deterministic": spec.deterministic,
+                "thinking_forced": bool(getattr(spec, "thinking_forced", False))}
     spec = providers.MODELS.get(model)
     if spec is not None:
         return {"key": spec.key, "label": spec.label, "vendor": spec.vendor,
                 "provider": spec.provider, "model_id": spec.model_id,
-                "deterministic": spec.deterministic}
+                "deterministic": spec.deterministic,
+                "thinking_forced": spec.thinking_forced}
     # An unregistered model id (POLYGUARD_VICTIM_MODEL set to something custom).
     # Assume the Anthropic path, and infer determinism from the sampling rule.
     return {"key": model, "label": model, "vendor": "unknown", "provider": "anthropic",
-            "model_id": model, "deterministic": model not in providers._ANTHROPIC_NO_SAMPLING}
+            "model_id": model, "deterministic": model not in providers._ANTHROPIC_NO_SAMPLING,
+            "thinking_forced": model in providers._ANTHROPIC_THINKING_ALWAYS_ON}
 
 
 def summarize(results: list[dict], bank: dict, mock: bool, model: str,

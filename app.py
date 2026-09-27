@@ -520,6 +520,7 @@ if "out" in st.session_state:
             "Low vs high p": (f"{c['p']:.3g}" if c["p"] is not None else "n/a"),
             "Gap significant": "yes" if c["significant"] else "no",
             "Temp pinned": "yes" if c["pinned"] else "no",
+            "Thinks first": "yes" if c.get("thinking_forced") else "no",
             "Errors": c["errors"],
         } for c in comp]), width="stretch", hide_index=True)
 
@@ -969,6 +970,7 @@ if "out" in st.session_state:
         "victim": out.get("victim"), "judge_model": out.get("judge_model"),
         "phrasings_per_cell": out.get("max_variants"),
         "temperature_pinned": (out.get("victim") or {}).get("deterministic"),
+        "thinking_forced": (out.get("victim") or {}).get("thinking_forced"),
         "extraction_scoreable": out.get("extraction_scoreable"),
         "worst_language_test": out.get("max_gap_test"),
         "attacks_fired": out["n_attacks"], "attacks_broke": out["n_broke"],

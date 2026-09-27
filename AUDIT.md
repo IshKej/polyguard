@@ -749,6 +749,34 @@ JSON round-trip.
     victim model, its vendor, whether its key is present and whether it can be
     pinned to temperature 0.
 
+## Round 14 — the API moved under the victim
+
+54. **Two families of Claude victim would have failed every single attack.**
+    The victim request is built per model because the API differs per model, and
+    it had fallen behind twice. First, `claude-opus-5-5` was missing from the set
+    of models that removed sampling parameters, so it would have been sent
+    `temperature=0`, which is a 400. Second, Fable 5, Fable 5.1 and the Mythos
+    models were grouped with the models whose thinking can be switched off, and
+    were sent `thinking: disabled`. On those models thinking cannot be disabled
+    and the explicit disable is itself a 400. Opus 5.5 has the same property. In
+    both cases the first live scan against those victims would have returned
+    nothing but errors. Neither is in the default model list, so no committed
+    result was affected, but both are one environment variable away.
+    FIX: the set was split into models where disabling thinking is accepted and
+    models where it is not. The second group omits the parameter, runs at the
+    lowest effort, and gets extra output headroom, because thinking tokens count
+    against `max_tokens` and a victim that spends its budget reasoning returns no
+    answer, which would have scored as a refusal and flattered the model. An
+    empty reply truncated by `max_tokens` now raises, so it becomes missing data
+    rather than a silent non-break. The request was also built in two separate
+    places, engine and providers, which is why a drift like this needed fixing
+    twice; both now call one shared helper.
+    A victim that reasons before answering is a different kind of victim from
+    one that answers immediately, so every scan now records `thinking_forced`,
+    and the HTML report, the export and the cross-model table all show it.
+    The unit tests were mutation-checked: re-injecting either original bug turns
+    the fast suite red.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

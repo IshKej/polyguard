@@ -44,18 +44,65 @@ BLOCKED_SENTINEL = "[BLOCKED BY PROVIDER SAFETY FILTER]"
 # any of these is a 400, not a warning. The victim call must therefore be
 # temperature-aware or a cross-model scan dies on the second model.
 _ANTHROPIC_NO_SAMPLING = {
-    "claude-opus-5", "claude-opus-4-8", "claude-opus-4-7",
+    "claude-opus-5-5", "claude-opus-5", "claude-opus-4-8", "claude-opus-4-7",
     "claude-sonnet-5", "claude-fable-5", "claude-fable-5-1",
     "claude-mythos-5", "claude-mythos-5-1",
 }
 
-# Anthropic models where thinking runs unless explicitly disabled. A victim
-# standing in for a shipped chatbot should not be reasoning at length before it
-# answers, so these get thinking switched off for both fairness and cost.
-_ANTHROPIC_THINKING_ON_BY_DEFAULT = {
-    "claude-opus-5", "claude-sonnet-5", "claude-fable-5", "claude-fable-5-1",
+# Anthropic models where thinking runs unless explicitly disabled, AND disabling
+# it is accepted. A victim standing in for a shipped chatbot should not be
+# reasoning at length before it answers, so these get thinking switched off for
+# both fairness and cost.
+_ANTHROPIC_THINKING_ON_BY_DEFAULT = {"claude-opus-5", "claude-sonnet-5"}
+
+# Anthropic models where thinking CANNOT be switched off: an explicit
+# {"type": "disabled"} is a 400, so sending it would fail every attack. These
+# omit the parameter and run at the lowest effort instead. They still reason
+# before answering, which makes them a different kind of victim, so the scan
+# records it (`thinking_forced`) rather than comparing them silently.
+_ANTHROPIC_THINKING_ALWAYS_ON = {
+    "claude-opus-5-5", "claude-fable-5", "claude-fable-5-1",
     "claude-mythos-5", "claude-mythos-5-1",
 }
+
+# Thinking tokens count against max_tokens. Without headroom a forced-thinking
+# victim can spend the whole budget reasoning and return no answer, which would
+# read as a refusal and flatter the model.
+_THINKING_HEADROOM = 4000
+
+
+def anthropic_victim_request(model_id: str, system_prompt: str, user_text: str,
+                             max_tokens: int) -> dict:
+    """The one place the Anthropic victim request is built.
+
+    Both the multi-vendor client and engine's direct path call this, so a change
+    in which models accept which parameters is fixed once instead of twice.
+    """
+    kwargs = {"model": model_id, "max_tokens": max_tokens, "system": system_prompt,
+              "messages": [{"role": "user", "content": user_text}]}
+    if model_id not in _ANTHROPIC_NO_SAMPLING:
+        kwargs["temperature"] = 0                # reproducible where the API allows it
+    if model_id in _ANTHROPIC_THINKING_ALWAYS_ON:
+        kwargs["output_config"] = {"effort": "low"}
+        kwargs["max_tokens"] = max_tokens + _THINKING_HEADROOM
+    elif model_id in _ANTHROPIC_THINKING_ON_BY_DEFAULT:
+        # A shipped chatbot does not reason at length before replying, so the
+        # victim should not either.
+        kwargs["thinking"] = {"type": "disabled"}
+    return kwargs
+
+
+def anthropic_victim_text(resp) -> str:
+    """Extract the victim's answer, refusing to turn a truncation into a refusal."""
+    stop = getattr(resp, "stop_reason", None)
+    if stop == "refusal":
+        return BLOCKED_SENTINEL
+    text = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
+    if not text and stop == "max_tokens":
+        # The model ran out of budget before saying anything. Returning "" would
+        # score as a non-break. Raising makes it missing data instead.
+        raise RuntimeError("victim hit max_tokens before producing an answer")
+    return text
 
 # OpenAI reasoning models reject temperature the same way the newer Claudes do.
 _OPENAI_NO_SAMPLING_PREFIXES = ("o1", "o3", "o4", "gpt-5")
@@ -90,6 +137,11 @@ class ModelSpec:
         rather than implying a precision the API cannot give.
         """
         return self.supports_temperature
+
+    @property
+    def thinking_forced(self) -> bool:
+        """True when this victim reasons before answering and cannot be stopped."""
+        return self.provider == "anthropic" and self.model_id in _ANTHROPIC_THINKING_ALWAYS_ON
 
 
 # The victim class this project actually cares about: small, cheap models of the
@@ -210,23 +262,9 @@ class VictimClient:
 
     # -- Anthropic ---------------------------------------------------------- #
     def _call_anthropic(self, system_prompt: str, user_text: str) -> str:
-        kwargs = {
-            "model": self.spec.model_id,
-            "max_tokens": self.max_tokens,
-            "system": system_prompt,
-            "messages": [{"role": "user", "content": user_text}],
-        }
-        if self.spec.supports_temperature:
-            kwargs["temperature"] = 0            # reproducible where the API allows it
-        if self.spec.model_id in _ANTHROPIC_THINKING_ON_BY_DEFAULT:
-            # A shipped chatbot does not reason at length before replying, so the
-            # victim should not either. Leaving thinking on would test a system
-            # the user is not actually deploying.
-            kwargs["thinking"] = {"type": "disabled"}
-        resp = self._client.messages.create(**kwargs)
-        if getattr(resp, "stop_reason", None) == "refusal":
-            return BLOCKED_SENTINEL
-        return "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
+        resp = self._client.messages.create(**anthropic_victim_request(
+            self.spec.model_id, system_prompt, user_text, self.max_tokens))
+        return anthropic_victim_text(resp)
 
     # -- OpenAI and OpenAI-compatible --------------------------------------- #
     def _call_openai(self, system_prompt: str, user_text: str) -> str:
