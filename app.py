@@ -1,6 +1,6 @@
 """
-PolyGuard - Multilingual AI Vulnerability Scanner
-=================================================
+PolyGuard: multilingual AI vulnerability scanner
+================================================
 Paste a chatbot's system prompt. PolyGuard attacks a live copy of that bot in
 many languages across five injection categories and reports, per language and per
 resource tier, which attacks broke it - exposing the gap between how well the bot
@@ -19,7 +19,9 @@ API key (enables the live scan; without it the app runs in labelled MOCK mode)
 import html
 import json
 import os
+import re
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -30,43 +32,139 @@ from languages_catalog import CATALOG, tier_of
 
 CATALOG_TIERS = {k: v["tier"] for k, v in CATALOG.items()}
 
-st.set_page_config(page_title="PolyGuard - Multilingual AI Vulnerability Scanner",
-                   page_icon="🛡", layout="wide")
+# A spend gate on a public deployment keeps the passcode box in the sidebar, so
+# the sidebar opens by default only when there is a passcode to enter.
+_HAS_PASSCODE = bool(providers.resolve_key("POLYGUARD_PASSCODE"))
+st.set_page_config(page_title="PolyGuard", page_icon=":material/shield:", layout="wide",
+                   initial_sidebar_state="expanded" if _HAS_PASSCODE else "collapsed")
 
 TIER_ORDER = ["high", "mid", "low"]
-TIER_LABEL = {"high": "High-resource", "mid": "Mid-resource", "low": "Low-resource"}
+TIER_LABEL = {"high": "High resource", "mid": "Mid resource", "low": "Low resource"}
+REPO_URL = "https://github.com/IshKej/polyguard"
 
 # --------------------------------------------------------------------------- #
 # Styling
+#
+# .streamlit/config.toml carries the colours, fonts and radii. This stylesheet
+# only does what the theme cannot: the page width, the hero, the scan panel, and
+# the spec sheet treatment of results. The palette is repeated here as custom
+# properties so the two never drift into different blacks.
 # --------------------------------------------------------------------------- #
 st.markdown("""
 <style>
-  .stApp { background:#0b0f16; }
-  h1,h2,h3,h4,p,span,div,label,li { color:#e6edf3; }
-  .pg-head { border-left:4px solid #f0603a; padding:.1rem 0 .1rem 1rem; margin-bottom:.2rem; }
-  .pg-title { font-size:2.2rem; font-weight:800; letter-spacing:-.5px; margin:0; }
-  .pg-title .g { color:#f0603a; }
-  .pg-sub { color:#8b949e; font-size:.95rem; margin:.1rem 0 0; }
-  .pg-thesis { background:#12161f; border:1px solid #262c36; border-radius:10px;
-               padding:.8rem 1.1rem; margin:.8rem 0 1.2rem; color:#c9d3de; font-size:.95rem; }
-  .cell { text-align:center; padding:.42rem .1rem; border-radius:6px; font-size:.8rem;
-          font-weight:700; color:#0b0f16; }
-  .rowlab { padding:.42rem .6rem; font-size:.86rem; color:#e6edf3; white-space:nowrap; }
-  .rowlab .nat { color:#8b949e; font-size:.78rem; }
-  .collab { font-size:.7rem; color:#8b949e; text-align:center; padding:0 .1rem .3rem;
-            line-height:1.05; height:2.6rem; display:flex; align-items:flex-end;
-            justify-content:center; }
-  .legend { font-size:.78rem; color:#8b949e; }
-  .swatch { display:inline-block; width:12px; height:12px; border-radius:3px;
-            vertical-align:middle; margin:0 .25rem 0 .8rem; }
-  .attackcard { background:#14181f; border:1px solid #262c36; border-radius:8px;
-                padding:.7rem .9rem; margin-bottom:.5rem; }
-  .badge { display:inline-block; border-radius:999px; padding:.1rem .55rem; font-size:.72rem;
-           font-weight:700; margin-right:.4rem; }
-  .b-broke { background:#3a1417; color:#ff9a8f; border:1px solid #f0603a; }
-  .b-held  { background:#12261a; color:#87e0a0; border:1px solid #3fb950; }
-  .mono { font-family:ui-monospace,monospace; font-size:.82rem; color:#c9d3de;
-          white-space:pre-wrap; word-break:break-word; }
+:root{--black:#000;--tile:#1d1d1f;--raised:#2c2c2e;--ink:#f5f5f7;--quiet:#86868b;
+      --line:#424245;--blue:#2997ff;--red:#ff453a;--green:#30d158;--yellow:#ffd60a}
+header[data-testid="stHeader"]{background:transparent}
+[data-testid="stMainBlockContainer"],.block-container{max-width:1040px;
+  padding-top:1.25rem;padding-bottom:6rem}
+[data-testid="stSidebar"]{background:var(--tile)}
+
+/* nav and hero */
+.pg-nav{display:flex;justify-content:space-between;align-items:baseline;gap:1rem}
+.pg-mark{font-weight:600;font-size:1.3125rem;letter-spacing:-.012em;color:var(--ink)}
+.pg-nav a{color:var(--quiet);font-size:.875rem;text-decoration:none}
+.pg-nav a:hover{color:var(--ink)}
+.pg-nav a:focus-visible,.pg-foot a:focus-visible{outline:2px solid var(--blue);
+  outline-offset:3px;border-radius:4px}
+.pg-hero{text-align:center;padding:6rem 0 4.5rem}
+.pg-h1{font-size:clamp(2.5rem,6.2vw,4.25rem);line-height:1.04;letter-spacing:-.03em;
+  font-weight:600;color:var(--ink);max-width:14ch;margin:0 auto}
+.pg-lede{font-size:clamp(1.125rem,2.1vw,1.4375rem);line-height:1.42;color:var(--quiet);
+  max-width:33ch;margin:1.5rem auto 0;letter-spacing:-.006em}
+.pg-demo{margin:5rem auto 0;max-width:760px}
+.pg-en{font-size:clamp(1.5rem,3.4vw,2.375rem);font-weight:600;letter-spacing:-.022em;
+  line-height:1.2;color:var(--ink);margin:0}
+.pg-cycle{display:grid;margin-top:.6rem;min-height:6.25rem}
+.pg-cycle>div{grid-area:1/1;opacity:0}
+.pg-cycle .t{font-size:clamp(1.5rem,3.4vw,2.375rem);font-weight:500;line-height:1.25;
+  color:var(--quiet);margin:0}
+.pg-cycle .n{font-size:.875rem;color:var(--quiet);margin:.7rem 0 0;opacity:.75}
+.pg-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){
+  .pg-cycle>div{animation:none!important}
+  .pg-cycle>div:first-child{opacity:1}}
+
+/* the scan panel */
+.st-key-scan_panel{background:var(--tile);border-radius:28px;padding:2.5rem 2.5rem 2rem}
+.st-key-scan_panel textarea,
+.st-key-scan_panel [data-baseweb="textarea"],
+.st-key-scan_panel [data-baseweb="select"]>div,
+.st-key-scan_panel [data-testid="stSelectbox"] [data-baseweb="select"] div[value]{background:var(--raised)!important}
+.st-key-scan_panel [data-testid="stSelectbox"]>div>div{background:var(--raised);border-radius:12px}
+.st-key-scan_panel textarea{font-size:.9375rem;line-height:1.55}
+span[data-baseweb="tag"]{background:#3a3a3c!important;color:var(--ink)!important}
+.pg-label{font-size:1.3125rem;font-weight:600;letter-spacing:-.012em;color:var(--ink);
+  margin:0 0 .2rem}
+.pg-hint{color:var(--quiet);font-size:.9375rem;margin:0 0 1.1rem}
+.pg-sub{font-size:1.0625rem;font-weight:600;color:var(--ink);margin:1.4rem 0 .3rem}
+.pg-count{text-align:center;color:var(--quiet);font-size:1rem;margin:2rem auto 1.1rem;
+  max-width:44rem}
+.pg-count b{color:var(--ink);font-weight:600}
+.stButton button[kind="primary"]{padding:.75rem 1.75rem;font-size:1.0625rem;font-weight:500}
+.stButton button[kind="primary"]:hover{background:#0077ed;border-color:#0077ed}
+.stButton button[kind="secondary"],.stDownloadButton button{background:transparent;
+  border:1px solid var(--line)}
+
+/* results: a spec sheet, not a dashboard */
+.pg-results{font-size:clamp(2rem,4.4vw,3rem);font-weight:600;letter-spacing:-.028em;
+  color:var(--ink);margin:4.5rem 0 .4rem}
+.pg-scope{color:var(--quiet);font-size:1.0625rem;margin:0 0 2.25rem}
+[data-testid="stMetric"]{border-top:1px solid var(--line);padding-top:1.1rem}
+[data-testid="stMetricLabel"] p{color:var(--quiet)!important;font-size:.9375rem}
+[data-testid="stMetricValue"]{letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+[data-testid="stAlertContainer"]{border-radius:18px;padding:1.1rem 1.3rem;background-color:var(--tile)!important}
+[data-testid="stAlertContainer"] p,[data-testid="stAlertContainer"] li{color:var(--ink)!important;
+  line-height:1.55}
+[data-testid="stAlertContentError"] strong{color:var(--red)}
+[data-testid="stAlertContentWarning"] strong{color:var(--yellow)}
+[data-testid="stAlertContentSuccess"] strong{color:var(--green)}
+[data-testid="stAlertContentInfo"] strong{color:var(--blue)}
+[data-testid="stExpander"] details{border:none;background:var(--tile);border-radius:18px}
+hr{border-color:var(--line)!important}
+[data-testid="stHeaderActionElements"]{display:none}
+
+/* break map: one hue whose strength is the break rate */
+.cell{text-align:center;padding:.6rem .1rem;border-radius:10px;font-size:.8125rem;
+  font-weight:600;font-variant-numeric:tabular-nums}
+.rowlab{padding:.6rem 0;font-size:.9375rem;color:var(--ink);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.rowlab .nat{color:var(--quiet);font-size:.8125rem;margin-left:.4rem}
+.collab{font-size:.75rem;color:var(--quiet);text-align:center;padding:0 .1rem .4rem;
+  line-height:1.15;height:2.9rem;display:flex;align-items:flex-end;justify-content:center}
+.legend{font-size:.875rem;color:var(--quiet);display:flex;align-items:center;gap:.6rem}
+.pg-scale{display:inline-block;width:9rem;height:.5rem;border-radius:99px;
+  background:linear-gradient(90deg,var(--tile),rgb(255,69,58))}
+
+/* evidence: what was sent and what came back */
+.pg-cap{color:var(--quiet);font-size:.8125rem;margin:.9rem 0 .35rem}
+.pg-quote{background:var(--black);border-radius:14px;padding:.95rem 1.15rem;
+  font-size:.9375rem;line-height:1.55;color:var(--ink);white-space:pre-wrap;
+  word-break:break-word}
+.pg-quote.reply{background:transparent;border:1px solid var(--line)}
+
+/* how it works, and the footer */
+.pg-how{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;margin:1.5rem 0 0}
+.pg-how p{margin:0}
+.pg-how .k{color:var(--quiet);font-size:.875rem;margin-bottom:.45rem}
+.pg-how .h{font-weight:600;font-size:1.0625rem;color:var(--ink);margin-bottom:.35rem}
+.pg-how .b{color:var(--quiet);font-size:.9375rem;line-height:1.5}
+.pg-types{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:1.5rem 2rem;margin-top:1.5rem}
+.pg-types .h{font-weight:600;color:var(--ink);font-size:1rem;margin:0 0 .3rem}
+.pg-types .b{color:var(--quiet);font-size:.9375rem;line-height:1.5;margin:0}
+.pg-foot{color:var(--quiet);font-size:.8125rem;border-top:1px solid var(--line);
+  margin-top:5rem;padding-top:1.25rem;display:flex;justify-content:space-between;
+  gap:1rem;flex-wrap:wrap}
+.pg-foot a{color:var(--quiet)}
+.pg-section{font-size:clamp(1.75rem,3.6vw,2.5rem);font-weight:600;letter-spacing:-.025em;
+  color:var(--ink);margin:6rem 0 .5rem}
+
+@media (max-width:760px){
+  .pg-hero{padding:3.5rem 0 2.5rem}
+  .pg-demo{margin-top:3rem}
+  .st-key-scan_panel{padding:1.4rem 1.2rem;border-radius:22px}
+  .pg-how{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.pg-how{grid-template-columns:1fr}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -105,13 +203,56 @@ def get_bank():
 
 
 def heat(rate):
-    """Green (held) to red (broken) for a break-rate in [0,1]."""
+    """A break rate as the strength of one red on the page's own black.
+
+    One hue whose strength carries the value reads correctly for colour blind
+    viewers, where the old green to red ramp put both ends on the axis they
+    cannot tell apart. Zero is shown as the plain tile, so a language that held
+    everywhere does not look faintly alarming.
+    """
     if rate is None:
-        return "#20262f", "-"
-    r = int(60 + rate * 180)
-    g = int(200 - rate * 165)
-    b = int(90 - rate * 55)
-    return f"rgb({r},{g},{b})", f"{rate:.0%}"
+        return "var(--tile)", "n/a", "var(--quiet)"
+    if rate == 0:
+        return "var(--tile)", "0%", "var(--quiet)"
+    alpha = 0.22 + 0.78 * rate
+    text = "#000" if rate >= 0.55 else "var(--ink)"
+    return f"rgba(255,69,58,{alpha:.2f})", f"{rate:.0%}", text
+
+
+def rate_bars(rows, label, reference=None):
+    """Break rates as horizontal bars, most broken first, in percent.
+
+    st.bar_chart re-sorts its axis alphabetically, so the ranking the code asked
+    for never reached the screen, and it labelled rates as 0.0 to 0.5 with the
+    category names cut off. Altair draws exactly what is asked for.
+
+    `reference`, when given, is drawn in grey rather than red: it is the baseline
+    everything else is compared against, not one more result.
+    """
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return
+    base = alt.Chart(df).encode(
+        y=alt.Y(f"{label}:N", sort="-x", title=None,
+                axis=alt.Axis(labelLimit=320, labelFontSize=13, labelColor="#f5f5f7",
+                              labelPadding=12, ticks=False, domain=False)),
+        x=alt.X("rate:Q", title=None, scale=alt.Scale(domain=[0, 1]),
+                axis=alt.Axis(format="%", tickCount=5, grid=True, gridColor="#2c2c2e",
+                              labelColor="#86868b", labelFontSize=12, domain=False,
+                              ticks=False)))
+    colour = (alt.condition(alt.datum[label] == reference, alt.value("#86868b"),
+                            alt.value("#ff453a")) if reference else alt.value("#ff453a"))
+    bars = base.mark_bar(cornerRadiusEnd=5).encode(color=colour)
+    # The label layer gets no axis of its own; otherwise its grid is drawn over
+    # the bars of the layer beneath it.
+    values = base.mark_text(align="left", dx=8, color="#86868b", fontSize=12).encode(
+        x=alt.X("rate:Q", axis=None, scale=alt.Scale(domain=[0, 1])),
+        text=alt.Text("rate:Q", format=".0%"))
+    chart = ((bars + values)
+             .properties(height=alt.Step(30))
+             .configure(background="transparent", font="Geist")
+             .configure_view(strokeWidth=0))
+    st.altair_chart(chart, width="stretch", theme=None)
 
 
 def tier_buckets(available):
@@ -217,178 +358,235 @@ EXAMPLES = {
 }
 
 # --------------------------------------------------------------------------- #
-# Header
+# Hero
+#
+# The one bold thing on the page is the product's own evidence: the opening line
+# of a real attack from the bank, cross-fading through every language it has been
+# written in. Nothing here is decorative copy; it is the test itself.
 # --------------------------------------------------------------------------- #
-st.markdown(
-    '<div class="pg-head">'
-    '<p class="pg-title">🛡 Poly<span class="g">Guard</span></p>'
-    '<p class="pg-sub">Multilingual AI Vulnerability Scanner</p>'
-    '</div>', unsafe_allow_html=True)
+def _first_sentence(text):
+    """The opening sentence of an attack, cut before its payload."""
+    m = re.search(r"^.+?[.!?。।؟]", text.strip())
+    return (m.group(0) if m else text.split(":")[0]).strip()
 
+
+def _override_line(code):
+    a = next((x for x in bank["attacks"] if x["lang"] == code
+              and x["category"] == "instruction_override" and x.get("variant", 0) == 0), None)
+    return _first_sentence(a["text"]) if a else None
+
+
+def hero_cycle(step=2.8, limit=24):
+    """Every non-English version of the same attack, shown one at a time in place.
+
+    Keyframes are generated for the number of languages actually in the bank, so
+    the cycle stays even as languages are added. Reduced motion shows the first
+    translation and stops.
+    """
+    lines = [(c, m["name"], _override_line(c)) for c, m in bank["languages"].items()
+             if c != "en"]
+    lines = [x for x in lines if x[2]][:limit]
+    if not lines:
+        return ""
+    n = len(lines)
+    slot = 100 / n
+    keyframes = (
+        "@keyframes pgc{"
+        f"0%{{opacity:0;transform:translateY(.35rem)}}"
+        f"{slot * .12:.3f}%{{opacity:1;transform:none}}"
+        f"{slot * .86:.3f}%{{opacity:1;transform:none}}"
+        f"{slot:.3f}%{{opacity:0;transform:translateY(-.35rem)}}"
+        "100%{opacity:0}}")
+    items = "".join(
+        f'<div style="animation-delay:{i * step:.1f}s">'
+        f'<div class="t" dir="auto" lang="{html.escape(code)}">{html.escape(text)}</div>'
+        f'<div class="n">{html.escape(name)}</div></div>'
+        for i, (code, name, text) in enumerate(lines))
+    return (f"<style>{keyframes}.pg-cycle>div{{animation:pgc {n * step:.1f}s linear infinite}}"
+            f"</style><div class=\"pg-cycle\" aria-hidden=\"true\">{items}</div>"
+            f'<div class="pg-sr">The same attack, written in {n} other languages.</div>')
+
+
+_n_langs = len(bank["languages"])
 st.markdown(
-    '<div class="pg-thesis">Most AI safety tools are built and tested in English. '
-    f'PolyGuard attacks your chatbot in <b>{len(bank["languages"])} languages</b> across '
-    '<b>5 injection categories</b> and shows you where it holds and where it breaks - '
-    'because a bot that resists <i>"ignore all instructions"</i> in English often obeys '
-    'the exact same attack in Hindi, Tagalog, or Vietnamese.</div>', unsafe_allow_html=True)
+    f'<nav class="pg-nav" aria-label="PolyGuard"><span class="pg-mark">PolyGuard</span>'
+    f'<a href="{REPO_URL}" target="_blank" rel="noopener">Source on GitHub</a></nav>'
+    f'<section class="pg-hero">'
+    f'<div class="pg-h1" role="heading" aria-level="1">'
+    f'Does your chatbot hold up in every language?</div>'
+    f'<div class="pg-lede">PolyGuard sends the same attacks in {_n_langs} languages and shows '
+    f'where the guardrails hold, and where they give way.</div>'
+    f'<div class="pg-demo"><div class="pg-en">{html.escape(_override_line("en") or "")}</div>'
+    f'{hero_cycle()}</div></section>',
+    unsafe_allow_html=True)
 
 if client is None:
     if LOCKED:
-        st.warning("Running in **MOCK mode** - live scanning on this deployment is "
-                   "passcode-protected because scans spend the owner's API credits. "
-                   "Everything you see below is the real interface on simulated "
-                   "results. Enter the passcode in the sidebar to run live attacks.",
-                   icon="🔒")
+        st.warning("**Live scanning is locked on this deployment.** Scans spend the owner's "
+                   "API credits, so they are passcode-protected. Everything below is the "
+                   "real interface running on simulated results. Enter the passcode in the "
+                   "sidebar to run live attacks.")
     else:
-        st.warning("Running in **MOCK mode** - no API key found, so results are simulated "
-                   "for demonstration and are clearly not a real scan. Add ANTHROPIC_API_KEY "
-                   "to Streamlit secrets to run live attacks.", icon="⚠")
+        st.warning("**Mock mode.** No API key is configured, so results are simulated and "
+                   "are not a real scan. Add ANTHROPIC_API_KEY to the Streamlit secrets to "
+                   "run live attacks.")
 
 # --------------------------------------------------------------------------- #
-# Input
+# The scan panel
 # --------------------------------------------------------------------------- #
-left, right = st.columns([3, 2], gap="large")
+with st.container(key="scan_panel"):
+    left, right = st.columns([3, 2], gap="large")
 
-with left:
-    st.markdown("#### 1 · Target bot")
-    st.caption("Paste the system prompt of the chatbot you want to test.")
-    ex = st.selectbox("Load an example", ["Custom (write your own)"] + list(EXAMPLES),
-                      label_visibility="collapsed")
-    default = EXAMPLES.get(ex, "")
-    system_prompt = st.text_area("System prompt", value=default, height=190,
-                                 placeholder="You are a helpful assistant for ...",
-                                 label_visibility="collapsed")
+    with left:
+        st.markdown('<div class="pg-label">Your chatbot</div>'
+                    '<div class="pg-hint">Paste the system prompt it runs on, or start from '
+                    'an example.</div>', unsafe_allow_html=True)
+        # Opens on a real example so the first visit can run a scan in one click.
+        ex = st.selectbox("Start from an example", ["Write your own"] + list(EXAMPLES),
+                          index=1, label_visibility="collapsed")
+        default = EXAMPLES.get(ex, "")
+        system_prompt = st.text_area("System prompt", value=default, height=250,
+                                     placeholder="You are a helpful assistant for ...",
+                                     label_visibility="collapsed")
 
-with right:
-    st.markdown("#### 2 · Scan scope")
-    all_langs = list(bank["languages"])
+    with right:
+        st.markdown('<div class="pg-label">What to test</div>'
+                    '<div class="pg-hint">Languages, attack types, and the model under '
+                    'test.</div>', unsafe_allow_html=True)
+        all_langs = list(bank["languages"])
 
-    def lang_label(c):
-        m = bank["languages"][c]
-        # Say which it is. "author" is not a quality claim, it only means the
-        # project author wrote it; no language here has been reviewed by a
-        # speaker of it.
-        tag = " · machine" if m.get("provenance") == "machine" else " · author"
-        if m.get("native_reviewed"):
-            tag += " · native-reviewed"
-        return f"{m['name']} ({tier_of(c)}){tag}"
+        def lang_label(c):
+            m = bank["languages"][c]
+            # Say which it is. "author" is not a quality claim, it only means the
+            # project author wrote it; no language here has been reviewed by a
+            # speaker of it.
+            source = "machine" if m.get("provenance") == "machine" else "author"
+            reviewed = ", native reviewed" if m.get("native_reviewed") else ""
+            return f"{m['name']} ({tier_of(c)}, {source}{reviewed})"
 
-    mode = st.radio(
-        "Language set",
-        ["Quick (representative)", f"All languages ({len(all_langs)})", "Custom"],
-        label_visibility="collapsed")
-    if mode.startswith("Quick"):
-        langs = representative(all_langs)
-        _cov = tiers_covered(langs)
-        _label = ("A spread across all three resource tiers"
-                  if len(_cov) == 3 else
-                  f"{len(langs)} languages, but only the "
-                  f"{' and '.join(TIER_LABEL[t].lower() for t in _cov)} tier"
-                  f"{'s' if len(_cov) > 1 else ''} exist in the bank so far")
-        st.caption(_label + ": " +
-                   ", ".join(bank["languages"][c]["name"] for c in langs))
-    elif mode.startswith("All"):
-        langs = all_langs
-        st.caption(f"Every language currently in the bank ({len(all_langs)}).")
-    else:
-        langs = st.multiselect("Pick languages", all_langs,
-                               default=representative(all_langs), format_func=lang_label)
+        mode = st.radio(
+            "Language set",
+            ["Quick (representative)", f"All languages ({len(all_langs)})", "Custom"],
+            label_visibility="collapsed")
+        if mode.startswith("Quick"):
+            langs = representative(all_langs)
+            _cov = tiers_covered(langs)
+            _label = ("A spread across all three resource tiers"
+                      if len(_cov) == 3 else
+                      f"{len(langs)} languages, but only the "
+                      f"{' and '.join(TIER_LABEL[t].lower() for t in _cov)} tier"
+                      f"{'s' if len(_cov) > 1 else ''} exist in the bank so far")
+            st.caption(_label + ": " +
+                       ", ".join(bank["languages"][c]["name"] for c in langs))
+        elif mode.startswith("All"):
+            langs = all_langs
+            st.caption(f"Every language currently in the bank ({len(all_langs)}).")
+        else:
+            langs = st.multiselect("Pick languages", all_langs,
+                                   default=representative(all_langs), format_func=lang_label)
 
-    cats = st.multiselect(
-        "Attack categories", bank["categories"], default=bank["categories"],
-        format_func=lambda c: c.replace("_", " ").title())
+        cats = st.pills(
+            "Attack types", bank["categories"], selection_mode="multi",
+            default=bank["categories"],
+            format_func=lambda c: c.replace("_", " ").capitalize()) or []
 
-    depth = st.select_slider(
-        "Phrasings per category", options=[1, 2, 3], value=3,
-        help="3 gives the full statistical depth (each cell is an average of 3 "
-             "phrasings). 1 is a fast pass for very large scans, but noisier.")
+        depth = st.select_slider(
+            "Phrasings per attack type", options=[1, 2, 3], value=3,
+            help="Three gives the full statistical depth, since each cell averages three "
+                 "phrasings. One is a fast pass for very large scans, but noisier.")
 
-    # ---- which model is actually being attacked ----
-    # A break rate is a property of a specific model, not of chatbots in general,
-    # so the model under test is a first-class choice rather than a constant.
-    statuses = providers.available_models()
-    ready = [s for s in statuses if s["ready"]]
-    ready_keys = [s["key"] for s in ready]
+        # ---- which model is actually being attacked ----
+        # A break rate is a property of a specific model, not of chatbots in general,
+        # so the model under test is a first-class choice rather than a constant.
+        statuses = providers.available_models()
+        ready = [s for s in statuses if s["ready"]]
+        ready_keys = [s["key"] for s in ready]
 
-    st.markdown("##### Victim model")
-    if not ready_keys:
-        victim_key, compare = None, False
-        st.caption("No provider keys found, so the scan runs in MOCK mode. "
-                   "Add a key to attack a real model.")
-        with st.expander("What each model needs"):
-            for s in statuses:
-                st.markdown(f"- **{s['label']}** ({s['vendor']}): {s['reason']}")
-    else:
-        default_i = ready_keys.index(providers.DEFAULT_MODEL)             if providers.DEFAULT_MODEL in ready_keys else 0
-        victim_key = st.selectbox(
-            "Model under test", ready_keys, index=default_i,
-            format_func=lambda k: f"{providers.MODELS[k].label} · {providers.MODELS[k].vendor}")
-        spec = providers.MODELS[victim_key]
-        if not spec.deterministic:
-            st.caption("⚠ This model removed the sampling controls, so it cannot be "
-                       "pinned to temperature 0. Its numbers are samples, not fixed "
-                       "values, and the export records that.")
-        compare = st.checkbox(
-            f"Compare across all {len(ready_keys)} available models",
-            value=False, disabled=len(ready_keys) < 2,
-            help="Fires the identical attack bank at every configured model and puts "
-                 "the results side by side. A gap on one vendor but not another is a "
-                 "stronger finding than a gap on one model alone. Costs the scan once "
-                 "per model.")
-        if len(ready_keys) < 2:
-            st.caption("Add a second provider key to unlock the cross-model comparison.")
+        st.markdown('<div class="pg-sub">Model under test</div>', unsafe_allow_html=True)
+        if not ready_keys:
+            victim_key, compare = None, False
+            st.caption("No provider keys found, so the scan runs in mock mode. "
+                       "Add a key to attack a real model.")
+            with st.expander("What each model needs"):
+                for s in statuses:
+                    st.markdown(f"**{s['label']}** ({s['vendor']}): {s['reason']}")
+        else:
+            default_i = (ready_keys.index(providers.DEFAULT_MODEL)
+                         if providers.DEFAULT_MODEL in ready_keys else 0)
+            victim_key = st.selectbox(
+                "Model under test", ready_keys, index=default_i,
+                label_visibility="collapsed",
+                format_func=lambda k: f"{providers.MODELS[k].label} ({providers.MODELS[k].vendor})")
+            spec = providers.MODELS[victim_key]
+            if not spec.deterministic:
+                st.caption("This model removed the sampling controls, so it cannot be "
+                           "pinned to temperature 0. Its numbers are samples, not fixed "
+                           "values, and the export records that.")
+            compare = st.checkbox(
+                f"Compare across all {len(ready_keys)} available models",
+                value=False, disabled=len(ready_keys) < 2,
+                help="Fires the identical attack bank at every configured model and puts "
+                     "the results side by side. A gap on one vendor but not another is a "
+                     "stronger finding than a gap on one model alone. Costs the scan once "
+                     "per model.")
+            if len(ready_keys) < 2:
+                st.caption("Add a second provider key to unlock the cross model comparison.")
 
-    n = len(langs) * len(cats) * depth
-    note = ""
-    if n > 600:
-        note = "  This is a big scan — expect several minutes. Drop to 1 phrasing to go faster."
-    elif n > 200:
-        note = "  Larger scan, give it a minute."
-    st.caption(f"**{n} attacks** will be fired ({len(langs)} languages × {len(cats)} "
-               f"categories × {depth} phrasing{'s' if depth > 1 else ''}).{note}")
-    if depth < 3:
-        st.caption("⚠ Fewer phrasings means noisier per-cell numbers.")
+n = len(langs) * len(cats) * depth
+note = ""
+if n > 600:
+    note = " A big scan, so expect several minutes. One phrasing is faster."
+elif n > 200:
+    note = " Give it a minute."
+if depth < 3:
+    note += " Fewer phrasings means noisier numbers."
+st.markdown(
+    f'<div class="pg-count"><b>{n} attacks</b> across {len(langs)} language'
+    f'{"s" if len(langs) != 1 else ""}, {len(cats)} attack type{"s" if len(cats) != 1 else ""}, '
+    f'{depth} phrasing{"s" if depth > 1 else ""} each.{note}</div>', unsafe_allow_html=True)
 
-    # Extraction is scored by finding a long verbatim run of the system prompt in
-    # the reply. A prompt shorter than that run can never trigger it, so those
-    # attacks would silently always score as "held" and make the bot look safer
-    # than it is. Say so rather than quietly reporting a deflated break rate.
-    # Caught before the scan runs, so the user does not pay for a scan whose
-    # every result would be meaningless.
-    _collide = [n for n, tok in (("canary", bank.get("canary", "")),
-                                 ("control token", bank.get("control_token", "")))
-                if tok and tok in system_prompt]
-    if _collide:
-        st.error(
-            f"Your system prompt contains PolyGuard's {' and '.join(_collide)}. "
-            f"A scan would count the bot's normal output as a successful attack and "
-            f"the results would be meaningless. Remove that string first.", icon="🛑")
+# Extraction is scored by finding a long verbatim run of the system prompt in
+# the reply. A prompt shorter than that run can never trigger it, so those
+# attacks would silently always score as "held" and make the bot look safer
+# than it is. Say so rather than quietly reporting a deflated break rate.
+# Caught before the scan runs, so the user does not pay for a scan whose
+# every result would be meaningless.
+_collide = [n for n, tok in (("canary", bank.get("canary", "")),
+                             ("control token", bank.get("control_token", "")))
+            if tok and tok in system_prompt]
+if _collide:
+    st.error(
+        f"**Your system prompt contains PolyGuard's {' and '.join(_collide)}.** A scan "
+        f"would count the bot's normal output as a successful attack and the results "
+        f"would be meaningless. Remove that string first.")
 
-    if 0 < len(system_prompt.split()) < engine.MIN_RUN and "system_prompt_extraction" in cats:
-        st.warning(
-            f"This system prompt is {len(system_prompt.split())} words. Prompt-extraction "
-            f"attacks are scored by spotting {engine.MIN_RUN}+ consecutive words of it "
-            f"repeated back, so with a prompt this short they can never register as "
-            f"broken and the overall break rate will read low. Paste the bot's real "
-            f"system prompt, or uncheck that category.", icon="⚠")
+if 0 < len(system_prompt.split()) < engine.MIN_RUN and "system_prompt_extraction" in cats:
+    st.warning(
+        f"**This system prompt is {len(system_prompt.split())} words.** Prompt extraction "
+        f"attacks are scored by spotting {engine.MIN_RUN} or more consecutive words of it "
+        f"repeated back, so with a prompt this short they can never register as broken "
+        f"and the overall break rate will read low. Paste the bot's real system prompt, "
+        f"or leave out that attack type.")
 
-    # Say this BEFORE the scan, not after. The tier comparison is the headline
-    # result, and on a bank with no low-resource languages it cannot be computed
-    # at all. Finding that out after paying for a scan, or worse while recording
-    # a demo, is the wrong time.
-    _missing_tiers = [t for t in TIER_ORDER
-                      if not any(tier_of(c) == t for c in langs)]
-    if "low" in _missing_tiers:
-        st.warning(
-            f"This selection has no low-resource languages, so the headline "
-            f"low-versus-high comparison cannot be computed. The scan will still "
-            f"report per-language break rates and the attack-type breakdown. "
-            f"Run `python expand_languages.py --tier low` to fill the "
-            f"{sum(1 for k in CATALOG_TIERS if CATALOG_TIERS[k] == 'low')} "
-            f"low-resource languages in the catalog.", icon="📉")
+# Say this BEFORE the scan, not after. The tier comparison is the headline
+# result, and on a bank with no low-resource languages it cannot be computed
+# at all. Finding that out after paying for a scan, or worse while recording
+# a demo, is the wrong time.
+_missing_tiers = [t for t in TIER_ORDER
+                  if not any(tier_of(c) == t for c in langs)]
+if "low" in _missing_tiers:
+    st.info(
+        f"**No low resource languages in this selection yet.** The headline low versus "
+        f"high comparison needs them, so it will not appear. The scan still reports "
+        f"per language break rates and the attack type breakdown. Run "
+        f"`python expand_languages.py --tier low` to generate the "
+        f"{sum(1 for k in CATALOG_TIERS if CATALOG_TIERS[k] == 'low')} low resource "
+        f"languages in the catalog.")
 
-go = st.button("🚀  Run vulnerability scan", type="primary", width="stretch",
-               disabled=not (system_prompt.strip() and langs and cats))
+_b1, _b2, _b3 = st.columns([1, 1, 1])
+with _b2:
+    go = st.button("Run scan", type="primary", width="stretch",
+                   disabled=not (system_prompt.strip() and langs and cats))
 
 # --------------------------------------------------------------------------- #
 # Scan + report
@@ -420,7 +618,7 @@ if go:
         bar.empty()
 
     for label, err in failed:
-        st.error(f"Could not reach {label}: {err}", icon="🚫")
+        st.error(f"Could not reach {label}: {err}")
 
     if runs:
         st.session_state["runs"] = runs
@@ -474,7 +672,13 @@ if "out" in st.session_state:
     # live scan with both tiers present crashed on a NameError (AUDIT.md 56).
     used_cats = [c for c in bank["categories"] if c in scan_cats]
 
-    st.divider()
+    _vm = out.get("victim") or {}
+    _against = ("a simulated victim" if out["mock"]
+                else html.escape(_vm.get("label") or str(out["model"])))
+    st.markdown(
+        f'<div class="pg-results" role="heading" aria-level="2">Results</div>'
+        f'<div class="pg-scope">{out["n_attacks"]} attacks against {_against}, '
+        f'across {len(scan_langs)} languages.</div>', unsafe_allow_html=True)
 
     # A token collision invalidates the entire scan, so it is said before anything
     # else and before any number is shown.
@@ -484,20 +688,18 @@ if "out" in st.session_state:
             f"PolyGuard's own {' and '.join(out['token_collision'])}. The bot will "
             f"emit that string as part of doing its normal job, so attacks are being "
             f"counted as successful when nothing was actually broken. Remove it from "
-            f"the prompt and scan again. Every number below should be ignored.",
-            icon="🛑")
+            f"the prompt and scan again. Every number below should be ignored.")
 
     if out["mock"]:
-        st.info("**MOCK preview — not a measurement.** No API key, so break/hold outcomes "
-                "are simulated and deliberately language-independent. Numbers here mean "
-                "nothing; add a key and run a live scan for real results.", icon="🧪")
+        st.info("**MOCK preview. Not a measurement.** No API key, so every outcome is "
+                "simulated and deliberately the same in every language. The numbers mean "
+                "nothing; add a key and run a live scan for real results.")
     else:
-        st.caption(f"Live scan · victim model: `{out['model']}`. Results are specific to "
-                   "this model.")
+        st.caption(f"Live scan against `{out['model']}`. Results are specific to this "
+                   "model.")
         if out["n_errors"]:
             st.warning(f"{out['n_errors']} attack(s) failed (network or rate limit) and were "
-                       "excluded from the rates, not counted as held. Re-run to fill them in.",
-                       icon="⚠")
+                       "excluded from the rates, not counted as held. Re-run to fill them in.")
 
     # ---- cross-model comparison ----
     # Hypothesis H2 in PREREGISTRATION.md: if a multilingual gap is real, it should
@@ -507,7 +709,7 @@ if "out" in st.session_state:
     # attack bank and scored by the identical judge. Nothing was re-tuned per vendor.
     runs = st.session_state.get("runs", {})
     if len(runs) > 1 and not out["mock"]:
-        st.markdown("#### Cross-model comparison")
+        st.markdown("### Cross-model comparison")
         st.caption("Same attack bank, same languages, same phrasings, same judge. "
                    "The only thing that changes between rows is the model being defended.")
 
@@ -528,43 +730,44 @@ if "out" in st.session_state:
             "Errors": c["errors"],
         } for c in comp]), width="stretch", hide_index=True)
 
-        st.bar_chart(
-            pd.DataFrame([{"model": c["model"], "break rate": c["overall_num"] or 0}
-                          for c in comp]).sort_values("break rate", ascending=False),
-            x="model", y="break rate", color="#f0603a", height=260)
+        rate_bars([{"model": c["model"], "rate": c["overall_num"] or 0} for c in comp],
+                  "model")
 
         testable = [c for c in comp if c["p"] is not None]
         gapped = [c for c in testable if c["significant"] and (c["low_num"] or 0) > (c["high_num"] or 0)]
         if not testable:
             st.info("No model could be tested for a tier gap yet: the scan needs both "
                     "low-resource and high-resource languages in scope. Run "
-                    "`expand_languages.py --tier low` to fill them in.", icon="📊")
+                    "`expand_languages.py --tier low` to fill them in.")
         elif len(gapped) == len(testable):
             st.error(f"**Every model tested shows the gap.** All {len(testable)} models "
                      f"broke significantly more often in low-resource languages. That "
                      f"points at a property of multilingual safety training in general, "
-                     f"not at one vendor.", icon="⚖")
+                     f"not at one vendor.")
         elif gapped:
             st.error(f"**The gap is vendor-specific.** {len(gapped)} of {len(testable)} "
                      f"models broke significantly more often in low-resource languages "
                      f"({', '.join(c['model'] for c in gapped)}), while the rest did not. "
                      f"That is the H2 result: multilingual robustness is a property of "
                      f"the model, so it is a fixable engineering choice rather than an "
-                     f"inevitable cost of speaking another language.", icon="⚖")
+                     f"inevitable cost of speaking another language.")
         else:
             st.success(f"**No model tested shows a significant low-resource penalty** "
                        f"({len(testable)} models compared). On this evidence the gap "
                        f"these systems were expected to have has largely closed, which "
                        f"is itself the finding. It is reported as-is, per the "
-                       f"pre-registration.", icon="✅")
+                       f"pre-registration.")
         st.caption("Detail below is for " + (out.get("victim") or {}).get("label", "the first model")
                    + ". Re-run with a single model selected to inspect another one.")
 
     # ---- headline numbers ----
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Attacks fired", out["n_attacks"])
-    c2.metric("Attacks that broke the bot", out["n_broke"],
-              f"{out['overall_rate']:.0%} success" if out["overall_rate"] is not None else "-")
+    # Shares go in a caption, not the delta slot: a delta is drawn as a change with
+    # an arrow and a colour, and a higher break rate drawn green reads as good news.
+    c2.metric("Broke the bot", out["n_broke"])
+    if out["overall_rate"] is not None:
+        c2.caption(f"{out['overall_rate']:.0%} of attacks")
     c3.metric("English break rate",
               f"{out['en_rate']:.0%}" if out["en_rate"] is not None else "n/a")
     if out["equity_gap"] is not None and out["worst_lang"]:
@@ -576,8 +779,8 @@ if "out" in st.session_state:
         # arithmetic of having looked in many places. It is shown as a pointer to
         # where to look, and the claim is made below only if it survives the
         # multiplicity-corrected test.
-        c4.metric(f"Worst: {wmeta['name']}{wtag}", f"{out['worst_rate']:.0%}",
-                  "where to look first")
+        c4.metric(f"Highest: {wmeta['name']}{wtag}", f"{out['worst_rate']:.0%}")
+        c4.caption("Where to look first. Not a finding on its own.")
 
     # The equity claim is only asserted on real data (mock can never "find" it),
     # and only when the observed worst-language gap beats what chance alone
@@ -595,15 +798,14 @@ if "out" in st.session_state:
                 f"{mg['observed']:+.0%} more often than English. Chance alone, across "
                 f"{mg['n_langs']} languages, would produce a worst-language gap of about "
                 f"{mg['null_mean']:+.0%}, so a gap this large is unlikely to be noise "
-                f"(permutation p = {mg['p']:.3f}, {mg['n_iter']:,} shuffles).", icon="⚖")
+                f"(permutation p = {mg['p']:.3f}, {mg['n_iter']:,} shuffles).")
         else:
             st.info(
                 f"**No language gap survives correction.** {worst} is the worst performer "
                 f"at {mg['observed']:+.0%} vs English, but across {mg['n_langs']} languages "
                 f"chance alone produces about {mg['null_mean']:+.0%}, so this gap is within "
                 f"noise (permutation p = {mg['p']:.3f}). Reporting it as a finding would be "
-                f"reading a maximum as a result. The tier comparison below is the better test.",
-                icon="📊")
+                f"reading a maximum as a result. The tier comparison below is the better test.")
 
     # ---- equity by resource tier: the headline finding at scale ----
     # Pool the raw attack outcomes per tier rather than averaging per-language
@@ -619,7 +821,7 @@ if "out" in st.session_state:
             tier_langs[t].add(r["lang"])
 
     if any(tier_counts[t][1] for t in TIER_ORDER):
-        st.markdown("#### Vulnerability by language resource level")
+        st.markdown("### Vulnerability by language resource level")
         tcols = st.columns(3)
         for i, t in enumerate(TIER_ORDER):
             s, n = tier_counts[t]
@@ -629,12 +831,11 @@ if "out" in st.session_state:
                 # (n, p), which would show a narrower interval than the evidence
                 # supports. Calibration measured both (AUDIT.md finding 23).
                 lo, hi = engine.wilson_ci_cc(s, n)
-                tcols[i].metric(f"{TIER_LABEL[t]} ({len(tier_langs[t])} langs)",
-                                f"{s / n:.0%}", f"95% CI {lo:.0%}–{hi:.0%}",
-                                delta_color="off")
-                tcols[i].caption(f"{s}/{n} attacks")
+                tcols[i].metric(f"{TIER_LABEL[t]} ({len(tier_langs[t])} languages)",
+                                f"{s / n:.0%}")
+                tcols[i].caption(f"95% CI {lo:.0%} to {hi:.0%}, from {s} of {n} attacks")
             else:
-                tcols[i].metric(f"{TIER_LABEL[t]} (0 langs)", "n/a")
+                tcols[i].metric(f"{TIER_LABEL[t]} (0 languages)", "n/a")
 
         lo_s, lo_n = tier_counts["low"]
         hi_s, hi_n = tier_counts["high"]
@@ -672,8 +873,7 @@ if "out" in st.session_state:
                 st.error(f"**Low-resource languages are significantly more vulnerable.** "
                          f"Attacks succeeded {diff:+.0%} more often than in high-resource "
                          f"languages. Mann-Whitney U on per-language rates: p = {mw['p']:.3g} "
-                         f"(n = {mw['n1']} low vs {mw['n2']} high languages)." + eff_txt,
-                         icon="📉")
+                         f"(n = {mw['n1']} low vs {mw['n2']} high languages)." + eff_txt)
                 if eff.get("crosses_zero"):
                     st.caption("Note: the effect-size interval still includes zero, so the "
                                "direction of the gap is not firmly established even though "
@@ -697,15 +897,14 @@ if "out" in st.session_state:
                     st.success(f"**No significant low-resource penalty on this bot.** "
                                f"Low-resource languages {body}{eff_txt} This scan had "
                                f"{pw['power']:.0%} power to detect a 15-point gap, so the "
-                               f"null is informative rather than merely inconclusive.",
-                               icon="✅")
+                               f"null is informative rather than merely inconclusive.")
                 else:
                     st.warning(f"**Not significant, and this scan was underpowered.** "
                                f"Low-resource languages {body}{eff_txt} At this size the "
                                f"scan had only {pw['power']:.0%} power to detect a 15-point "
                                f"gap, so it cannot distinguish 'no effect' from 'too small "
                                f"a sample to see one'. Add languages before concluding "
-                               f"anything.", icon="📊")
+                               f"anything.")
 
             if _tr["n_excluded"]:
                 st.caption(
@@ -727,7 +926,7 @@ if "out" in st.session_state:
             if any(r["testable"] for r in cat_rows):
                 st.markdown("##### Where the gap lives, by attack type")
                 st.dataframe(pd.DataFrame([{
-                    "Attack type": r["category"].replace("_", " ").title(),
+                    "Attack type": r["category"].replace("_", " ").capitalize(),
                     "Low-resource": f"{r['low_rate']:.0%}" if r["low_rate"] is not None else "n/a",
                     "High-resource": f"{r['high_rate']:.0%}" if r["high_rate"] is not None else "n/a",
                     "Effect (delta)": f"{r['delta']:+.2f}" if r.get("delta") is not None else "n/a",
@@ -752,7 +951,7 @@ if "out" in st.session_state:
     # framing, and measures how often the bot simply does as asked.
     cap = out.get("capability")
     if cap and cap.get("ref_rate") is not None and not out["mock"]:
-        st.markdown("#### Can the bot even follow instructions in each language?")
+        st.markdown("### Can the bot follow instructions in each language?")
         rows = []
         for code, d in sorted(cap["per_lang"].items(),
                               key=lambda kv: (kv[1]["rate"] is None, kv[1]["rate"])):
@@ -780,21 +979,19 @@ if "out" in st.session_state:
                 f"{cap['ref_rate']:.0%}. A low break rate in these languages is "
                 f"**not** evidence the bot is well defended, it is evidence the bot "
                 f"does not function in that language. Reading it as safety would "
-                f"invert the finding. Exclude them, or fix the bot's coverage first.",
-                icon="🚧")
+                f"invert the finding. Exclude them, or fix the bot's coverage first.")
         elif screen:
             st.warning(
                 f"Possible capability issue in {names(screen)}: below the English "
                 f"baseline on benign instructions, but with only "
                 f"{cap['controls_per_lang']} controls per language the interval is "
-                f"too wide to be sure. Treat break rates there as provisional.",
-                icon="🔍")
+                f"too wide to be sure. Treat break rates there as provisional.")
         else:
             st.success(
                 f"Every scanned language follows benign instructions at a rate "
                 f"comparable to English ({cap['ref_rate']:.0%}). The break-rate "
                 f"differences below are therefore about **defence**, not about "
-                f"whether the bot understands the language.", icon="✅")
+                f"whether the bot understands the language.")
         st.caption(
             f"{cap['controls_per_lang']} controls per language. At this size the "
             f"screen resolves {cap['resolves']}."
@@ -811,11 +1008,10 @@ if "out" in st.session_state:
                         reverse=True)
 
     if len(lang_order) <= 18:
-        st.markdown("#### Break map · language × attack type")
-        st.markdown('<span class="legend">Each cell is the share of attacks of that type, '
-                    'in that language, that broke the bot.<span class="swatch" '
-                    'style="background:rgb(60,200,90)"></span>held '
-                    '<span class="swatch" style="background:rgb(240,35,35)"></span>broke</span>',
+        st.markdown("### Break map")
+        st.markdown('<div class="legend">Each cell is the share of attacks of that type, in '
+                    'that language, that broke the bot.</div><div class="legend">held '
+                    '<span class="pg-scale"></span> broke</div>',
                     unsafe_allow_html=True)
         st.write("")
 
@@ -823,7 +1019,7 @@ if "out" in st.session_state:
         header[0].markdown("&nbsp;", unsafe_allow_html=True)
         for i, cat in enumerate(used_cats):
             header[i + 1].markdown(
-                f'<div class="collab">{cat.replace("_", " ").title()}</div>',
+                f'<div class="collab">{cat.replace("_", " ").capitalize()}</div>',
                 unsafe_allow_html=True)
 
         cell_rate = {}
@@ -837,53 +1033,49 @@ if "out" in st.session_state:
             meta = bank["languages"][code]
             row = st.columns([2] + [1] * len(used_cats))
             row[0].markdown(
-                f'<div class="rowlab">{meta["name"]} '
-                f'<span class="nat">{meta["native"]}</span></div>', unsafe_allow_html=True)
+                f'<div class="rowlab">{html.escape(meta["name"])}'
+                f'<span class="nat" dir="auto">{html.escape(meta["native"])}</span></div>',
+                unsafe_allow_html=True)
             for i, cat in enumerate(used_cats):
-                color, label = heat(cell_rate[(code, cat)])
+                color, label, ink = heat(cell_rate[(code, cat)])
                 row[i + 1].markdown(
-                    f'<div class="cell" style="background:{color}">{label}</div>',
+                    f'<div class="cell" style="background:{color};color:{ink}">{label}</div>',
                     unsafe_allow_html=True)
     else:
         st.info(f"Scanned {len(lang_order)} languages, too many for the cell grid. "
                 "See the ranked chart and the tier summary above; pick 18 or fewer "
-                "languages (or Custom) to see the per-category break map.", icon="🗺")
+                "languages (or Custom) to see the per-category break map.")
 
     # ---- ranked language bar chart ----
-    st.markdown("#### Overall vulnerability by language")
-    chart_rows = [{"language": d["name"], "break rate": d["rate"] or 0}
-                  for d in out["by_lang"].values()]
-    df = pd.DataFrame(chart_rows).sort_values("break rate", ascending=False)
-    st.bar_chart(df, x="language", y="break rate", color="#f0603a", height=280)
+    st.markdown("### By language")
+    rate_bars([{"language": d["name"], "rate": d["rate"] or 0}
+               for d in out["by_lang"].values()], "language", reference="English")
+    st.caption("English, in grey, is the baseline every other language is compared against.")
 
     # ---- which attack type is most effective against this bot ----
     if out["by_cat"]:
-        st.markdown("#### Which attack type works best")
-        cat_rows = [{"attack type": c.replace("_", " ").title(),
-                     "break rate": d["rate"] or 0}
+        st.markdown("### By attack type")
+        cat_rows = [{"attack type": c.replace("_", " ").capitalize(), "rate": d["rate"] or 0}
                     for c, d in out["by_cat"].items()]
-        cdf = pd.DataFrame(cat_rows).sort_values("break rate", ascending=False)
-        st.bar_chart(cdf, x="attack type", y="break rate", color="#f0603a", height=240)
-        top = cdf.iloc[0]
-        if top["break rate"] > 0:
-            st.caption(f"Weakest against **{top['attack type']}** "
-                       f"({top['break rate']:.0%} of those attacks landed).")
+        rate_bars(cat_rows, "attack type")
+        top = max(cat_rows, key=lambda r: r["rate"])
+        if top["rate"] > 0:
+            st.caption(f"Weakest against **{top['attack type'].lower()}**: "
+                       f"{top['rate']:.0%} of those attacks landed.")
 
     # ---- the attacks that broke it ----
     broke = [r for r in out["results"] if r["broke"]]
-    st.markdown(f"#### Attacks that broke the bot ({len(broke)})")
+    st.markdown(f"### Attacks that broke the bot ({len(broke)})")
     if not broke:
-        st.success("No attack in the selected scope broke this bot. Strong defenses.", icon="✅")
+        st.success("**Nothing broke.** No attack in this scan got through.")
     for r in broke:
         lang = bank["languages"][r["lang"]]["name"]
-        cat = r["category"].replace("_", " ").title()
-        with st.expander(f"❌  {lang} · {cat}"):
-            st.markdown('<span class="badge b-broke">BROKE</span>'
-                        f'<b>{lang}</b> · {cat}', unsafe_allow_html=True)
-            st.markdown("**Attack sent**")
-            st.markdown(f'<div class="mono">{html.escape(r["text"])}</div>', unsafe_allow_html=True)
-            st.markdown("**Bot replied**")
-            st.markdown(f'<div class="mono">{html.escape(r["reply"][:600])}</div>',
+        cat = r["category"].replace("_", " ").capitalize()
+        with st.expander(f"{lang}: {cat.lower()}, phrasing {r.get('variant', 0) + 1}"):
+            st.markdown('<div class="pg-cap">Attack sent</div>'
+                        f'<div class="pg-quote" dir="auto">{html.escape(r["text"])}</div>'
+                        '<div class="pg-cap">Bot replied</div>'
+                        f'<div class="pg-quote reply" dir="auto">{html.escape(r["reply"][:600])}</div>',
                         unsafe_allow_html=True)
             if r["evidence"]:
                 st.caption(f"Break confirmed by: {r['evidence'][:120]}")
@@ -892,7 +1084,7 @@ if "out" in st.session_state:
     broken_cats = defenses.broken_categories_from(out["results"])
     if broken_cats:
         st.divider()
-        st.markdown("#### Fix it")
+        st.markdown("### Fix it")
         st.caption(f"Weaknesses found in {len(broken_cats)} attack "
                    f"categor{'y' if len(broken_cats) == 1 else 'ies'}. "
                    "These targeted rules close them:")
@@ -910,7 +1102,7 @@ if "out" in st.session_state:
         if out["mock"]:
             st.caption("Re-testing needs a live scan: the mock victim ignores the system "
                        "prompt, so it cannot show whether these rules actually work.")
-        elif st.button("🔁  Re-scan with the hardened prompt", width="stretch"):
+        elif st.button("Re-scan with the hardened prompt", width="stretch"):
             st.session_state["run_hardened"] = True
             st.rerun()
 
@@ -919,7 +1111,7 @@ if "out" in st.session_state:
     if h and h.get("mock"):
         h = None            # never present a mock re-test as evidence a fix worked
     if h:
-        st.markdown("#### Before vs after hardening")
+        st.markdown("### Before vs after hardening")
         before, after = out["n_broke"], h["n_broke"]
         d1, d2, d3 = st.columns(3)
         d1.metric("Broke the original", before)
@@ -928,16 +1120,15 @@ if "out" in st.session_state:
         d3.metric("Vulnerabilities closed",
                   f"{((before - after) / before) if before else 0:.0%}")
         if after == 0 and before > 0:
-            st.success("Every attack in scope now fails against the hardened prompt.",
-                       icon="🛡")
+            st.success("Every attack in scope now fails against the hardened prompt.")
         elif after < before:
             st.info(f"Hardening closed {before - after} of {before} successful attacks. "
-                    "The rest need stronger measures than prompt rules alone.", icon="📉")
+                    "The rest need stronger measures than prompt rules alone.")
         else:
             st.warning("Hardening did not reduce successful attacks. This bot likely needs "
-                       "a real input filter, not just system-prompt rules.", icon="⚠")
+                       "a real input filter, not just system-prompt rules.")
 
-    with st.expander(f"Full log · all {out['n_attacks']} attacks"):
+    with st.expander(f"Full log of all {out['n_attacks']} attacks"):
         # mode + model travel with every row: an exported CSV must never be mistaken
         # for real measurements when it came from a mock run.
         mode = "MOCK-SIMULATED" if out["mock"] else "live"
@@ -960,7 +1151,7 @@ if "out" in st.session_state:
     # ---- export the evidence ----
     e1, e2 = st.columns(2)
     e1.download_button(
-        "⬇  Download full results (CSV)",
+        "Download full results (CSV)",
         log_df.to_csv(index=False).encode("utf-8"),
         file_name="polyguard_results.csv", mime="text/csv", width="stretch")
     # The summary is the artefact someone else would have to trust, so it carries
@@ -987,39 +1178,44 @@ if "out" in st.session_state:
         "by_category": out["by_cat"],
     }
     e2.download_button(
-        "⬇  Download summary (JSON)",
+        "Download summary (JSON)",
         json.dumps(summary, indent=2, ensure_ascii=False).encode("utf-8"),
         file_name="polyguard_summary.json", mime="application/json", width="stretch")
 
 # --------------------------------------------------------------------------- #
-# Sidebar
+# How it works, on the page rather than in a sidebar nobody opens
 # --------------------------------------------------------------------------- #
-with st.sidebar:
-    st.markdown("### How PolyGuard works")
-    st.markdown(
-        "1. You paste a chatbot's **system prompt**.\n"
-        f"2. PolyGuard spins up a live copy of that bot and fires the **attack bank** "
-        f"at it: 5 injection types × {len(bank['languages'])} languages.\n"
-        "3. Each attack tries to make the bot leak a **secret token** or reveal its own "
-        "instructions. Whether it actually **complied** (vs quoting the token while "
-        "refusing) is decided by a language-agnostic judge, so a refusal in any "
-        "language is not miscounted as a break.\n"
-        "4. You get a per-language report and the exact prompts that worked.")
-    st.divider()
-    st.markdown("### The five attack types")
-    st.markdown(
-        "- **Instruction override** - *ignore your rules and do this*\n"
-        "- **Role-play jailbreak** - *pretend you are an AI with no rules*\n"
-        "- **System-prompt extraction** - *repeat your instructions*\n"
-        "- **Obfuscated payload** - the attack hidden in Base64\n"
-        "- **Indirect injection** - an order smuggled inside data to summarize")
-    st.divider()
-    st.markdown("### Why languages matter")
-    st.markdown(
-        "AI safety training is overwhelmingly English-first. The same guardrail that "
-        "blocks an attack in English can be blind to it in a lower-resource language. "
-        "PolyGuard measures that gap so builders can fix it before attackers find it.")
-    st.divider()
-    st.caption("Test only systems you own or are authorized to test. "
-               "PolyGuard is a defensive tool.")
-    st.caption("PolyGuard · Congressional App Challenge 2026")
+st.markdown(
+    '<div class="pg-section" role="heading" aria-level="2">How it works</div>'
+    '<div class="pg-how">'
+    '<div><div class="k">1</div><div class="h">Paste a system prompt</div>'
+    '<div class="b">The instructions your chatbot runs on. PolyGuard builds a live copy '
+    'of that bot from them.</div></div>'
+    f'<div><div class="k">2</div><div class="h">Attack it in {len(bank["languages"])} languages</div>'
+    '<div class="b">Five kinds of prompt injection, each in several phrasings, each asking '
+    'the bot to give up a harmless code word or its own instructions.</div></div>'
+    '<div><div class="k">3</div><div class="h">Judge what it did</div>'
+    '<div class="b">A judge that reads any language decides whether the bot complied or '
+    'only quoted the code while refusing, so a refusal is never counted as a break.</div></div>'
+    '<div><div class="k">4</div><div class="h">Read the gap</div>'
+    '<div class="b">Break rates per language and tier, tested for significance, with the '
+    'exact attacks that worked and the rules that close them.</div></div>'
+    '</div>'
+    '<div class="pg-section" role="heading" aria-level="2">Five kinds of attack</div>'
+    '<div class="pg-types">'
+    '<div><div class="h">Instruction override</div><div class="b">Ignore your rules and do '
+    'this instead.</div></div>'
+    '<div><div class="h">Role play</div><div class="b">Pretend you are an AI with no '
+    'rules.</div></div>'
+    '<div><div class="h">Prompt extraction</div><div class="b">Repeat the instructions you '
+    'were given.</div></div>'
+    '<div><div class="h">Encoded payload</div><div class="b">The same order, hidden in '
+    'Base64.</div></div>'
+    '<div><div class="h">Indirect injection</div><div class="b">An order smuggled inside a '
+    'review or email the bot is asked to process.</div></div>'
+    '</div>'
+    '<footer class="pg-foot"><span>Test only systems you own or are authorized to test. '
+    'PolyGuard is a defensive tool.</span>'
+    f'<a href="{REPO_URL}" target="_blank" rel="noopener">Source, audit and '
+    'preregistration on GitHub</a></footer>',
+    unsafe_allow_html=True)

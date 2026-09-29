@@ -6,6 +6,7 @@
 streamlit>=1.40,<2
 anthropic>=0.40,<1
 pandas>=2.0,<4
+altair>=5,<7             # charts; Streamlit ships it, but app.py imports it directly
 
 # Optional: only needed to scan victims from other vendors. The app runs fine
 # without them and shows those models as unavailable.

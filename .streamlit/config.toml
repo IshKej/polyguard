@@ -1,6 +1,43 @@
+# PolyGuard's look: an Apple product page, not a dashboard. True black, one
+# action colour, and red, green and yellow reserved for what they mean in the
+# results (broke, held, caution). Everything the theme can express lives here;
+# app.py's stylesheet only handles what the theme cannot.
+
 [theme]
 base = "dark"
-primaryColor = "#f0603a"
-backgroundColor = "#0b0f16"
-secondaryBackgroundColor = "#12161f"
-textColor = "#e6edf3"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#1d1d1f"
+textColor = "#f5f5f7"
+primaryColor = "#0071e3"
+linkColor = "#2997ff"
+linkUnderline = false
+borderColor = "#424245"
+showWidgetBorder = false
+showSidebarBorder = false
+
+# Apple's system colours for dark backgrounds, so alerts read as signals
+# rather than as blocks of saturated colour.
+redColor = "#ff453a"
+greenColor = "#30d158"
+yellowColor = "#ffd60a"
+blueColor = "#2997ff"
+
+# Geist sits close to SF Pro in shape and spacing, and renders the same on
+# every platform, which matters for a demo recorded on Windows.
+font = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap, -apple-system, BlinkMacSystemFont, sans-serif"
+headingFont = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap, -apple-system, BlinkMacSystemFont, sans-serif"
+codeFont = "'Geist Mono':https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap, ui-monospace, monospace"
+headingFontWeights = [600, 600, 600, 600, 600, 600]
+headingFontSizes = ["3.5rem", "2.5rem", "1.75rem", "1.3125rem", "1.0625rem", "1rem"]
+metricValueFontSize = "3rem"
+metricValueFontWeight = 600
+baseRadius = "12px"
+buttonRadius = "980px"
+codeBackgroundColor = "#1d1d1f"
+
+dataframeBorderColor = "#2c2c2e"
+dataframeHeaderBackgroundColor = "#1d1d1f"
+chartCategoricalColors = ["#2997ff", "#ff453a", "#30d158", "#ffd60a", "#bf5af2", "#64d2ff"]
+
+[client]
+toolbarMode = "minimal"
