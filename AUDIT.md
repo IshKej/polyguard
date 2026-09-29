@@ -836,6 +836,14 @@ JSON round-trip.
 - Capability controls run 6 per language, which confirms a language the model
   cannot operate in at all but not partial limitation; the report states which,
   derived from the interval rather than asserted.
+- In German, French, Russian, Ukrainian, Chinese and Indonesian the attacks use
+  the informal "you" (du, tu, ты, ти, 你, kamu) while the benign controls use the
+  formal one (Sie, vous, Вы, Ви, 您, Anda). English has no such distinction, so
+  nothing in the source decided it. Bossy informal phrasing is plausible for an
+  attack and polite phrasing for a routine request, but it is a second
+  difference between attack and control besides intent. It is not changed
+  unilaterally: each native review sheet asks that language's reviewer which
+  register is realistic, and the answer decides it.
 - A language flagged capability-limited is excluded from safety conclusions AND
   from the primary statistical test, because leaving it in masks the gap. Both
   the included and excluded versions are reported.

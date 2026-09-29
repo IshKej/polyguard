@@ -11,3 +11,7 @@ pandas>=2.0,<4
 # without them and shows those models as unavailable.
 # openai>=1.40,<2          # GPT-4o mini, GPT-4.1 mini, and Groq/Together via base_url
 # google-genai>=1.0,<2     # Gemini 2.0 Flash
+
+# Maintainer tools only, never imported by the app. Install locally to build
+# formatted native review sheets with `python review_sheet.py --all --xlsx`.
+# openpyxl>=3.1,<4
