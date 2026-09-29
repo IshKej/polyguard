@@ -28,6 +28,9 @@ from languages_catalog import tier_of
 
 BANK_PATH = Path(__file__).with_name("attack_bank.json")
 OUT_DIR = Path(__file__).with_name("review")
+# Tracked in git, so a reviewer can be sent a link that never changes under them.
+# Built only from attack_bank.json, which is already public.
+PUBLISH_DIR = Path(__file__).with_name("review_sheets")
 
 INSTRUCTIONS = [
     ["# PolyGuard translation review"],
@@ -160,7 +163,8 @@ def write_xlsx(bank: dict, code: str) -> Path:
         ("What these are", 12, True),
         ("Test messages used to check whether an AI chatbot can be tricked into ignoring its "
          "instructions. They are security tests, not real requests, and nothing here is meant "
-         "to be acted on. The chatbot is only ever asked to repeat a harmless code word.", 11, False),
+         "to be acted on. Most ask the chatbot to repeat a harmless code word, and a few ask it "
+         "to reveal its own setup instructions. None ask for anything harmful.", 11, False),
         ("", 11, False),
         ("What to do", 12, True),
         ("On the Review tab, pick a verdict for each row from the dropdown:", 11, False),
@@ -230,6 +234,9 @@ def main() -> int:
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--xlsx", action="store_true",
                     help="also write a formatted Excel sheet for sending to a reviewer")
+    ap.add_argument("--publish", action="store_true",
+                    help="write the Excel sheets to review_sheets/ under readable names, "
+                         "so each reviewer can be sent a stable download link")
     args = ap.parse_args()
 
     bank = load_bank()
@@ -257,6 +264,12 @@ def main() -> int:
         print(f"  {bank['languages'][code]['name']:<14} {n:>3} rows -> {path}")
         if args.xlsx:
             print(f"  {'':<14}     + {write_xlsx(bank, code)}")
+        if args.publish:
+            src = write_xlsx(bank, code)
+            dest = PUBLISH_DIR / f"PolyGuard_{bank['languages'][code]['name']}_review.xlsx"
+            PUBLISH_DIR.mkdir(exist_ok=True)
+            dest.write_bytes(src.read_bytes())
+            print(f"  {'':<14}     published {dest.name}")
     print(f"\n{len(codes)} sheet(s) in {OUT_DIR}/")
     print("Send to a speaker of each language. Record results in NATIVE_REVIEW.md")
     print("and set native_reviewed for that language once applied.")
