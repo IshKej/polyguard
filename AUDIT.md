@@ -849,6 +849,19 @@ would, rather than by reading the code.
     to red ramp, unreadable for the most common colour blindness, is now one
     red whose strength is the rate.
 
+59. **The README's opening paragraph claimed what the project had not done.**
+    It described "87 languages (20 hand-authored and verified, the rest
+    auto-translated with a verification gate)". No language has been reviewed
+    by a native speaker, and none of the other 67 had been generated. The same
+    claim appeared again in the languages section. `consistency.py` only
+    compared numbers, so a false claim that contained the right numbers passed.
+    FIX: the README now says plainly what exists and what does not, and opens
+    with the project's actual status. `consistency.py` gained rules tied to the
+    state of the bank: while no language is native reviewed, no current document
+    may call a translation verified, and while none has been generated, none may
+    describe the generated languages as existing. Run against the old README it
+    flags all four instances.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

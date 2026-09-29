@@ -215,8 +215,7 @@ def heat(rate):
     if rate == 0:
         return "var(--tile)", "0%", "var(--quiet)"
     alpha = 0.22 + 0.78 * rate
-    text = "#000" if rate >= 0.55 else "var(--ink)"
-    return f"rgba(255,69,58,{alpha:.2f})", f"{rate:.0%}", text
+    return f"rgba(255,69,58,{alpha:.2f})", f"{rate:.0%}", "var(--ink)"
 
 
 def rate_bars(rows, label, reference=None):

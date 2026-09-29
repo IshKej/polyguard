@@ -149,6 +149,6 @@ tracked rather than waved off.
 | Languages in bank | 20 of a planned 87 (16 high, 4 mid, **0 low**) |
 | Verification checks | 212 |
 | Unit tests | 151 (all 29 engine functions) |
-| Audit findings fixed | 58 across 17 rounds |
+| Audit findings fixed | 59 across 17 rounds |
 | Native-reviewed languages | 0 |
 | Live scans ever run | 0 |

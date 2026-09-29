@@ -82,6 +82,28 @@ def stale_claims(truth: dict) -> list[str]:
         (r"(?<!-no)--backcheck\b", CURRENT,
          "backcheck is on by default; the flag is --no-backcheck"),
     ]
+    # Claims that depend on the state of the bank, not on a number. While no
+    # language has been reviewed by a native speaker, no current document may
+    # call a translation verified; while no language has been generated, none
+    # may describe the generated ones as existing. The README said both, in its
+    # opening paragraph, until AUDIT.md finding 59.
+    bank = json.loads((HERE / "attack_bank.json").read_text(encoding="utf-8"))
+    reviewed = sum(1 for m in bank["languages"].values() if m.get("native_reviewed"))
+    generated = sum(1 for m in bank["languages"].values() if m.get("provenance") == "machine")
+    if not reviewed:
+        rules += [
+            (r"\b(?:hand[- ]authored|hand[- ]written|authored)\s+and\s+verified\b", CURRENT,
+             "no language has been reviewed by a native speaker"),
+            (r"\b\d+\s+(?:are|languages are)\s+(?:hand[- ]authored\s+and\s+)?verified\b", CURRENT,
+             "no language has been reviewed by a native speaker"),
+            (r"\bverified translations?\b", CURRENT,
+             "no language has been reviewed by a native speaker"),
+        ]
+    if not generated:
+        rules += [
+            (r"\bthe rest(?: are)?\s+auto[- ]?translated\b", CURRENT,
+             "no language has been generated yet; the bank holds only the authored ones"),
+        ]
     out = []
     for path in sorted(HERE.glob("*.md")) + sorted(HERE.glob("*.py")):
         if path.name == Path(__file__).name:
