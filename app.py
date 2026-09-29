@@ -469,6 +469,10 @@ if "out" in st.session_state:
     scan_langs, scan_cats, scan_depth = st.session_state.get(
         "scope", (list(out["by_lang"]), bank["categories"],
                   out.get("max_variants") or 3))
+    # Defined here, once, because the tier comparison needs it long before the
+    # break map does. It used to be assigned only at the break map, so the first
+    # live scan with both tiers present crashed on a NameError (AUDIT.md 56).
+    used_cats = [c for c in bank["categories"] if c in scan_cats]
 
     st.divider()
 
@@ -802,7 +806,6 @@ if "out" in st.session_state:
                        f"excluded.")
 
     # ---- heatmap: language x category (only when it stays readable) ----
-    used_cats = [c for c in bank["categories"] if c in scan_cats]
     lang_order = sorted(scan_langs,
                         key=lambda c: out["by_lang"].get(c, {}).get("rate") or -1,
                         reverse=True)

@@ -805,6 +805,24 @@ JSON round-trip.
     is logged in PREREGISTRATION.md, stating plainly that attack text changed.
     No live scan had run, so nothing was altered after seeing a result.
 
+## Round 16 — the page nobody had seen
+
+56. **The first real result would have crashed the page.** The tier comparison
+    called `category_gap_tests(out["results"], used_cats)`, but `used_cats` was
+    only assigned eighty lines further down, at the break map. That branch runs
+    only on a live scan with both low- and high-resource languages present. Mock
+    mode skips it and the bank has no low-resource languages yet, so the
+    battery, which drives the app in mock mode, could never reach it. The first
+    live scan after generating the low-resource languages would have died on a
+    NameError at exactly the moment the headline result was about to appear.
+    FIX: assigned once where the scan scope is read back. More important is the
+    check that found it: `live_view_check.py` builds a scan with the mock victim,
+    relabels four mid-resource languages as low-resource for the duration of the
+    check only, marks it live, and renders the real app through session state.
+    It covers the single-scan view, the cross-model comparison and the
+    before/after hardening view, none of which had ever been rendered.
+    Reproduced first, then fixed; verify_all check 112 runs it every time.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

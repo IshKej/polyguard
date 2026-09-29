@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 210 independent checks across the data, the
+PolyGuard full verification battery. Runs 211 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1375,6 +1375,17 @@ _es = [a["text"] for a in json.loads((HERE / "attack_bank.json").read_text(encod
 _stripped = ["".join(c for c in _ud.normalize("NFD", t) if not _ud.combining(c)) for t in _es]
 ck("111. the accent check fires on deliberately stripped Spanish",
    bool(_ling.check_diacritics("es", _stripped)) and not _ling.check_diacritics("es", _es))
+
+# 112. The live results page, including the tier comparison, the cross-model
+# table and the before/after view, renders without error. Mock mode and a bank
+# with no low-resource languages never reach those branches, which is how a
+# NameError sat in the headline result (AUDIT.md finding 56). Run in its own
+# process because it borrows catalog tiers for the duration of the check.
+import subprocess as _sp
+_lv = _sp.run([sys.executable, str(HERE / "live_view_check.py")], cwd=str(HERE),
+              capture_output=True, text=True, encoding="utf-8", timeout=600)
+ck("112. every live-only results view renders cleanly", _lv.returncode == 0
+   and "all render cleanly" in _lv.stdout)
 
 # report
 passed = sum(1 for _, ok in checks if ok)
