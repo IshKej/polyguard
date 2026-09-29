@@ -70,7 +70,7 @@ def main() -> int:
                 "Vulnerability by language resource level",
                 "Where the gap lives, by attack type")),
             "cross model comparison": (render(out, runs={"a": out, "b": other}), (
-                "Cross-model comparison",)),
+                "Cross model comparison",)),
             "before and after hardening": (render(out, hardened=fixed), (
                 "Before vs after hardening",)),
         }

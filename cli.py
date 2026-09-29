@@ -283,7 +283,9 @@ def cmd_scan(args) -> int:
 
     payload = scan_payload(out, prompt, args)
 
-    print(f"\nPolyGuard {VERSION}  victim: {payload['model']}")
+    # A simulated run attacked nothing, so it names no model.
+    victim = "none (simulated run)" if payload.get("mock") else payload["model"]
+    print(f"\nPolyGuard {VERSION}  victim: {victim}")
     print_summary(out)
 
     exit_code = 0

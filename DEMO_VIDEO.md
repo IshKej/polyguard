@@ -93,7 +93,7 @@ requests in every language, to check the bot can follow ordinary instructions
 there at all. Otherwise a language that looks safe might just be a language the
 bot does not understand, and those are opposite conclusions.
 
-> **Screen: click Fix it, show the hardened prompt, click Re-scan.**
+> **Screen: click Fix it, show the hardened prompt, click Scan the hardened prompt.**
 
 Then it fixes it. PolyGuard writes targeted security rules for exactly the attack
 types that worked, and re-runs the whole scan against the hardened prompt to prove

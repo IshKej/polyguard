@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 211 independent checks across the data, the
+PolyGuard full verification battery. Runs 212 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -329,7 +329,7 @@ ck("37. harden is deterministic and no-op when nothing broke",
    and defenses.harden("X", []) == "X")
 ck("38. app wires the harden + re-scan loop",
    "run_hardened" in app_src and "hardened_out" in app_src
-   and "Re-scan with the hardened prompt" in app_src)
+   and "Scan the hardened prompt" in app_src)
 ck("39. re-test is live-only; a mock re-test is never shown as proof a fix worked",
    'if out["mock"]:' in app_src and 'h.get("mock")' in app_src)
 
@@ -343,7 +343,7 @@ try:
     labels = [x.label for x in at2.metric]
     has_fix = any("Fix it" in m.value for m in at2.markdown)
     no_fake_delta = not any("closed" in l.lower() or "hardened" in l.lower() for l in labels)
-    no_rescan_btn = not any("Re-scan" in b.label for b in at2.button)
+    no_rescan_btn = not any("hardened prompt" in b.label for b in at2.button)
     ck("40. mock shows fixes but no fabricated before/after",
        not at2.exception and has_fix and no_fake_delta and no_rescan_btn)
 except Exception as e:
@@ -443,7 +443,9 @@ ck("57. scan output carries victim provenance + determinism flag",
 # someone else looks authoritative while hiding that it was a mock run, or
 # unpinnable, or had unscoreable extraction, or an uncorrected worst-language gap.
 for _field in ("worst_language_test", "temperature_pinned", "extraction_scoreable",
-               "judge_model", '"victim": out.get("victim")'):
+               "judge_model",
+               # carried on a live run, and withheld on a simulated one (AUDIT.md 57)
+               '"victim": None if out["mock"] else out.get("victim")'):
     ck(f"58. JSON export carries provenance: {_field}", _field in app_src)
 
 # 59. the pre-registration must exist, must pin the instrument by hash, and must
@@ -536,7 +538,7 @@ ck("63. compare_runs flags the gapped vendor and clears the even one",
    and _cmp2["Gappy"]["n_low_langs"] == 6 and _cmp2["Gappy"]["n_high_langs"] == 6)
 
 ck("64. app renders the comparison from the engine, not its own inline maths",
-   "engine.compare_runs(runs)" in app_src and "Cross-model comparison" in app_src)
+   "engine.compare_runs(runs)" in app_src and "Cross model comparison" in app_src)
 ck("65. app re-tests the hardened prompt against the SAME model it scanned",
    'h_key = st.session_state.get("victim_key")' in app_src and "victim=h_vic" in app_src)
 
@@ -636,7 +638,7 @@ ck("70c. a category with too few languages is marked not testable, not tested",
    engine.category_gap_tests(_thin)[0]["testable"] is False
    and engine.category_gap_tests(_thin)[0]["p_adj"] is None)
 ck("70d. app reports the FDR-adjusted column, not the raw one, as the verdict",
-   "category_gap_tests" in app_src and "FDR-adjusted" in app_src)
+   "category_gap_tests" in app_src and "FDR adjusted" in app_src)
 
 # 71. Inline calibration: the headline test must not reject a TRUE NULL more
 # often than alpha. This is the property unit tests cannot establish, so a fast
@@ -979,7 +981,7 @@ ck("86b. passcode is compared in constant time, not with ==",
    "hmac.compare_digest" in app_src)
 ck("86c. a locked deployment still shows the full interface in mock mode",
    'client = None          # falls through to the existing MOCK-mode path' in app_src
-   and "passcode-protected" in app_src)
+   and "protected by a passcode" in app_src)
 ck("86d. the secrets example documents the gate without shipping a real one",
    "POLYGUARD_PASSCODE" in (HERE / ".streamlit" / "secrets.toml.example")
    .read_text(encoding="utf-8")
@@ -1386,6 +1388,17 @@ _lv = _sp.run([sys.executable, str(HERE / "live_view_check.py")], cwd=str(HERE),
               capture_output=True, text=True, encoding="utf-8", timeout=600)
 ck("112. every live-only results view renders cleanly", _lv.returncode == 0
    and "all render cleanly" in _lv.stdout)
+
+# 113. A simulated run attacked nothing and judged nothing, so neither the
+# forwarded report nor the CLI may name a model as if it had been tested.
+_mock_html = report_html.build_report(
+    {"mock": True, "model": "claude-haiku-4-5", "judge_model": "claude-haiku-4-5",
+     "victim": {"label": "Claude Haiku 4.5", "deterministic": True}, "by_lang": {}})
+_tested = _mock_html.split("<h2>What was tested")[1].split("</dl>")[0]
+ck("113. a simulated report never names a model or claims a pinned temperature",
+   "Haiku" not in _tested and "Temperature pinned" not in _tested
+   and "simulated run" in _tested
+   and "none (simulated run)" in (HERE / "cli.py").read_text(encoding="utf-8"))
 
 # report
 passed = sum(1 for _, ok in checks if ok)

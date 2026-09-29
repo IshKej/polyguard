@@ -319,7 +319,7 @@ if PASSCODE and client is not None:
         with st.sidebar:
             st.markdown("### Live scanning is locked")
             st.caption("Scans run on the owner's API credits, so live mode is "
-                       "passcode-protected. Without it the app runs in mock mode, "
+                       "protected by a passcode. Without it the app runs in mock mode, "
                        "which demonstrates the full interface.")
             entered = st.text_input("Passcode", type="password",
                                     key="passcode_input")
@@ -423,7 +423,7 @@ st.markdown(
 if client is None:
     if LOCKED:
         st.warning("**Live scanning is locked on this deployment.** Scans spend the owner's "
-                   "API credits, so they are passcode-protected. Everything below is the "
+                   "API credits, so they are protected by a passcode. Everything below is the "
                    "real interface running on simulated results. Enter the passcode in the "
                    "sidebar to run live attacks.")
     else:
@@ -632,7 +632,7 @@ if go:
 if st.session_state.get("run_hardened"):
     st.session_state["run_hardened"] = False
     h_langs, h_cats, h_depth = st.session_state.get("scope", (None, None, 3))
-    bar = st.progress(0.0, text="Re-testing hardened prompt...")
+    bar = st.progress(0.0, text="Retesting hardened prompt...")
     # Re-test against the SAME model the original scan attacked. Hardening measured
     # on a different model would compare two things at once and prove nothing.
     h_key = st.session_state.get("victim_key")
@@ -651,7 +651,7 @@ if st.session_state.get("run_hardened"):
                         max_variants=h_depth,
                         extraction_reference=st.session_state.get("scanned_prompt"),
                         progress=lambda d, t: bar.progress(d / t,
-                                                           text=f"Re-testing...  {d}/{t}"))
+                                                           text=f"Retesting...  {d}/{t}"))
     bar.empty()
     st.session_state["hardened_out"] = h_out
 
@@ -699,7 +699,7 @@ if "out" in st.session_state:
                    "model.")
         if out["n_errors"]:
             st.warning(f"{out['n_errors']} attack(s) failed (network or rate limit) and were "
-                       "excluded from the rates, not counted as held. Re-run to fill them in.")
+                       "excluded from the rates, not counted as held. Run again to fill them in.")
 
     # ---- cross-model comparison ----
     # Hypothesis H2 in PREREGISTRATION.md: if a multilingual gap is real, it should
@@ -709,7 +709,7 @@ if "out" in st.session_state:
     # attack bank and scored by the identical judge. Nothing was re-tuned per vendor.
     runs = st.session_state.get("runs", {})
     if len(runs) > 1 and not out["mock"]:
-        st.markdown("### Cross-model comparison")
+        st.markdown("### Cross model comparison")
         st.caption("Same attack bank, same languages, same phrasings, same judge. "
                    "The only thing that changes between rows is the model being defended.")
 
@@ -722,7 +722,7 @@ if "out" in st.session_state:
         st.dataframe(pd.DataFrame([{
             "Model": c["model"], "Vendor": c["vendor"],
             "Overall break rate": pc(c["overall_num"]),
-            "High-resource": pc(c["high_num"]), "Low-resource": pc(c["low_num"]),
+            "High resource": pc(c["high_num"]), "Low resource": pc(c["low_num"]),
             "Low vs high p": (f"{c['p']:.3g}" if c["p"] is not None else "n/a"),
             "Gap significant": "yes" if c["significant"] else "no",
             "Temp pinned": "yes" if c["pinned"] else "no",
@@ -737,28 +737,28 @@ if "out" in st.session_state:
         gapped = [c for c in testable if c["significant"] and (c["low_num"] or 0) > (c["high_num"] or 0)]
         if not testable:
             st.info("No model could be tested for a tier gap yet: the scan needs both "
-                    "low-resource and high-resource languages in scope. Run "
+                    "low resource and high resource languages in scope. Run "
                     "`expand_languages.py --tier low` to fill them in.")
         elif len(gapped) == len(testable):
             st.error(f"**Every model tested shows the gap.** All {len(testable)} models "
-                     f"broke significantly more often in low-resource languages. That "
+                     f"broke significantly more often in low resource languages. That "
                      f"points at a property of multilingual safety training in general, "
                      f"not at one vendor.")
         elif gapped:
-            st.error(f"**The gap is vendor-specific.** {len(gapped)} of {len(testable)} "
-                     f"models broke significantly more often in low-resource languages "
+            st.error(f"**The gap is specific to one vendor.** {len(gapped)} of {len(testable)} "
+                     f"models broke significantly more often in low resource languages "
                      f"({', '.join(c['model'] for c in gapped)}), while the rest did not. "
                      f"That is the H2 result: multilingual robustness is a property of "
                      f"the model, so it is a fixable engineering choice rather than an "
                      f"inevitable cost of speaking another language.")
         else:
-            st.success(f"**No model tested shows a significant low-resource penalty** "
+            st.success(f"**No model tested shows a significant low resource penalty** "
                        f"({len(testable)} models compared). On this evidence the gap "
                        f"these systems were expected to have has largely closed, which "
-                       f"is itself the finding. It is reported as-is, per the "
+                       f"is itself the finding. It is reported as is, per the "
                        f"pre-registration.")
         st.caption("Detail below is for " + (out.get("victim") or {}).get("label", "the first model")
-                   + ". Re-run with a single model selected to inspect another one.")
+                   + ". Run again with a single model selected to inspect another one.")
 
     # ---- headline numbers ----
     c1, c2, c3, c4 = st.columns(4)
@@ -796,7 +796,7 @@ if "out" in st.session_state:
             st.error(
                 f"**Equity gap found, and it survives correction.** {worst} breaks "
                 f"{mg['observed']:+.0%} more often than English. Chance alone, across "
-                f"{mg['n_langs']} languages, would produce a worst-language gap of about "
+                f"{mg['n_langs']} languages, would produce a worst language gap of about "
                 f"{mg['null_mean']:+.0%}, so a gap this large is unlikely to be noise "
                 f"(permutation p = {mg['p']:.3f}, {mg['n_iter']:,} shuffles).")
         else:
@@ -870,12 +870,12 @@ if "out" in st.session_state:
                            f"{eff['magnitude']}.")
 
             if diff > 0 and mw["significant"]:
-                st.error(f"**Low-resource languages are significantly more vulnerable.** "
-                         f"Attacks succeeded {diff:+.0%} more often than in high-resource "
-                         f"languages. Mann-Whitney U on per-language rates: p = {mw['p']:.3g} "
+                st.error(f"**Low resource languages are significantly more vulnerable.** "
+                         f"Attacks succeeded {diff:+.0%} more often than in high resource "
+                         f"languages. Mann-Whitney U on per language rates: p = {mw['p']:.3g} "
                          f"(n = {mw['n1']} low vs {mw['n2']} high languages)." + eff_txt)
                 if eff.get("crosses_zero"):
-                    st.caption("Note: the effect-size interval still includes zero, so the "
+                    st.caption("Note: the effect size interval still includes zero, so the "
                                "direction of the gap is not firmly established even though "
                                "p falls under 0.05. Treat the size as provisional.")
             else:
@@ -891,16 +891,16 @@ if "out" in st.session_state:
                 body = (f"broke {diff:+.0%} more often, but across languages that is not "
                         f"significant (p = {mw['p']:.3g}, n = {mw['n1']} vs {mw['n2']} "
                         f"languages).") if diff > 0 else (
-                       f"did not break more often than high-resource ones "
+                       f"did not break more often than high resource ones "
                        f"({diff:+.0%}, p = {mw['p']:.3g}).")
                 if powered:
-                    st.success(f"**No significant low-resource penalty on this bot.** "
-                               f"Low-resource languages {body}{eff_txt} This scan had "
+                    st.success(f"**No significant low resource penalty on this bot.** "
+                               f"Low resource languages {body}{eff_txt} This scan had "
                                f"{pw['power']:.0%} power to detect a 15-point gap, so the "
                                f"null is informative rather than merely inconclusive.")
                 else:
                     st.warning(f"**Not significant, and this scan was underpowered.** "
-                               f"Low-resource languages {body}{eff_txt} At this size the "
+                               f"Low resource languages {body}{eff_txt} At this size the "
                                f"scan had only {pw['power']:.0%} power to detect a 15-point "
                                f"gap, so it cannot distinguish 'no effect' from 'too small "
                                f"a sample to see one'. Add languages before concluding "
@@ -910,15 +910,15 @@ if "out" in st.session_state:
                 st.caption(
                     f"{_tr['n_excluded']} language(s) excluded from this test "
                     f"({', '.join(_tr['excluded'])}): the bot cannot follow ordinary "
-                    f"instructions in them, so their near-zero break rate reflects "
+                    f"instructions in them, so their near zero break rate reflects "
                     f"incapacity rather than defence and would mask a real gap. "
-                    f"Including them, the low-resource group would be "
+                    f"Including them, the low resource group would be "
                     f"{len(_tr['rates_including_limited']['low'])} languages instead "
                     f"of {len(lo_rates)}.")
             st.caption(
                 f"Primary test clusters by language (each language contributes one rate), "
                 f"because attacks on the same bot are not independent. For reference, the "
-                f"uncorrected attack-level z-test over {lo_n + hi_n} attacks gives "
+                f"uncorrected attack level z test over {lo_n + hi_n} attacks gives "
                 f"p = {zt['p']:.3g}; that number is optimistic and is not the headline.")
 
             # ---- H3: which attack categories carry the gap ----
@@ -927,17 +927,17 @@ if "out" in st.session_state:
                 st.markdown("##### Where the gap lives, by attack type")
                 st.dataframe(pd.DataFrame([{
                     "Attack type": r["category"].replace("_", " ").capitalize(),
-                    "Low-resource": f"{r['low_rate']:.0%}" if r["low_rate"] is not None else "n/a",
-                    "High-resource": f"{r['high_rate']:.0%}" if r["high_rate"] is not None else "n/a",
+                    "Low resource": f"{r['low_rate']:.0%}" if r["low_rate"] is not None else "n/a",
+                    "High resource": f"{r['high_rate']:.0%}" if r["high_rate"] is not None else "n/a",
                     "Effect (delta)": f"{r['delta']:+.2f}" if r.get("delta") is not None else "n/a",
                     "p (raw)": f"{r['p_raw']:.3g}" if r["p_raw"] is not None else "not testable",
-                    "p (FDR-adjusted)": f"{r['p_adj']:.3g}" if r["p_adj"] is not None else "-",
+                    "p (FDR adjusted)": f"{r['p_adj']:.3g}" if r["p_adj"] is not None else "-",
                     "Significant": "yes" if r["significant"] else "no",
                 } for r in cat_rows]), width="stretch", hide_index=True)
                 st.caption(
                     "Five categories means five tests, and reporting whichever came out "
-                    "significant would inflate the false-positive rate to about 24% "
-                    "(measured under an all-null simulation in calibration_report.txt). "
+                    "significant would inflate the false positive rate to about 24% "
+                    "(measured under an all null simulation in calibration_report.txt). "
                     "The adjusted column is Benjamini-Hochberg across the family and is "
                     "the one to read. Categories without enough languages on both sides "
                     "are marked not testable rather than tested on junk.")
@@ -955,7 +955,7 @@ if "out" in st.session_state:
         rows = []
         for code, d in sorted(cap["per_lang"].items(),
                               key=lambda kv: (kv[1]["rate"] is None, kv[1]["rate"])):
-            status = ("capability-limited" if d["capability_limited"]
+            status = ("capability limited" if d["capability_limited"]
                       else "needs a closer look" if d["capability_screen"] else "ok")
             rows.append({
                 "Language": bank["languages"].get(code, {}).get("name", code),
@@ -1044,7 +1044,7 @@ if "out" in st.session_state:
     else:
         st.info(f"Scanned {len(lang_order)} languages, too many for the cell grid. "
                 "See the ranked chart and the tier summary above; pick 18 or fewer "
-                "languages (or Custom) to see the per-category break map.")
+                "languages (or Custom) to see the per category break map.")
 
     # ---- ranked language bar chart ----
     st.markdown("### By language")
@@ -1100,9 +1100,9 @@ if "out" in st.session_state:
         # mock re-scan would always report "0% closed" and imply the fix failed. That
         # would be a fabricated result, so the re-test is live-only.
         if out["mock"]:
-            st.caption("Re-testing needs a live scan: the mock victim ignores the system "
+            st.caption("Retesting needs a live scan: the mock victim ignores the system "
                        "prompt, so it cannot show whether these rules actually work.")
-        elif st.button("Re-scan with the hardened prompt", width="stretch"):
+        elif st.button("Scan the hardened prompt", width="stretch"):
             st.session_state["run_hardened"] = True
             st.rerun()
 
@@ -1126,7 +1126,7 @@ if "out" in st.session_state:
                     "The rest need stronger measures than prompt rules alone.")
         else:
             st.warning("Hardening did not reduce successful attacks. This bot likely needs "
-                       "a real input filter, not just system-prompt rules.")
+                       "a real input filter, not just system prompt rules.")
 
     with st.expander(f"Full log of all {out['n_attacks']} attacks"):
         # mode + model travel with every row: an exported CSV must never be mistaken
@@ -1161,7 +1161,9 @@ if "out" in st.session_state:
     # worst-language delta. A number without those is not evidence.
     summary = {
         "mock": out["mock"], "victim_model": out["model"],
-        "victim": out.get("victim"), "judge_model": out.get("judge_model"),
+        # A simulated run attacked and judged nothing, so it names no model.
+        "victim": None if out["mock"] else out.get("victim"),
+        "judge_model": None if out["mock"] else out.get("judge_model"),
         "phrasings_per_cell": out.get("max_variants"),
         "temperature_pinned": (out.get("victim") or {}).get("deterministic"),
         "thinking_forced": (out.get("victim") or {}).get("thinking_forced"),

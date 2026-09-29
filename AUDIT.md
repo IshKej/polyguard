@@ -823,6 +823,32 @@ JSON round-trip.
     before/after hardening view, none of which had ever been rendered.
     Reproduced first, then fixed; verify_all check 112 runs it every time.
 
+## Round 17 — what the screen actually said
+
+Found by rendering the redesigned app and report and reading them as a visitor
+would, rather than by reading the code.
+
+57. **A simulated report named a model it never attacked.** The HTML report's
+    provenance table said "Victim model: Claude Haiku 4.5", "Temperature
+    pinned: yes" and named a compliance judge on a mock run, where no model
+    was attacked and nothing was judged. The CLI's first line said the same,
+    and so did the app's JSON export. The mock banner was there, but a
+    forwarded file whose provenance names a real model reads as a real test
+    of it. FIX: a simulated run now names no victim and no judge in all three
+    places. verify_all check 113.
+
+58. **Two charts showed something other than what the code computed.** The
+    per-language and per-attack-type charts were sorted most broken first in
+    the code, but `st.bar_chart` re-sorts its axis alphabetically, so the
+    ranking never reached the screen; rates were labelled 0.0 to 0.5 and
+    attack names were cut off. Separately, the overall break rate and the
+    tier intervals were drawn in the metric delta slot, which renders a green
+    up arrow: a higher break rate displayed as good news. FIX: Altair bars in
+    the order computed, labelled in percent, with English drawn grey as the
+    baseline; shares and intervals are plain captions. The break map's green
+    to red ramp, unreadable for the most common colour blindness, is now one
+    red whose strength is the rate.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

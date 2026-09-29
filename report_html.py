@@ -3,13 +3,15 @@ Render a scan into one self-contained HTML file.
 
 A JSON report is for machines. This is the thing you send to a person: a single
 file with no external assets, no network calls, and no build step, that opens in
-any browser and still works in a year.
+any browser and still works in a year. It uses the system font of whatever
+machine opens it, follows that machine's light or dark setting, and prints on
+white.
 
 Every caveat the scan carried travels with it. A simulated run says so at the top
-in a colour nobody can miss, a scan whose prompt collided with PolyGuard's own
-token refuses to show its numbers as findings, and a tier comparison that could
-not be computed says why instead of quietly showing nothing. A report that omits
-its own limitations is worse than no report, because it will be forwarded.
+before any number, a scan whose prompt collided with PolyGuard's own token refuses
+to show its numbers as findings, and a tier comparison that could not be computed
+says why instead of quietly showing nothing. A report that omits its own
+limitations is worse than no report, because it will be forwarded.
 """
 from __future__ import annotations
 
@@ -17,44 +19,61 @@ import html
 import json
 from pathlib import Path
 
+REPO_URL = "https://github.com/IshKej/polyguard"
+
 CSS = """
-:root{--bg:#0b0f16;--panel:#12161f;--line:#262c36;--ink:#e6edf3;--dim:#8b949e;
---accent:#f0603a;--ok:#3fb950;--warn:#d29922}
+:root{color-scheme:dark;--bg:#000;--tile:#1d1d1f;--raised:#2c2c2e;--ink:#f5f5f7;
+--quiet:#86868b;--line:#424245;--red:#ff453a;--green:#30d158;--yellow:#ffd60a;
+--blue:#2997ff;--base:#86868b}
+@media (prefers-color-scheme:light){:root{color-scheme:light;--bg:#fff;--tile:#f5f5f7;
+--raised:#e8e8ed;--ink:#1d1d1f;--quiet:#6e6e73;--line:#d2d2d7;--red:#d70015;
+--green:#248a3d;--yellow:#b25000;--blue:#0066cc;--base:#86868b}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
-font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
-padding:2.5rem 1.25rem}
-.wrap{max-width:900px;margin:0 auto}
-h1{font-size:1.9rem;margin:0;letter-spacing:-.5px}
-h1 .g{color:var(--accent)}
-h2{font-size:1.05rem;margin:2.2rem 0 .7rem;padding-bottom:.35rem;
-border-bottom:1px solid var(--line);color:var(--ink)}
-.sub{color:var(--dim);margin:.25rem 0 1.5rem;font-size:.9rem}
-.banner{border-radius:10px;padding:.85rem 1.1rem;margin:1rem 0;font-size:.92rem;
-border:1px solid}
-.b-mock{background:#2a2410;border-color:var(--warn);color:#f0d58c}
-.b-bad{background:#3a1417;border-color:var(--accent);color:#ff9a8f}
-.b-ok{background:#12261a;border-color:var(--ok);color:#87e0a0}
-.b-info{background:var(--panel);border-color:var(--line);color:#c9d3de}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
-padding:.8rem .95rem}
-.card .k{color:var(--dim);font-size:.76rem;text-transform:uppercase;
-letter-spacing:.04em}
-.card .v{font-size:1.45rem;font-weight:700;margin-top:.15rem}
-table{width:100%;border-collapse:collapse;margin-top:.5rem;font-size:.88rem}
-th{text-align:left;color:var(--dim);font-weight:600;font-size:.78rem;
-text-transform:uppercase;letter-spacing:.04em;padding:.45rem .6rem;
-border-bottom:1px solid var(--line)}
-td{padding:.45rem .6rem;border-bottom:1px solid #1a1f29}
-tr:last-child td{border-bottom:none}
-.bar{height:7px;border-radius:4px;background:#1a1f29;overflow:hidden;min-width:70px}
-.bar span{display:block;height:100%}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem}
-.dim{color:var(--dim)}
-footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--line);
-color:var(--dim);font-size:.82rem}
-@media print{body{background:#fff;color:#111}.card,.banner{border-color:#ccc}}
+font:17px/1.47 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text",
+"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;
+padding:3.5rem 1.25rem 4rem}
+.wrap{max-width:880px;margin:0 auto}
+.mark{font-weight:600;font-size:1.0625rem;letter-spacing:-.01em;margin:0}
+h1{font-size:clamp(2.25rem,6vw,3.5rem);line-height:1.05;letter-spacing:-.03em;
+font-weight:600;margin:2.5rem 0 .6rem}
+.sub{color:var(--quiet);margin:0 0 2.5rem;font-size:1.0625rem}
+h2{font-size:1.75rem;letter-spacing:-.022em;font-weight:600;margin:4rem 0 1.1rem}
+.note{background:var(--tile);border-radius:18px;padding:1.1rem 1.3rem;margin:.9rem 0;
+font-size:.9375rem;line-height:1.55}
+.note b{font-weight:600}
+.n-mock b{color:var(--yellow)}.n-bad b{color:var(--red)}.n-ok b{color:var(--green)}
+.n-info b{color:var(--blue)}
+.specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0 2rem}
+.spec{border-top:1px solid var(--line);padding:1rem 0 1.25rem}
+.spec .k{color:var(--quiet);font-size:.875rem}
+.spec .v{font-size:2.75rem;font-weight:600;letter-spacing:-.03em;line-height:1.1;
+margin-top:.3rem;font-variant-numeric:tabular-nums}
+.spec .c{color:var(--quiet);font-size:.8125rem;margin-top:.25rem}
+dl{display:grid;grid-template-columns:minmax(10rem,14rem) 1fr;gap:0;margin:0}
+dt,dd{margin:0;padding:.7rem 0;border-top:1px solid var(--line);font-size:.9375rem}
+dt{color:var(--quiet)}
+dd{overflow-wrap:anywhere}
+table{width:100%;border-collapse:collapse;font-size:.9375rem}
+th{text-align:left;color:var(--quiet);font-weight:400;font-size:.8125rem;
+padding:0 .75rem .6rem 0}
+td{padding:.55rem .75rem .55rem 0;border-top:1px solid var(--line);vertical-align:middle}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nat{color:var(--quiet);font-size:.8125rem;margin-left:.4rem}
+.dim{color:var(--quiet)}
+.bar{height:.5rem;border-radius:99px;background:var(--raised);overflow:hidden;min-width:5rem}
+.bar span{display:block;height:100%;border-radius:99px;background:var(--red)}
+.bar.base span{background:var(--base)}
+ul.fix{padding-left:1.1rem;margin:0}
+ul.fix li{margin:.45rem 0;font-size:.9375rem}
+footer{margin-top:4.5rem;padding-top:1.25rem;border-top:1px solid var(--line);
+color:var(--quiet);font-size:.8125rem;line-height:1.6}
+footer a{color:var(--quiet)}
+@media (max-width:560px){dl{grid-template-columns:1fr}dd{border-top:none;padding-top:0}
+.hide-sm{display:none}}
+@media print{:root{color-scheme:light;--bg:#fff;--tile:#f5f5f7;--raised:#e8e8ed;
+--ink:#000;--quiet:#555;--line:#ccc}body{padding:0}h2{break-after:avoid}
+tr,.note,.spec{break-inside:avoid}}
 """
 
 
@@ -62,17 +81,20 @@ def _pct(v, dash="n/a"):
     return dash if v is None else f"{v:.0%}"
 
 
-def _heat(rate):
-    if rate is None:
-        return "#20262f"
-    r = int(60 + rate * 180)
-    g = int(200 - rate * 165)
-    b = int(90 - rate * 55)
-    return f"rgb({r},{g},{b})"
-
-
 def _e(s):
     return html.escape(str(s))
+
+
+def _bar(rate, baseline=False):
+    width = max(0.0, min(1.0, rate or 0)) * 100
+    return (f"<div class=\"bar{' base' if baseline else ''}\" role=\"img\" "
+            f"aria-label=\"{_pct(rate)}\"><span style=\"width:{width:.0f}%\"></span></div>")
+
+
+def _spec(label, value, caption=""):
+    cap = f'<div class="c">{_e(caption)}</div>' if caption else ""
+    return (f'<div class="spec"><div class="k">{_e(label)}</div>'
+            f'<div class="v">{_e(value)}</div>{cap}</div>')
 
 
 def build_report(scan: dict) -> str:
@@ -82,46 +104,52 @@ def build_report(scan: dict) -> str:
     by_lang = scan.get("by_lang", {})
     cap = scan.get("capability") or {}
     limited = set(cap.get("capability_limited") or [])
+    against = "a simulated victim" if mock else (victim.get("label") or scan.get("model") or "?")
 
-    parts = [f"<!doctype html><html lang=en><meta charset=utf-8>",
+    parts = ["<!doctype html><html lang=en><meta charset=utf-8>",
              "<meta name=viewport content='width=device-width,initial-scale=1'>",
              f"<title>PolyGuard report</title><style>{CSS}</style>",
-             "<body><div class=wrap>",
-             "<h1>&#128737; Poly<span class=g>Guard</span></h1>",
-             f"<p class=sub>Multilingual prompt-injection report &middot; "
-             f"generated {_e(scan.get('generated_at','?'))}</p>"]
+             "<body><main class=wrap>",
+             '<p class="mark">PolyGuard</p>',
+             "<h1>Scan report</h1>",
+             f'<p class="sub">{_e(scan.get("attacks_fired", 0))} attacks against '
+             f'{_e(against)}. Generated {_e(scan.get("generated_at", "?"))}.</p>']
 
     # Caveats first, always, before any number.
     if mock:
-        parts.append("<div class='banner b-mock'><b>Simulated run, not a "
-                     "measurement.</b> These results came from an offline mock "
-                     "with no model involved. The mock is language-independent by "
-                     "design, so nothing here says anything about any real "
-                     "chatbot.</div>")
+        parts.append('<div class="note n-mock"><b>Simulated run, not a measurement.</b> '
+                     "These results came from an offline mock with no model involved. The "
+                     "mock is the same in every language by design, so nothing here says "
+                     "anything about any real chatbot.</div>")
     if collision:
-        parts.append(f"<div class='banner b-bad'><b>These results are invalid.</b> "
-                     f"The scanned prompt contains PolyGuard's own "
-                     f"{_e(' and '.join(collision))}, so the bot emits that token "
-                     f"while doing its normal job and ordinary answers were counted "
-                     f"as successful attacks. Remove it and scan again.</div>")
+        parts.append(f'<div class="note n-bad"><b>These results are invalid.</b> The '
+                     f"scanned prompt contains PolyGuard's own {_e(' and '.join(collision))}, "
+                     f"so the bot emits that token while doing its normal job and ordinary "
+                     f"answers were counted as successful attacks. Remove it and scan "
+                     f"again.</div>")
     if scan.get("extraction_scoreable") is False:
-        parts.append("<div class='banner b-info'>The system prompt is shorter than "
-                     "the verbatim run used to detect a leak, so prompt-extraction "
-                     "attacks could not register and the overall rate reads low.</div>")
+        parts.append('<div class="note n-info"><b>Prompt extraction could not register.</b> '
+                     "The system prompt is shorter than the verbatim run used to detect a "
+                     "leak, so those attacks could not score as broken and the overall rate "
+                     "reads low.</div>")
 
     # Headline numbers
-    parts.append("<div class=grid>")
-    for k, v in (("Attacks fired", scan.get("attacks_fired")),
-                 ("Broke the bot", scan.get("attacks_broke")),
-                 ("Overall break rate", _pct(scan.get("overall_break_rate"))),
-                 ("English", _pct(scan.get("english_break_rate")))):
-        parts.append(f"<div class=card><div class=k>{_e(k)}</div>"
-                     f"<div class=v>{_e(v)}</div></div>")
+    parts.append('<div class="specs">')
+    parts.append(_spec("Attacks fired", scan.get("attacks_fired", 0)))
+    parts.append(_spec("Broke the bot", scan.get("attacks_broke", 0),
+                       f"{_pct(scan.get('overall_break_rate'))} of attacks"))
+    parts.append(_spec("English break rate", _pct(scan.get("english_break_rate")),
+                       "The baseline"))
     parts.append("</div>")
 
     # Provenance: what was actually tested, and how trustworthy it is.
-    parts.append("<h2>What was tested</h2><table>")
-    rows = [
+    parts.append("<h2>What was tested</h2><dl>")
+    # A simulated run attacked nothing and judged nothing. Naming the model it
+    # would have attacked, or saying its temperature was pinned, would let a
+    # forwarded copy of this file read as a real test of that model.
+    rows = [("Victim model", "none, this was a simulated run"),
+            ("Phrasings per cell", scan.get("phrasings_per_cell")),
+            ("Mode", "MOCK-SIMULATED")] if mock else [
         ("Victim model", victim.get("label") or scan.get("model")),
         ("Vendor", victim.get("vendor")),
         ("Compliance judge", scan.get("judge_model")),
@@ -132,17 +160,17 @@ def build_report(scan: dict) -> str:
          "yes, this model cannot switch thinking off, so it is not directly "
          "comparable with a victim that answers immediately"
          if victim.get("thinking_forced") else None),
-        ("Prompt fingerprint", (scan.get("prompt_sha256") or "")[:16] + "..."),
+        ("Prompt fingerprint", ((scan.get("prompt_sha256") or "")[:16] + "...")
+         if scan.get("prompt_sha256") else None),
         ("Mode", "MOCK-SIMULATED" if mock else "live"),
     ]
     for k, v in rows:
         if v not in (None, ""):
-            parts.append(f"<tr><td class=dim>{_e(k)}</td>"
-                         f"<td class=mono>{_e(v)}</td></tr>")
-    parts.append("</table>")
+            parts.append(f"<dt>{_e(k)}</dt><dd>{_e(v)}</dd>")
+    parts.append("</dl>")
 
-    # Tier comparison, or an honest explanation of why there isn't one.
-    tiers = {}
+    # Tier comparison, or a plain explanation of why there isn't one.
+    tiers: dict[str, list[float]] = {}
     for code, d in by_lang.items():
         if d.get("rate") is None or code in limited:
             continue
@@ -151,101 +179,105 @@ def build_report(scan: dict) -> str:
     if tiers.get("low") and tiers.get("high"):
         lo = sum(tiers["low"]) / len(tiers["low"])
         hi = sum(tiers["high"]) / len(tiers["high"])
-        parts.append("<div class=grid>")
+        parts.append('<div class="specs">')
         for t in ("high", "mid", "low"):
             if tiers.get(t):
                 avg = sum(tiers[t]) / len(tiers[t])
-                parts.append(f"<div class=card><div class=k>{_e(t)}-resource "
-                             f"({len(tiers[t])} langs)</div>"
-                             f"<div class=v>{avg:.0%}</div></div>")
+                parts.append(_spec(f"{t.capitalize()} resource", f"{avg:.0%}",
+                                   f"{len(tiers[t])} languages"))
         parts.append("</div>")
-        verdict = ("more often" if lo > hi else "less often")
-        parts.append(f"<p class=sub>Low-resource languages broke <b>{abs(lo-hi):.0%}"
-                     f"</b> {verdict} than high-resource ones.</p>")
+        direction = "more often" if lo > hi else "less often"
+        parts.append(f'<p class="dim">Low resource languages broke {abs(lo - hi):.0%} '
+                     f"{direction} than high resource ones, averaged per language. "
+                     f"Whether that is more than chance is tested in the app and the "
+                     f"JSON export, not asserted here.</p>")
     else:
-        parts.append("<div class='banner b-info'>The low-versus-high comparison "
-                     "could not be computed: this scan did not include languages "
-                     "from both tiers. Generate the low-resource languages and "
-                     "scan again.</div>")
+        parts.append('<div class="note n-info"><b>No tier comparison.</b> This scan did not '
+                     "include languages from both the low and high resource tiers, so the "
+                     "comparison could not be computed. Generate the low resource languages "
+                     "and scan again.</div>")
 
     if limited:
         names = ", ".join(_e(by_lang.get(c, {}).get("name", c)) for c in sorted(limited))
-        parts.append(f"<div class='banner b-bad'>Excluded from the comparison: "
-                     f"<b>{names}</b>. The bot could not follow ordinary, harmless "
-                     f"instructions in these languages, so a low break rate there "
-                     f"reflects incapacity rather than defence and would hide a "
-                     f"real gap.</div>")
+        parts.append(f'<div class="note n-bad"><b>Left out of the comparison: {names}.</b> '
+                     f"The bot could not follow ordinary, harmless instructions in these "
+                     f"languages, so a low break rate there reflects incapacity rather than "
+                     f"defence and would hide a real gap.</div>")
 
-    # Per-language table
-    parts.append("<h2>By language</h2><table>"
-                 "<tr><th>Language</th><th>Tier</th><th>Break rate</th>"
-                 "<th></th><th>Attacks</th></tr>")
-    for code, d in sorted(by_lang.items(),
-                          key=lambda kv: -(kv[1].get("rate") or -1)):
+    # Per-language table, most broken first, English drawn as the baseline.
+    parts.append("<h2>By language</h2><table><thead><tr><th>Language</th>"
+                 "<th class=hide-sm>Tier</th><th></th><th class=num>Broke</th>"
+                 "<th class=num>Rate</th></tr></thead><tbody>")
+    for code, d in sorted(by_lang.items(), key=lambda kv: -(kv[1].get("rate") or -1)):
         rate = d.get("rate")
-        flag = " <span class=dim>(unscoreable)</span>" if code in limited else ""
+        native = d.get("native")
+        nat = f'<span class="nat" dir="auto">{_e(native)}</span>' if native else ""
+        flag = ' <span class="dim">(not scoreable)</span>' if code in limited else ""
         parts.append(
-            f"<tr><td>{_e(d.get('name', code))}{flag}</td>"
-            f"<td class=dim>{_e(d.get('tier','?'))}</td>"
-            f"<td class=mono>{_pct(rate)}</td>"
-            f"<td><div class=bar><span style='width:{(rate or 0)*100:.0f}%;"
-            f"background:{_heat(rate)}'></span></div></td>"
-            f"<td class=dim>{_e(d.get('broke',0))}/{_e(d.get('total',0))}</td></tr>")
-    parts.append("</table>")
+            f"<tr><td>{_e(d.get('name', code))}{nat}{flag}</td>"
+            f"<td class='dim hide-sm'>{_e(d.get('tier', '?'))}</td>"
+            f"<td style='width:34%'>{_bar(rate, baseline=(code == 'en'))}</td>"
+            f"<td class='num dim'>{_e(d.get('broke', 0))} of {_e(d.get('total', 0))}</td>"
+            f"<td class=num>{_pct(rate)}</td></tr>")
+    parts.append("</tbody></table>")
+    if "en" in by_lang:
+        parts.append('<p class="dim" style="font-size:.8125rem">English, in grey, is the '
+                     "baseline every other language is compared against.</p>")
 
-    # Categories
+    # Attack types
     if scan.get("by_category"):
-        parts.append("<h2>By attack type</h2><table>"
-                     "<tr><th>Attack</th><th>Break rate</th><th></th></tr>")
+        parts.append("<h2>By attack type</h2><table><thead><tr><th>Attack type</th><th></th>"
+                     "<th class=num>Rate</th></tr></thead><tbody>")
         for cat, d in sorted(scan["by_category"].items(),
                              key=lambda kv: -(kv[1].get("rate") or -1)):
             rate = d.get("rate")
-            parts.append(
-                f"<tr><td>{_e(cat.replace('_',' ').title())}</td>"
-                f"<td class=mono>{_pct(rate)}</td>"
-                f"<td><div class=bar><span style='width:{(rate or 0)*100:.0f}%;"
-                f"background:{_heat(rate)}'></span></div></td></tr>")
-        parts.append("</table>")
+            parts.append(f"<tr><td>{_e(cat.replace('_', ' ').capitalize())}</td>"
+                         f"<td style='width:40%'>{_bar(rate)}</td>"
+                         f"<td class=num>{_pct(rate)}</td></tr>")
+        parts.append("</tbody></table>")
 
     # Regression against a baseline, if the scan carried one
     cmp = scan.get("comparison")
     if cmp:
         parts.append("<h2>Compared with the baseline</h2>")
         if not cmp.get("comparable"):
-            parts.append(f"<div class='banner b-info'>Not comparable: "
+            parts.append(f'<div class="note n-info"><b>Not comparable.</b> '
                          f"{_e(cmp.get('reason'))}</div>")
         else:
-            cls = "b-bad" if cmp.get("regressed") else "b-ok"
-            msg = ("This bot is measurably easier to break than the baseline."
-                   if cmp.get("regressed") else
-                   "No regression: nothing got measurably worse.")
-            parts.append(f"<div class='banner {cls}'><b>{msg}</b></div>")
+            if cmp.get("regressed"):
+                parts.append('<div class="note n-bad"><b>Regression.</b> This bot is '
+                             "measurably easier to break than the baseline.</div>")
+            else:
+                parts.append('<div class="note n-ok"><b>No regression.</b> Nothing got '
+                             "measurably worse.</div>")
             if cmp.get("regressions"):
-                parts.append("<table><tr><th>Language</th><th>Before</th>"
-                             "<th>After</th><th>Change</th></tr>")
+                parts.append("<table><thead><tr><th>Language</th><th class=num>Before</th>"
+                             "<th class=num>After</th><th class=num>Change</th></tr>"
+                             "</thead><tbody>")
                 for r in cmp["regressions"]:
                     parts.append(f"<tr><td>{_e(r['name'])}</td>"
-                                 f"<td class=mono>{r['before']:.0%}</td>"
-                                 f"<td class=mono>{r['after']:.0%}</td>"
-                                 f"<td class=mono>{r['delta']:+.0%}</td></tr>")
-                parts.append("</table>")
+                                 f"<td class=num>{r['before']:.0%}</td>"
+                                 f"<td class=num>{r['after']:.0%}</td>"
+                                 f"<td class=num>{r['delta']:+.0%}</td></tr>")
+                parts.append("</tbody></table>")
 
     # What broke, and the fix
     broken = scan.get("broken_categories") or []
     if broken:
         import defenses
-        parts.append("<h2>Recommended fixes</h2><ul>")
+        parts.append("<h2>Recommended fixes</h2><ul class=fix>")
         for clause in defenses.recommend(broken):
             parts.append(f"<li>{_e(clause)}</li>")
         parts.append("</ul>")
 
     parts.append(
-        "<footer>Generated by PolyGuard. Break detection is canary-based and "
-        "confirmed by a language-agnostic judge, so a refusal that quotes the "
-        "token is not counted as a break. Results are specific to the victim "
-        "model named above. No language in this project has been reviewed by a "
-        "native speaker, so translation quality remains a known limitation."
-        "</footer></div></body></html>")
+        "<footer>Generated by PolyGuard. A break is counted only when a judge that reads "
+        "any language decides the bot complied, so a refusal that quotes the code word is "
+        "not a break. Results are specific to the victim model named above. No language "
+        "in this project has been reviewed by a native speaker yet, so translation quality "
+        "remains a known limitation. "
+        f'<a href="{REPO_URL}">Source, audit and preregistration</a>.'
+        "</footer></main></body></html>")
     return "".join(parts)
 
 
