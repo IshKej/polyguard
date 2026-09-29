@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 208 independent checks across the data, the
+PolyGuard full verification battery. Runs 210 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1360,6 +1360,21 @@ ck("109. the report discloses a victim that could not stop thinking",
        {"victim": engine.victim_meta("claude-opus-5-5"), "by_lang": {}})
    and "Reasoned before answering" not in _rh.build_report(
        {"victim": engine.victim_meta("claude-haiku-4-5"), "by_lang": {}}))
+
+# 110. Accent-stripped text passes the script check, because ASCII is still Latin
+# script. Eight languages shipped that way (AUDIT.md finding 55).
+import linguistics as _ling
+_acc = [f for f in _ling.audit_bank(json.loads((HERE / "attack_bank.json").read_text(encoding="utf-8")))["findings"]
+        if f["kind"] == "accents"]
+ck("110. no language in the bank is typed without its accents", not _acc)
+
+# 111. And the check has teeth: stripping accents from a correct language trips it.
+import unicodedata as _ud
+_es = [a["text"] for a in json.loads((HERE / "attack_bank.json").read_text(encoding="utf-8"))["attacks"]
+       if a["lang"] == "es"]
+_stripped = ["".join(c for c in _ud.normalize("NFD", t) if not _ud.combining(c)) for t in _es]
+ck("111. the accent check fires on deliberately stripped Spanish",
+   bool(_ling.check_diacritics("es", _stripped)) and not _ling.check_diacritics("es", _es))
 
 # report
 passed = sum(1 for _, ok in checks if ok)

@@ -186,6 +186,40 @@ def check_length_ratio(text: str, reference: str) -> list[str]:
     return []
 
 
+# Letters these Latin-script languages cannot be written correctly without.
+# Stripped text passes the script check, because plain ASCII is still Latin
+# script, so it needs its own check. AUDIT.md finding 55: eight languages had
+# every attack typed without accents while their controls were accented, which
+# made the attack text degraded and the capability control not.
+# Only languages whose diacritics are frequent enough in ordinary sentences to
+# make a share threshold meaningful are listed.
+DIACRITICS = {
+    "es": "áéíóúñü¿¡", "fr": "éèêàçùâîôûëïœ", "it": "àèéìíòóù", "pt": "ãõáéíóúâêôçà",
+    "de": "äöüß", "pl": "ąćęłńóśźż", "tr": "çğıöşü", "cs": "áčďéěíňóřšťúůýž",
+    "sk": "áäčďéíĺľňóôŕšťúýž", "ro": "ăâîșțşţ", "hu": "áéíóöőúüű", "hr": "čćđšž",
+    "sl": "čšž", "lt": "ąčęėįšųūž", "lv": "āčēģīķļņšūž", "et": "äöõüšž",
+    "fi": "äöå", "sv": "åäö", "no": "æøå", "da": "æøå", "is": "áðéíóúýþæö",
+    "ca": "àçèéíïòóúü", "gl": "áéíñóú", "az": "çəğıöşü", "sq": "ëç", "ga": "áéíóú",
+    "vi": "ăâđêôơưáàảãạéèẻẽẹíìỉĩịóòỏõọúùủũụýỳỷỹỵấầẩẫậắằẳẵặếềểễệốồổỗộớờởỡợứừửữự",
+}
+
+# Measured on this bank: stripped text sits at 14 to 29 percent of items with
+# any diacritic, corrected text at 57 to 100. The floor sits between the two.
+MIN_DIACRITIC_SHARE = 0.45
+
+
+def check_diacritics(lang: str, texts: list[str]) -> list[str]:
+    """Flag a language whose text looks typed without its accents."""
+    req = DIACRITICS.get(lang)
+    if not req or len(texts) < 6:
+        return []
+    share = sum(1 for t in texts if any(ch in req for ch in t.lower())) / len(texts)
+    if share < MIN_DIACRITIC_SHARE:
+        return [f"only {share:.0%} of items contain any of this language's diacritics "
+                f"(floor {MIN_DIACRITIC_SHARE:.0%}); text looks typed without accents"]
+    return []
+
+
 def audit_bank(bank: dict) -> dict:
     """
     Run every offline check over every attack and control in the bank.
@@ -227,6 +261,16 @@ def audit_bank(bank: dict) -> dict:
                 check_length_ratio(t, en_controls.get(c.get("variant", 0), "")))
         seen.setdefault(t.strip(), []).append(c["id"])
 
+    # Accents are judged per language, not per string: a single sentence can
+    # legitimately contain none, but a whole language cannot.
+    texts_by_lang: dict[str, list[str]] = {}
+    for item in bank["attacks"] + bank.get("controls", []):
+        texts_by_lang.setdefault(item["lang"], []).append(item["text"])
+    for lang, texts in sorted(texts_by_lang.items()):
+        for m in check_diacritics(lang, texts):
+            findings.append({"id": f"{lang} (all items)", "lang": lang,
+                             "kind": "accents", "problem": m})
+
     # The same string under two different languages means at least one of them
     # was never actually translated.
     for text, ids in seen.items():
@@ -252,7 +296,7 @@ def main() -> int:
           f"across {len(bank['languages'])} languages.")
     print("Applied to hand-authored and generated languages alike.\n")
     if rep["clean"]:
-        print("No script, mojibake, length or duplication problems found.")
+        print("No script, mojibake, accent, length or duplication problems found.")
     else:
         print(f"{len(rep['findings'])} finding(s):\n")
         for f in rep["findings"]:
@@ -261,7 +305,8 @@ def main() -> int:
                                           sorted(rep["by_lang"].items())))
     print("\nWhat this cannot do: none of these checks establish fluency or")
     print("naturalness. They catch text that is not in the right script, is")
-    print("mangled, is truncated, or was never translated at all. Native review")
+    print("mangled, typed without its accents, is truncated, or was never")
+    print("translated at all. Native review")
     print("is tracked separately in NATIVE_REVIEW.md.")
     return 1 if (rep["findings"] and "--strict" in sys.argv) else 0
 

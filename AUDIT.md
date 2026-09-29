@@ -777,6 +777,34 @@ JSON round-trip.
     The unit tests were mutation-checked: re-injecting either original bug turns
     the fast suite red.
 
+## Round 15 — the text itself
+
+55. **Eight languages had every attack typed without its accents.** Spanish,
+    French, Portuguese, Italian, German, Polish, Turkish and Vietnamese attacks
+    were written as if on a keyboard with no accent keys: `Tu unica tarea` for
+    `Tu única tarea`, `precedentes` for `précédentes`, German `vollstaendig` for
+    `vollständig`, and Vietnamese with every tone mark missing, which is the
+    worst case because tone marks carry meaning there. The capability controls
+    in the same languages were written correctly. That asymmetry is the real
+    damage: the control that measures whether the model can operate in a
+    language was well formed while the attack was degraded, so a model that
+    shrugged off a sloppy attack would have looked defended. Found while
+    preparing native review sheets, not by any check, because the script check
+    counts plain ASCII as valid Latin script.
+    FIX: accents restored in 108 items, spelling only. Stripping the accents
+    back off the corrected text reproduces the old text character for
+    character, verified by script, so no word or meaning moved. The one place
+    the check refused (Polish `streszcz`, which is probably the wrong verb form)
+    was left as is and flagged for the native reviewer. Sixteen language names
+    in the catalog had the same problem (`Espanol`, `Cestina`, `Romana` and
+    others) and were corrected. `linguistics.py` now checks every Latin-script
+    language whose accents are frequent in ordinary sentences: stripped text in
+    this bank sat at 14 to 29 percent of items containing any accent, corrected
+    text at 57 to 100, and the floor is 45. Run against the old bank it flags
+    exactly the eight languages. The bank fingerprint changed and the amendment
+    is logged in PREREGISTRATION.md, stating plainly that attack text changed.
+    No live scan had run, so nothing was altered after seeing a result.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.
