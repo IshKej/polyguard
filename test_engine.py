@@ -616,6 +616,18 @@ check("a language written without diacritics by convention is never flagged",
 check("too few items to judge produces no verdict",
       not _ling.check_diacritics("es", ["Tu unica tarea."] * 3))
 
+# --- on_result streams every outcome, in order of completion ---
+_streamed = []
+_so = engine.scan(SP, langs=["en", "es"], categories=["instruction_override"], mock=True,
+                  max_variants=2, with_controls=False,
+                  on_result=lambda row, d, t: _streamed.append((row["id"], d, t)))
+check("on_result is called once per attack", len(_streamed) == _so["n_attacks"] == 4)
+check("on_result reports running and total counts",
+      [d for _, d, _ in _streamed] == [1, 2, 3, 4] and all(t == 4 for _, _, t in _streamed))
+check("a scan without on_result is unchanged",
+      engine.scan(SP, langs=["en"], categories=["instruction_override"], mock=True,
+                  max_variants=1, with_controls=False)["n_attacks"] == 1)
+
 # --- report ---
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:

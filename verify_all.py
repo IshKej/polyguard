@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 212 independent checks across the data, the
+PolyGuard full verification battery. Runs 213 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1399,6 +1399,13 @@ ck("113. a simulated report never names a model or claims a pinned temperature",
    "Haiku" not in _tested and "Temperature pinned" not in _tested
    and "simulated run" in _tested
    and "none (simulated run)" in (HERE / "cli.py").read_text(encoding="utf-8"))
+
+# 114. The web API: spend gate, input limits, streaming, clean failures, and a
+# verdict that never turns a simulation into a finding. Its own suite, run here so
+# the battery covers every surface a visitor can reach.
+_api = _sp.run([sys.executable, str(HERE / "api" / "test_api.py")], cwd=str(HERE),
+               capture_output=True, text=True, encoding="utf-8", timeout=600)
+ck("114. the web API suite passes", _api.returncode == 0 and "API tests passed" in _api.stdout)
 
 # report
 passed = sum(1 for _, ok in checks if ok)

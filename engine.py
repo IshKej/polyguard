@@ -867,7 +867,8 @@ def run_attack(client, system_prompt, attack, canary, mock, model, victim=None,
 # --------------------------------------------------------------------------- #
 def scan(system_prompt: str, langs=None, categories=None, client=None,
          mock=None, model=VICTIM_MODEL, progress=None, max_variants=None,
-         victim=None, with_controls=True, extraction_reference=None) -> dict:
+         victim=None, with_controls=True, extraction_reference=None,
+         on_result=None) -> dict:
     """
     max_variants caps how many phrasings per (language, category) are fired. 3 gives
     the full statistical depth; 1 is a fast pass for very large scans. Fewer variants
@@ -924,6 +925,11 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
             done += 1
             if progress:
                 progress(done, total)
+            # The web app streams each outcome as it lands, so the live grid can
+            # animate the scan rather than wait for the end. A separate hook
+            # keeps every existing two-argument `progress` caller unchanged.
+            if on_result:
+                on_result(results[-1], done, total)
 
     # Capability controls: benign twins that measure whether the bot follows
     # ordinary instructions in each language. Run after the attacks and kept

@@ -143,9 +143,10 @@ def scan_payload(out: dict, prompt: str, args) -> dict:
         # printed in, and somebody will read this without the context.
         "mode": "MOCK-SIMULATED" if out["mock"] else "live",
         "mock": out["mock"],
-        "victim": vm,
-        "model": out.get("model"),
-        "judge_model": out.get("judge_model"),
+        # A simulated run attacked and judged nothing, so it names no model.
+        "victim": None if out["mock"] else vm,
+        "model": None if out["mock"] else out.get("model"),
+        "judge_model": None if out["mock"] else out.get("judge_model"),
         "phrasings_per_cell": out.get("max_variants"),
         "temperature_pinned": vm.get("deterministic"),
         "thinking_forced": vm.get("thinking_forced"),
