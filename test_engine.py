@@ -548,7 +548,7 @@ check("a run with only one tier present gets no invented p-value",
 
 # ---------------------------------------------------------------------------
 # The victim request, per model family. The API changed under this project
-# twice: newer Claudes removed temperature, and some cannot switch thinking off
+# twice: newer Anthropic models removed temperature, and some cannot switch thinking off
 # at all. Each shape below is a 400 on every attack if it is wrong, so a live
 # scan would die at the first call. AUDIT.md finding 54.
 # ---------------------------------------------------------------------------

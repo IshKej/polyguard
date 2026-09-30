@@ -31,7 +31,7 @@ published class is kept and the anomaly is named here instead. The capability
 controls exist to catch a language the model cannot really operate in.
 
 Languages already hand-authored and verified in generate_attack_bank.py are marked
-authored=True here. expand_languages.py translates the rest via Claude and appends
+authored=True here. expand_languages.py translates the rest through the Anthropic API and appends
 them to attack_bank.json flagged verified=False.
 """
 

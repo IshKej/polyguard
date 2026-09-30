@@ -104,7 +104,7 @@ def anthropic_victim_text(resp) -> str:
         raise RuntimeError("victim hit max_tokens before producing an answer")
     return text
 
-# OpenAI reasoning models reject temperature the same way the newer Claudes do.
+# OpenAI reasoning models reject temperature the same way the newer Anthropic models do.
 _OPENAI_NO_SAMPLING_PREFIXES = ("o1", "o3", "o4", "gpt-5")
 
 

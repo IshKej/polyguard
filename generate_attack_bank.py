@@ -24,7 +24,7 @@ Five attack categories:
 
 Twenty hand-authored languages: English plus major world languages and Ishaan's
 heritage languages Hindi and Gujarati. expand_languages.py translates the rest of
-the catalog (see languages_catalog.py) via Claude and can also fill/refresh variants
+the catalog (see languages_catalog.py) through the Anthropic API and can also fill/refresh variants
 with a reverse-translation check.
 """
 import base64

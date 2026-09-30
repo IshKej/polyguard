@@ -101,7 +101,7 @@ streamlit run app.py
 | `attack_bank.json` | The multilingual attacks (generated) |
 | `generate_attack_bank.py` | Builds the 20 hand-authored languages × 3 variants |
 | `languages_catalog.py` | The full 87-language target catalog with resource tiers |
-| `expand_languages.py` | Translates the rest via Claude, with a verification gate |
+| `expand_languages.py` | Translates the rest through the Anthropic API, with a verification gate |
 | `validate_bank.py` | Validates every attack in the bank |
 | `cli.py` | Headless scanning, regression detection, CI exit codes |
 | `report_html.py` | One self-contained HTML report, caveats included |

@@ -176,7 +176,7 @@ make a judge or a teammate distrust the whole project.
 
 20. **Sending temperature to a newer victim model would have killed cross-model
     scans.** `_real_victim` passed `temperature=0` unconditionally. The current
-    Claude tiers removed the sampling parameters, so scanning Sonnet 5 or Opus 5
+    Anthropic tiers removed the sampling parameters, so scanning Sonnet 5 or Opus 5
     returns a 400 on every attack, and the old check 18 was a **string match on
     the source** that would have passed while this was broken. FIX: temperature is
     sent only where the model accepts it and omitted where it does not; models
@@ -751,7 +751,7 @@ JSON round-trip.
 
 ## Round 14 — the API moved under the victim
 
-54. **Two families of Claude victim would have failed every single attack.**
+54. **Two families of Anthropic victim model would have failed every single attack.**
     The victim request is built per model because the API differs per model, and
     it had fallen behind twice. First, `claude-opus-5-5` was missing from the set
     of models that removed sampling parameters, so it would have been sent

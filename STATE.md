@@ -1,8 +1,8 @@
 # PolyGuard: current state and handoff
 
-**Last updated 2026-09-17.** Read this first if you are picking the project up
-cold, including a new Claude session. Everything below is reconstructable from the
-repo, but this is the short version and the reasoning behind the decisions.
+**Last updated 2026-09-29.** Read this first if you are picking the project up
+cold. Everything below is reconstructable from the repo, but this is the short
+version and the reasoning behind the decisions.
 
 Deadline: **Congressional App Challenge, 26 October 2026.**
 
@@ -132,10 +132,7 @@ tracked rather than waved off.
 
 ## Where things live
 
-- Working copy: `C:\\Users\\ishaa\\OneDrive\\Claude\\polyguard\\` (OneDrive
-  backs this up automatically)
-- Google Drive mirror: folder `PolyGuard - Multilingual AI Vulnerability
-  Scanner`, id `1bBNG1lvArvKmdIj7fqwZogkcXFJbUAJl`. **Goes stale on every edit.**
+- Source of truth: this GitHub repository, https://github.com/IshKej/polyguard
   GitHub should replace it as the real mirror.
 - Nothing secret is in the repo. `.gitignore` excludes `secrets.toml`, and no key
   is hardcoded anywhere.

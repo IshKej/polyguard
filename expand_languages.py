@@ -1,5 +1,5 @@
 """
-Expand the attack bank to the full language catalog using Claude.
+Expand the attack bank to the full language catalog using the Anthropic API.
 
 The 20 hand-authored languages in generate_attack_bank.py are the quality anchors.
 This script translates the same seed attacks into every remaining language in

@@ -652,7 +652,7 @@ def _real_victim(client, system_prompt: str, attack: dict, model: str) -> str:
     """
     Single-vendor victim path: a raw Anthropic client plus a model id.
 
-    Temperature is sent only where the model still accepts it. The newer Claude
+    Temperature is sent only where the model still accepts it. The newer Anthropic
     tiers removed the sampling parameters, and sending temperature to one of them
     is a 400, not a warning, so a cross-model comparison would have died on the
     second model. Where the API allows it we pin temperature=0 for
