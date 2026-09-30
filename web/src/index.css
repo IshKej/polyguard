@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/*
+  PolyGuard's colours are roles, not values. A theme fills the roles; nothing in a
+  component names a hue. The rule every theme follows is the one the best product
+  sites share: one colour, committed to completely, flat, with the real product
+  (the board) as the main visual and restraint everywhere else.
+
+    brand      the hero and call to action surfaces
+    page       where reading happens
+    band       the language ticker
+    deep       the dark "how it works" section
+    red/green  only ever "got through" and "held"
+    board      the departure board, the same in every theme, with its own lamps
+*/
+@theme {
+  --color-brand: #1f3fff;
+  --color-on-brand: #ffffff;
+  --color-on-brand-dim: #d5dcff;
+  --color-tile: #ffffff;        /* the flap in the headline, and the mark */
+  --color-on-tile: #1f3fff;
+
+  --color-page: #eef1ff;
+  --color-panel: #ffffff;
+  --color-ink: #060b2e;
+  --color-dim: #414a78;
+  --color-rule: #c9d0f2;
+
+  --color-band: #060b2e;
+  --color-on-band: #ffffff;
+  --color-on-band-alt: #9db0ff;
+
+  --color-deep: #000000;
+  --color-on-deep: #ffffff;
+  --color-on-deep-dim: #a6a6a6;
+  --color-deep-accent: #9db0ff;
+
+  --color-accent: #1f3fff;      /* selections, progress, the way forward */
+  --color-on-accent: #ffffff;
+
+  --color-red: #c8102e;
+  --color-green: #00703c;
+  --color-on-signal: #ffffff;   /* text on a red or green fill */
+  --color-link: #1f3fff;
+
+  --color-board: #000000;
+  --color-board-edge: #000000;
+  --color-flap: #1c1c1c;
+  --color-lamp-grey: #a8a8a8;
+  --color-lamp-red: #ff5a4f;
+  --color-lamp-green: #3ddc84;
+  --color-lamp-amber: #ffb020;
+
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-sans: "Barlow", system-ui, sans-serif;
+
+  --animate-flap: flap .34s cubic-bezier(.3, .7, .3, 1) both;
+  --animate-wall: wall 70s linear infinite;
+
+  @keyframes flap {
+    from { transform: perspective(240px) rotateX(-92deg); }
+    to { transform: perspective(240px) rotateX(0); }
+  }
+  @keyframes wall {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+}
+
+/* Black, white type, and one orange that only ever marks the way forward. */
+[data-theme="midnight"] {
+  --color-brand: #000000; --color-on-brand: #ffffff; --color-on-brand-dim: #a6a6a6;
+  --color-tile: #ff5a1f; --color-on-tile: #000000;
+  --color-page: #000000; --color-panel: #141414; --color-ink: #ffffff; --color-dim: #a6a6a6; --color-rule: #2b2b2b;
+  --color-band: #ff5a1f; --color-on-band: #000000; --color-on-band-alt: #3d1200;
+  --color-deep: #111111; --color-on-deep: #ffffff; --color-on-deep-dim: #a6a6a6; --color-deep-accent: #ff5a1f;
+  --color-accent: #ff5a1f; --color-on-accent: #000000;
+  --color-red: #ff6b61; --color-green: #3ddc84; --color-on-signal: #000000; --color-link: #ff5a1f;
+  --color-board: #111111; --color-board-edge: #2b2b2b;
+}
+
+[data-theme="tomato"] {
+  --color-brand: #ff4b2b; --color-on-brand: #000000; --color-on-brand-dim: #3a0b00;
+  --color-tile: #000000; --color-on-tile: #ff4b2b;
+  --color-page: #ffefe9; --color-panel: #ffffff; --color-ink: #000000; --color-dim: #54403a; --color-rule: #f0cfc4;
+  --color-band: #000000; --color-on-band: #ffffff; --color-on-band-alt: #ff7a5f;
+  --color-deep: #000000; --color-deep-accent: #ff7a5f;
+  --color-accent: #ff4b2b; --color-on-accent: #000000;
+  --color-red: #b80f2a; --color-green: #00693a; --color-link: #0046b8;
+}
+
+[data-theme="pink"] {
+  --color-brand: #ff4f9a; --color-on-brand: #000000; --color-on-brand-dim: #3d0a22;
+  --color-tile: #000000; --color-on-tile: #ff4f9a;
+  --color-page: #ffeef5; --color-panel: #ffffff; --color-ink: #000000; --color-dim: #55404a; --color-rule: #f3cbdc;
+  --color-band: #000000; --color-on-band: #ffffff; --color-on-band-alt: #ff7db3;
+  --color-deep: #000000; --color-deep-accent: #ff7db3;
+  --color-accent: #ff4f9a; --color-on-accent: #000000;
+  --color-red: #b80f2a; --color-green: #00693a; --color-link: #0046b8;
+}
+
+html { background: var(--color-page); scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--color-ink);
+  background: var(--color-page);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: var(--color-ink); color: var(--color-page); }
+:focus-visible { outline: 3px solid var(--color-link); outline-offset: 3px; }
+
+/* Display type: condensed, heavy, tight. The lettering carries the identity. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.012em;
+}
+
+/*
+  One button system. A surface says what colour its buttons are, so a button on
+  the brand colour and a button on the page never need to know where they sit.
+*/
+.on-page { --btn: var(--color-ink); --btn-text: var(--color-page); }
+.on-brand { --btn: var(--color-on-brand); --btn-text: var(--color-brand); }
+.on-deep { --btn: var(--color-on-deep); --btn-text: var(--color-deep); }
+/* On black, the way forward is the one thing in colour. */
+[data-theme="midnight"] .on-brand, [data-theme="midnight"] .on-page { --btn: var(--color-accent); --btn-text: var(--color-on-accent); }
+
+/* The flap: a tile whose seam cuts across the letters and disappears into the
+   tile, the way a real split flap's does. */
+.flap {
+  position: relative; display: inline-block; border-radius: 6px;
+  padding: .02em .22em .06em; color: var(--color-on-tile); background: var(--color-tile);
+}
+.flap::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: max(2px, .035em); background: var(--color-tile);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 1.375rem;
+  letter-spacing: 0.01em; line-height: 1; white-space: nowrap;
+  padding: .9rem 1.6rem; border-radius: 6px; border: 2px solid var(--btn);
+  transition: background-color .12s ease, color .12s ease, transform .06s ease;
+}
+.btn:active:not(:disabled) { transform: translateY(2px); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-solid { background: var(--btn); color: var(--btn-text); }
+.btn-solid:hover:not(:disabled) { background: transparent; color: var(--btn); }
+.btn-line { background: transparent; color: var(--btn); }
+.btn-line:hover:not(:disabled) { background: var(--btn); color: var(--btn-text); }
+.btn-sm { font-size: 1.125rem; padding: .55rem 1.1rem; }
+
+/* A framed surface for forms and lists. */
+.panel { background: var(--color-panel); border: 2px solid var(--color-ink); border-radius: 6px; }
+
+.tag {
+  display: inline-block; font-family: var(--font-display); font-weight: 700;
+  font-size: .9375rem; line-height: 1; letter-spacing: .04em; text-transform: uppercase;
+  padding: .3rem .5rem; border-radius: 3px; white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
