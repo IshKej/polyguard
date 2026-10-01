@@ -1,6 +1,6 @@
 # PolyGuard web app
 
-The front end: a landing page, a scan setup screen, a live departure board that
+The front end: a landing page, a scan setup screen, a live board that
 fills in as attacks land, and a results screen. React, Vite, Tailwind and GSAP.
 It talks to the Python API in `../api`, which wraps the same engine the research
 console and CLI use.
@@ -33,13 +33,18 @@ deployment covers both.
 |---|---|
 | `src/App.jsx` | The four screens and the scan's state |
 | `src/api.js` | Every call to the server, and the result stream |
-| `src/components/Board.jsx` | The departure board, used on every screen |
+| `src/components/Chrome.jsx` | The nav (it takes the colour of the section under it) and the first visit loader |
 | `src/components/Landing.jsx` | The landing page |
+| `src/components/HighlighterField.jsx` | The hero's paper: the cursor is a highlighter that reveals the attack in other languages |
+| `src/components/Bubble3D.jsx` | The 3D speech bubble (Three.js, loaded after the page) that says no in each language |
+| `src/components/Board.jsx` | The scan board, used on every screen |
 | `src/components/Setup.jsx` | Choosing a bot, languages and attacks |
 | `src/components/LiveScan.jsx` | The scan as it happens |
 | `src/components/Results.jsx` | Verdict, languages, fixes, and the detail for researchers |
 | `src/components/Drawer.jsx` | Every attack in one language, with its English original |
-| `src/index.css` | The colour roles and the themes that fill them |
+| `src/index.css` | The grounds, the type, the highlighter stroke and the buttons |
 
-Colours are roles (`brand`, `page`, `accent`, and so on), never values. A theme
-is one block in `src/index.css`.
+The look is the test sheet: paper and ink grounds, one highlighter colour for
+"held" and the way forward, red only for "got through". A section declares its
+ground with the `paper`, `ink` or `on-hi` class. Why it looks this way, and the
+research behind it, is in `../docs/design-research.md`.

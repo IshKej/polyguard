@@ -27,15 +27,15 @@ export default function Drawer({ lang, rows, onClose }) {
 
   return (
     <div className="fixed inset-0 z-40">
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/60" />
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/70" />
       <aside
         ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`${lang.name} results`}
-        className="on-page absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col border-l-2 border-ink bg-page text-ink outline-none"
+        data-surface="paper" className="paper absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col border-l-2 border-ink outline-none"
       >
-        <header className="flex items-start justify-between gap-4 border-b-2 border-ink p-6">
+        <header className="flex items-start justify-between gap-4 border-b border-(--line) p-6">
           <div>
-            <h2 dir="auto" lang={lang.code} className="display text-5xl">{lang.native}</h2>
-            <p className="mt-2 text-dim">
+            <h2 dir="auto" lang={lang.code} className="display text-5xl normal-case"><span className="hl drawn">{lang.native}</span></h2>
+            <p className="mt-2 text-(--mute)">
               {lang.name}, {lang.tier} resource. {broke} of {scored} attacks got through ({pct(scored ? broke / scored : null)}).
             </p>
           </div>
@@ -44,28 +44,28 @@ export default function Drawer({ lang, rows, onClose }) {
 
         <div className="flex-1 space-y-4 overflow-y-auto p-6">
           {ordered.map((r) => (
-            <article key={r.id} className="panel p-5">
+            <article key={r.id} className="card p-5">
               <div className="mb-4 flex flex-wrap items-center gap-3">
-                <span className={`tag ${r.error ? 'bg-ink text-page' : r.broke ? 'bg-red text-on-signal' : 'bg-green text-on-signal'}`}>
+                <span className={`tag ${r.error ? 'bg-amber text-ink' : r.broke ? 'bg-red text-ink' : 'bg-hi text-ink ring-1 ring-ink'}`}>
                   {r.error ? 'No answer' : r.broke ? 'Got through' : 'Held'}
                 </span>
-                <span className="text-dim">{label(r.category)}, phrasing {r.variant + 1}</span>
+                <span className="text-(--mute)">{label(r.category)}, phrasing {r.variant + 1}</span>
               </div>
 
-              <p className="text-sm font-semibold text-dim">Sent in {lang.name}</p>
+              <p className="caption text-(--mute)">Sent in {lang.name}</p>
               <p dir="auto" lang={lang.code} className="mt-1 whitespace-pre-wrap break-words">{r.attack}</p>
 
               {lang.code !== 'en' && r.english && (
                 <>
-                  <p className="mt-4 text-sm font-semibold text-dim">The same attack in English</p>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-dim">{r.english}</p>
+                  <p className="caption mt-4 text-(--mute)">The same attack in English</p>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-(--mute)">{r.english}</p>
                 </>
               )}
 
               {r.reply && (
                 <>
-                  <p className="mt-4 text-sm font-semibold text-dim">The bot replied</p>
-                  <p dir="auto" className="mt-1 whitespace-pre-wrap break-words border-l-4 border-rule pl-3">{r.reply}</p>
+                  <p className="caption mt-4 text-(--mute)">The bot replied</p>
+                  <p dir="auto" className="mt-1 whitespace-pre-wrap break-words border-l-4 border-ink pl-3">{r.reply}</p>
                 </>
               )}
               {r.error && <p className="mt-3 text-sm">This attack could not be scored and is left out of the rate.</p>}

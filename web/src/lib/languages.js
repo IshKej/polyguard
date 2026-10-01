@@ -16,3 +16,12 @@ export function representative(languages, target = 12) {
   }
   return pick
 }
+
+// "No" in each language the bank covers: what the bot answers when it holds.
+// Tagalog uses "Huwag" ("don't"), because its word for no is "Hindi", which
+// would read as the name of another language on this page.
+export const NO = {
+  en: 'No.', es: 'No.', hi: 'नहीं।', gu: 'ના.', zh: '不。', tl: 'Huwag.', vi: 'Không.', ar: 'لا.', ko: '아니요.',
+  fr: 'Non.', ru: 'Нет.', pt: 'Não.', de: 'Nein.', it: 'No.', ja: 'いいえ。', pl: 'Nie.', tr: 'Hayır.',
+  id: 'Tidak.', uk: 'Ні.', el: 'Όχι.',
+}

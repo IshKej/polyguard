@@ -1,169 +1,169 @@
 @import "tailwindcss";
 
 /*
-  PolyGuard's colours are roles, not values. A theme fills the roles; nothing in a
-  component names a hue. The rule every theme follows is the one the best product
-  sites share: one colour, committed to completely, flat, with the real product
-  (the board) as the main visual and restraint everywhere else.
+  PolyGuard's look: the test sheet.
 
-    brand      the hero and call to action surfaces
-    page       where reading happens
-    band       the language ticker
-    deep       the dark "how it works" section
-    red/green  only ever "got through" and "held"
-    board      the departure board, the same in every theme, with its own lamps
+  PolyGuard reads every language with a highlighter in hand and grades the bot
+  with a red pen. So the grounds are paper and ink, the one bright colour is
+  highlighter fluorescent, and red only ever means an attack got through.
+
+    paper / ink     the two grounds, alternating section by section
+    hi              highlighter: "held", the way forward, and the brand
+    red             red pen: "got through", nothing else
+    mute, rule      secondary text and lines, one set per ground
+
+  A section says which ground it is with the `paper` or `ink` class, and that
+  sets --bg, --fg, --mute, --line and the button colours for everything inside.
 */
-@theme {
-  --color-brand: #1f3fff;
-  --color-on-brand: #ffffff;
-  --color-on-brand-dim: #d5dcff;
-  --color-tile: #ffffff;        /* the flap in the headline, and the mark */
-  --color-on-tile: #1f3fff;
+@theme static {
+  --color-paper: #eeede5;
+  --color-paper-2: #e2e1d6;
+  --color-ink: #1a1c15;
+  --color-ink-2: #25281f;
+  --color-ink-3: #3a3e31;
+  --color-hi: #e6ff2e;
+  --color-red: #ff4a2b;
+  --color-red-text: #c22a10;
+  --color-mute: #5c5f51;
+  --color-mute-ink: #a7ab9a;
+  --color-rule: #cfcfc2;
+  --color-amber: #ffb020;
 
-  --color-page: #eef1ff;
-  --color-panel: #ffffff;
-  --color-ink: #060b2e;
-  --color-dim: #414a78;
-  --color-rule: #c9d0f2;
-
-  --color-band: #060b2e;
-  --color-on-band: #ffffff;
-  --color-on-band-alt: #9db0ff;
-
-  --color-deep: #000000;
-  --color-on-deep: #ffffff;
-  --color-on-deep-dim: #a6a6a6;
-  --color-deep-accent: #9db0ff;
-
-  --color-accent: #1f3fff;      /* selections, progress, the way forward */
-  --color-on-accent: #ffffff;
-
-  --color-red: #c8102e;
-  --color-green: #00703c;
-  --color-on-signal: #ffffff;   /* text on a red or green fill */
-  --color-link: #1f3fff;
-
-  --color-board: #000000;
-  --color-board-edge: #000000;
-  --color-flap: #1c1c1c;
-  --color-lamp-grey: #a8a8a8;
-  --color-lamp-red: #ff5a4f;
-  --color-lamp-green: #3ddc84;
-  --color-lamp-amber: #ffb020;
-
-  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --font-sans: "Barlow", system-ui, sans-serif;
+  --font-display: "Mona Sans", "Arial Black", sans-serif;
+  --font-serif: "Gloock", Georgia, serif;
+  --font-sans: "Mona Sans", system-ui, sans-serif;
 
   --animate-flap: flap .34s cubic-bezier(.3, .7, .3, 1) both;
-  --animate-wall: wall 70s linear infinite;
+  --animate-marquee: marquee 60s linear infinite;
 
   @keyframes flap {
     from { transform: perspective(240px) rotateX(-92deg); }
     to { transform: perspective(240px) rotateX(0); }
   }
-  @keyframes wall {
+  @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
   }
 }
 
-/* Black, white type, and one orange that only ever marks the way forward. */
-[data-theme="midnight"] {
-  --color-brand: #000000; --color-on-brand: #ffffff; --color-on-brand-dim: #a6a6a6;
-  --color-tile: #ff5a1f; --color-on-tile: #000000;
-  --color-page: #000000; --color-panel: #141414; --color-ink: #ffffff; --color-dim: #a6a6a6; --color-rule: #2b2b2b;
-  --color-band: #ff5a1f; --color-on-band: #000000; --color-on-band-alt: #3d1200;
-  --color-deep: #111111; --color-on-deep: #ffffff; --color-on-deep-dim: #a6a6a6; --color-deep-accent: #ff5a1f;
-  --color-accent: #ff5a1f; --color-on-accent: #000000;
-  --color-red: #ff6b61; --color-green: #3ddc84; --color-on-signal: #000000; --color-link: #ff5a1f;
-  --color-board: #111111; --color-board-edge: #2b2b2b;
-}
-
-[data-theme="tomato"] {
-  --color-brand: #ff4b2b; --color-on-brand: #000000; --color-on-brand-dim: #3a0b00;
-  --color-tile: #000000; --color-on-tile: #ff4b2b;
-  --color-page: #ffefe9; --color-panel: #ffffff; --color-ink: #000000; --color-dim: #54403a; --color-rule: #f0cfc4;
-  --color-band: #000000; --color-on-band: #ffffff; --color-on-band-alt: #ff7a5f;
-  --color-deep: #000000; --color-deep-accent: #ff7a5f;
-  --color-accent: #ff4b2b; --color-on-accent: #000000;
-  --color-red: #b80f2a; --color-green: #00693a; --color-link: #0046b8;
-}
-
-[data-theme="pink"] {
-  --color-brand: #ff4f9a; --color-on-brand: #000000; --color-on-brand-dim: #3d0a22;
-  --color-tile: #000000; --color-on-tile: #ff4f9a;
-  --color-page: #ffeef5; --color-panel: #ffffff; --color-ink: #000000; --color-dim: #55404a; --color-rule: #f3cbdc;
-  --color-band: #000000; --color-on-band: #ffffff; --color-on-band-alt: #ff7db3;
-  --color-deep: #000000; --color-deep-accent: #ff7db3;
-  --color-accent: #ff4f9a; --color-on-accent: #000000;
-  --color-red: #b80f2a; --color-green: #00693a; --color-link: #0046b8;
-}
-
-html { background: var(--color-page); scroll-behavior: smooth; }
+html { background: var(--color-ink); scroll-behavior: smooth; }
 body {
   margin: 0;
   min-height: 100vh;
   color: var(--color-ink);
-  background: var(--color-page);
+  background: var(--color-paper);
   font-family: var(--font-sans);
   font-size: 18px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
-::selection { background: var(--color-ink); color: var(--color-page); }
-:focus-visible { outline: 3px solid var(--color-link); outline-offset: 3px; }
+::selection { background: var(--color-hi); color: var(--color-ink); }
+:focus-visible { outline: 3px solid var(--fg, var(--color-ink)); outline-offset: 3px; }
 
-/* Display type: condensed, heavy, tight. The lettering carries the identity. */
-.display {
-  font-family: var(--font-display);
-  font-weight: 800;
-  line-height: 0.95;
-  letter-spacing: -0.012em;
-}
+@layer components {
+  /* The two grounds. */
+  .paper {
+    --bg: var(--color-paper); --fg: var(--color-ink); --mute: var(--color-mute); --line: var(--color-rule);
+    --card: var(--color-paper-2); --btn: var(--color-ink); --btn-text: var(--color-hi);
+    background: var(--bg); color: var(--fg);
+  }
+  .ink {
+    --bg: var(--color-ink); --fg: var(--color-paper); --mute: var(--color-mute-ink); --line: var(--color-ink-3);
+    --card: var(--color-ink-2); --btn: var(--color-hi); --btn-text: var(--color-ink);
+    background: var(--bg); color: var(--fg);
+  }
+  .on-hi {
+    --bg: var(--color-hi); --fg: var(--color-ink); --mute: #4a5212; --line: #b9cc22;
+    --btn: var(--color-ink); --btn-text: var(--color-hi);
+    background: var(--bg); color: var(--fg);
+  }
 
-/*
-  One button system. A surface says what colour its buttons are, so a button on
-  the brand colour and a button on the page never need to know where they sit.
-*/
-.on-page { --btn: var(--color-ink); --btn-text: var(--color-page); }
-.on-brand { --btn: var(--color-on-brand); --btn-text: var(--color-brand); }
-.on-deep { --btn: var(--color-on-deep); --btn-text: var(--color-deep); }
-/* On black, the way forward is the one thing in colour. */
-[data-theme="midnight"] .on-brand, [data-theme="midnight"] .on-page { --btn: var(--color-accent); --btn-text: var(--color-on-accent); }
+  /* Display type: Mona Sans, heavy, in capitals. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-stretch: 104%;
+    text-transform: uppercase;
+    line-height: .92;
+    letter-spacing: -0.012em;
+  }
+  /* The second voice inside a display line: a sharp serif, lower case. */
+  .serif {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-stretch: 100%;
+    text-transform: none;
+    letter-spacing: -0.01em;
+  }
+  /* Small data captions, the way a photo caption carries a place and a year. */
+  .caption {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: .75rem;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: .01em;
+  }
 
-/* The flap: a tile whose seam cuts across the letters and disappears into the
-   tile, the way a real split flap's does. */
-.flap {
-  position: relative; display: inline-block; border-radius: 6px;
-  padding: .02em .22em .06em; color: var(--color-on-tile); background: var(--color-tile);
-}
-.flap::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 50%;
-  height: max(2px, .035em); background: var(--color-tile);
-}
-.btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-weight: 700; font-size: 1.375rem;
-  letter-spacing: 0.01em; line-height: 1; white-space: nowrap;
-  padding: .9rem 1.6rem; border-radius: 6px; border: 2px solid var(--btn);
-  transition: background-color .12s ease, color .12s ease, transform .06s ease;
-}
-.btn:active:not(:disabled) { transform: translateY(2px); }
-.btn:disabled { opacity: .4; cursor: not-allowed; }
-.btn-solid { background: var(--btn); color: var(--btn-text); }
-.btn-solid:hover:not(:disabled) { background: transparent; color: var(--btn); }
-.btn-line { background: transparent; color: var(--btn); }
-.btn-line:hover:not(:disabled) { background: var(--btn); color: var(--btn-text); }
-.btn-sm { font-size: 1.125rem; padding: .55rem 1.1rem; }
+  /* A highlighter stroke behind a word. It draws in from the left when the
+     element gets the `drawn` class, and never covers the text. */
+  .hl {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 9 C 40 5, 90 7, 130 5 S 190 6, 197 8 L 198 31 C 160 35, 110 33, 70 35 S 12 34, 2 32 Z' fill='%23e6ff2e'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0 58%;
+    background-size: 0% 82%;
+    transition: background-size .55s cubic-bezier(.6, 0, .2, 1);
+    color: inherit;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    padding: 0 .12em;
+    margin: 0 -.12em;
+  }
+  .hl.drawn, .hl-hover:hover .hl, .hl-hover:focus-visible .hl { background-size: 100% 82%; }
+  .ink .hl.drawn, .ink .hl-hover:hover .hl { color: var(--color-ink); }
 
-/* A framed surface for forms and lists. */
-.panel { background: var(--color-panel); border: 2px solid var(--color-ink); border-radius: 6px; }
+  /* Buttons: square shouldered, capitals, the colour comes from the ground. */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+    font-family: var(--font-display); font-weight: 800; font-stretch: 108%; font-size: 1rem;
+    text-transform: uppercase; letter-spacing: .01em; line-height: 1; white-space: nowrap;
+    padding: 1rem 1.35rem; border-radius: 6px; border: 2px solid var(--btn);
+    transition: background-color .14s ease, color .14s ease, transform .08s ease;
+  }
+  .btn:active:not(:disabled) { transform: translateY(2px); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-solid { background: var(--btn); color: var(--btn-text); }
+  .btn-solid:hover:not(:disabled) { background: transparent; color: var(--btn); }
+  .btn-line { background: transparent; color: var(--fg); border-color: currentColor; }
+  .btn-line:hover:not(:disabled) { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .btn-sm { font-size: .875rem; padding: .7rem 1rem; }
+  /* The nav's call to action stays highlighter on every ground but its own. */
+  .nav-hi { background: var(--color-hi); color: var(--color-ink); border-color: var(--color-hi); }
+  .nav-hi:hover { background: var(--color-ink); color: var(--color-hi); border-color: var(--color-ink); }
 
-.tag {
-  display: inline-block; font-family: var(--font-display); font-weight: 700;
-  font-size: .9375rem; line-height: 1; letter-spacing: .04em; text-transform: uppercase;
-  padding: .3rem .5rem; border-radius: 3px; white-space: nowrap;
+  /* A card with its bottom right corner cut away, where its label sits. */
+  .cut {
+    --cut: 28px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+  }
+  .card { background: var(--card); border-radius: 4px; }
+
+  .tag {
+    display: inline-block; font-family: var(--font-display); font-weight: 800; font-stretch: 104%;
+    font-size: .75rem; line-height: 1; text-transform: uppercase; letter-spacing: .02em;
+    padding: .4rem .55rem; border-radius: 3px; white-space: nowrap;
+  }
+
+  /* Ruler ticks along the top of a paper section: PolyGuard measures. */
+  .ruler {
+    height: 14px;
+    background-image:
+      repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 100px),
+      repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 10px);
+    background-size: 100% 14px, 100% 6px;
+    background-repeat: no-repeat;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
