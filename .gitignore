@@ -8,3 +8,6 @@ review/
 # The web app: installed packages and build output are generated, never committed.
 web/node_modules/
 web/dist/
+
+.vercel
+.env*
