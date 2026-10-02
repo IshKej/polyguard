@@ -35,7 +35,7 @@ function Row({ k, children }) {
   )
 }
 
-export default function Results({ result, baseline, config, onAgain, onRescan }) {
+export default function Results({ result, baseline, config, onAgain, onRescan, onMethod }) {
   const [open, setOpen] = useState(null)
   // The report arrives with the result, so it is saved straight from the browser.
   const downloadReport = () => {
@@ -247,6 +247,11 @@ export default function Results({ result, baseline, config, onAgain, onRescan })
           <Row k="Translations">
             No language in the bank has been reviewed by a native speaker yet. A badly worded attack fails for
             reasons that have nothing to do with the bot’s defences.
+          </Row>
+          <Row k="How the worst language test works">
+            <button type="button" onClick={onMethod} className="font-semibold text-paper underline underline-offset-4">
+              Try it yourself on the How we know page
+            </button>
           </Row>
           <Row k="Method and audit">
             <a href={REPO} target="_blank" rel="noopener" className="font-semibold text-paper underline underline-offset-4">

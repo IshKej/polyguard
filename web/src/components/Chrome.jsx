@@ -44,7 +44,7 @@ function useNavState(offset = 36, deps = []) {
   return state
 }
 
-export function Nav({ live, loaded, onHome, onScan, showScan, view }) {
+export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) {
   const { surface, scrolled, hidden } = useNavState(36, [view])
   return (
     <header
@@ -63,6 +63,11 @@ export function Nav({ live, loaded, onHome, onScan, showScan, view }) {
             >
               {live ? 'Live' : 'Simulated'}
             </span>
+          )}
+          {onMethod && view !== 'method' && (
+            <button type="button" onClick={onMethod} className="hl-hover caption hidden text-[.8rem] md:inline">
+              <span className="hl">How we know</span>
+            </button>
           )}
           <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption hidden text-[.8rem] sm:inline">
             <span className="hl">GitHub</span>

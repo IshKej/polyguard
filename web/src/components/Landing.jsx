@@ -125,7 +125,7 @@ const REASONS = [
   ['PolyGuard measures', 'the difference.', 'The same attack in every language, scored the same way, with statistics honest enough to say when there is no gap at all.'],
 ]
 
-export default function Landing({ meta, onStart }) {
+export default function Landing({ meta, onStart, onMethod }) {
   const others = useMemo(() => (meta?.languages || []).filter((l) => l.code !== 'en'), [meta])
   const headline = useMemo(() => others.filter((l) => l.native.length <= 10), [others])
   const lines = useMemo(
@@ -295,6 +295,16 @@ export default function Landing({ meta, onStart }) {
 
       {/* How it works: pinned, and played by scrolling. */}
       <ScrollStory languages={others} lines={lines} prompt={meta?.examples?.[0]?.prompt || ''} />
+
+      {/* The question every result raises, answered on its own page. */}
+      <section data-surface="ink" className="ink">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 border-t border-(--line) px-5 py-12 sm:flex-row sm:items-center">
+          <p className="display max-w-3xl text-[clamp(1.6rem,3vw,2.4rem)]">
+            Some language always comes out worst. <span className="serif">So how do you know a gap is real?</span>
+          </p>
+          <button type="button" onClick={onMethod} className="btn btn-line shrink-0">See how we know</button>
+        </div>
+      </section>
 
       {/* The game, on a fresh sheet. */}
       <div className="relative">

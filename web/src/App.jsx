@@ -5,6 +5,7 @@ import { jumpToTop, startSmoothScroll, stopSmoothScroll } from './lib/smooth'
 import Landing from './components/Landing'
 import LiveScan from './components/LiveScan'
 import Results from './components/Results'
+import Method from './components/Method'
 import Setup from './components/Setup'
 
 export default function App() {
@@ -99,6 +100,7 @@ export default function App() {
         live={meta?.live} loaded={!!meta}
         onHome={() => { stop.current?.(); go('landing') }}
         onScan={() => go('setup')}
+        onMethod={() => go('method')}
         showScan={view === 'landing' && !!meta}
         view={view}
       />
@@ -111,7 +113,8 @@ export default function App() {
       >
         <span className="font-serif text-[clamp(3rem,8vw,6rem)] leading-none">Poly<span className="display">Guard</span></span>
       </div>
-      {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} />}
+      {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} onMethod={() => go('method')} />}
+      {view === 'method' && meta && <Method meta={meta} onStart={() => go('setup')} onBack={() => go('landing')} />}
       {view === 'setup' && meta && (
         <Setup
           meta={meta} initial={config}
@@ -134,6 +137,7 @@ export default function App() {
         <Results
           result={result} baseline={baseline} config={config}
           onAgain={() => go('setup')}
+          onMethod={() => go('method')}
           onRescan={(hardened) => { setBaseline(result); launch(config, { hardened, keepBaseline: true }) }}
         />
       )}
