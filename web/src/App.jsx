@@ -29,7 +29,21 @@ export default function App() {
     return () => { alive = false; stop.current?.() }
   }, [])
 
-  const go = (v) => { setView(v); window.scrollTo({ top: 0 }) }
+  // Moving between screens: a highlighter panel wipes up over the page, the
+  // screen changes underneath it, and it carries on up and away.
+  const [wipe, setWipe] = useState('idle')
+  const wipeTimers = useRef([])
+  const go = useCallback((v) => {
+    const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    wipeTimers.current.forEach(clearTimeout)
+    if (instant) { setView(v); window.scrollTo({ top: 0 }); return }
+    setWipe('in')
+    wipeTimers.current = [
+      setTimeout(() => { setView(v); window.scrollTo({ top: 0 }); setWipe('out') }, 380),
+      setTimeout(() => setWipe('idle'), 820),
+    ]
+  }, [])
+  useEffect(() => () => wipeTimers.current.forEach(clearTimeout), [])
 
   const launch = useCallback(async (cfg, { hardened, keepBaseline } = {}) => {
     stop.current?.()
@@ -55,7 +69,7 @@ export default function App() {
         onError: (e) => setScanError(e.message),
       })
     } catch (e) { setScanError(e.message) }
-  }, [])
+  }, [go])
 
   // The live board's state, derived from the rows that have arrived so far.
   const scanLanguages = useMemo(
@@ -73,8 +87,12 @@ export default function App() {
       <>
         <Nav loaded={false} onHome={() => {}} showScan={false} view="error" />
         <main data-surface="paper" className="paper mx-auto min-h-screen max-w-2xl px-5 pb-24 pt-36">
-          <h1 className="display text-5xl">PolyGuard can’t reach its server.</h1>
-          <p className="mt-4 text-(--mute)">{metaError}</p>
+          <h1 className="display text-5xl">PolyGuard can’t reach <span className="serif">its server.</span></h1>
+          <p className="mt-4 max-w-lg text-(--mute)">
+            The scan server isn’t answering. If you are running PolyGuard yourself, start it with{' '}
+            <code className="rounded bg-paper-2 px-1.5 py-0.5 text-ink">python -m uvicorn api.server:app --port 8000</code>{' '}
+            and try again.
+          </p>
           <button type="button" onClick={loadMeta} className="btn btn-solid mt-8">Try again</button>
         </main>
       </>
@@ -91,6 +109,14 @@ export default function App() {
         view={view}
       />
       <Loader />
+      <div
+        aria-hidden="true"
+        className={`on-hi pointer-events-none fixed inset-0 z-50 grid place-items-center ${
+          wipe === 'idle' ? 'translate-y-full' : wipe === 'in' ? 'translate-y-0 transition-transform duration-[380ms] ease-[cubic-bezier(.7,0,.3,1)]' : '-translate-y-full transition-transform duration-[440ms] ease-[cubic-bezier(.7,0,.3,1)]'
+        }`}
+      >
+        <span className="font-serif text-[clamp(3rem,8vw,6rem)] leading-none">Poly<span className="display">Guard</span></span>
+      </div>
       {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} />}
       {view === 'setup' && meta && (
         <Setup

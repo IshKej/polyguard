@@ -256,7 +256,7 @@ export default function Landing({ meta, onStart }) {
               ))}
             </ol>
           </div>
-          <div className="lg:pt-6">
+          <div className="lg:sticky lg:top-24 lg:pt-6">
             <PreviewBoard languages={others} />
           </div>
         </div>

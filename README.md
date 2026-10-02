@@ -2,7 +2,7 @@
 
 **Does your chatbot hold up in every language?**
 
-![The PolyGuard app: the same attack, cycling through every language in the bank](docs/hero.png)
+![The PolyGuard web app: the cursor is a highlighter that shows the same attack in other languages, and a speech bubble answers no in each one](docs/hero.png)
 
 Most AI safety testing happens in English. PolyGuard takes a chatbot's system prompt, attacks a live copy of that bot with **5 kinds of prompt injection** in **every language in its attack bank**, and shows, per language and per resource tier, which attacks got through. The point is to measure the gap between how well a bot is defended in English and how well it is defended in everyone else's language.
 
@@ -30,7 +30,7 @@ PolyGuard measures that gap so a builder can see it and fix it **before an attac
 
 ## What a scan looks like
 
-![A scan's results: headline numbers, the resource tier comparison, and the break map](docs/results.png)
+![A scan's results: the verdict, the headline numbers, and the board of every language](docs/results.png)
 
 *Shown with simulated data, which the app labels as such. A simulated run attacks no model and proves nothing about any real chatbot.*
 
@@ -79,8 +79,17 @@ eventually be read as though it were real.
 
 ## Run it
 
+The web app (the main interface):
+
 ```bash
 pip install -r requirements.txt
+python -m uvicorn api.server:app --port 8000     # the API
+cd web && npm install && npm run dev             # the app, on http://localhost:5173
+```
+
+The research console, with every statistic exposed:
+
+```bash
 streamlit run app.py
 ```
 

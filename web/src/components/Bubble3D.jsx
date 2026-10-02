@@ -5,7 +5,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { useReducedMotion } from '../lib/motion'
 
 const HI = '#e6ff2e'
-const RED = '#ff4a2b'
+const RED = '#ff5a3d'
 const INK = '#1a1c15'
 
 // The speech bubble's outline: a rounded body with a tail at the lower left.

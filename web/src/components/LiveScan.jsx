@@ -11,7 +11,7 @@ export default function LiveScan({ languages, outcomes, expected, done, total, b
         <div className="flex flex-wrap items-end justify-between gap-8">
           <div>
             <span className="tag border border-current text-(--mute)">{live ? 'Live scan' : 'Simulated scan'}</span>
-            <h1 className="display mt-4 text-[clamp(2.6rem,6.4vw,5.4rem)]">
+            <h1 className="display mt-4 text-[clamp(2.4rem,5.2vw,4.6rem)]">
               Attacking <span className="serif">{title}.</span>
             </h1>
             <p className="caption mt-3 text-(--mute)">

@@ -111,7 +111,7 @@ test sheet, and the speech bubble (the bot's "no").
   olive. No pure black page, no cream plus terracotta.
 - One fluorescent: highlighter `#e6ff2e`. It is "held" on the board and the call
   to action colour.
-- Red pen `#ff4a2b` (on ink) and `#c22a10` (text on paper): only "got through".
+- Red pen `#ff5a3d` (on ink; was `#ff4a2b`, raised to pass 4.5:1 on the board) and `#c22a10` (text on paper): only "got through".
 - Type: Mona Sans (wide and heavy, uppercase for display) mixed inside headlines
   with Gloock, a sharp display serif, and with the native scripts themselves. The
   mixed type move from Lando, but the second voice is the other language.
