@@ -5,36 +5,40 @@ PolyGuard web API: the only way the web app reaches the engine.
 
 Endpoints
     GET  /api/meta                  languages, attack types, example bots, live or demo
-    POST /api/scans                 start a scan, returns its id
-    GET  /api/scans/{id}/stream     server-sent events: every attack result as it lands
-    GET  /api/scans/{id}            the finished scan, with verdict and statistics
-    GET  /api/scans/{id}/report     the self-contained HTML report
+    POST /api/scan                  run a scan and stream it as server-sent events:
+                                    every attack result as it lands, then the verdict,
+                                    the statistics and the self-contained report
     POST /api/harden                targeted rules for what broke, and the hardened prompt
     GET  /api/game                  real messages for the spot the attack game
+
+Nothing is kept between requests. A scan runs inside the one request that streams
+it, so any instance of the server can take any request. That is what lets the API
+run as serverless functions (Vercel) as well as on a laptop.
 
 Spend safety. A live scan is hundreds of paid model calls, and a public link means
 strangers can press the button. So a scan is live only when an API key is
 configured AND, if POLYGUARD_PASSCODE is set, the request carries it. Everything
 else runs as a clearly labelled simulation. At most MAX_LIVE live scans run at
-once, inputs are bounded, and finished scans are kept in memory only up to
-MAX_JOBS. The engine, statistics and honesty rules are the same code the research
-console and CLI use; nothing is re-implemented here.
+once on a server, inputs are bounded, and on hosting with a time limit a live scan
+is capped at HOSTED_LIVE_MAX_ATTACKS so it can finish inside that limit. The
+engine, statistics and honesty rules are the same code the research console and
+CLI use; nothing is re-implemented here.
 """
 from __future__ import annotations
 
 import hmac
 import json
 import os
+import queue
 import sys
 import threading
 import time
 import uuid
-from collections import OrderedDict
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -51,9 +55,16 @@ from examples import DESCRIPTIONS, EXAMPLES  # noqa: E402
 from languages_catalog import tier_of  # noqa: E402
 
 MAX_PROMPT_CHARS = 8000
-MAX_JOBS = 40
 MAX_LIVE = 2
 REPLY_CHARS = 1200
+KEEPALIVE_SECONDS = 10.0
+
+# Vercel sets VERCEL=1. A function there stops after 300 seconds on the free plan,
+# and a live attack is two model calls (the bot, then the judge), so a hosted live
+# scan is capped to what can finish in that time. The full scan runs from a laptop
+# or the CLI, where nothing stops it. Simulated scans are never capped.
+HOSTED = os.environ.get("VERCEL") == "1"
+HOSTED_LIVE_MAX_ATTACKS = int(os.environ.get("POLYGUARD_HOSTED_LIVE_MAX", "60"))
 
 app = FastAPI(title="PolyGuard API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 _origins = [o.strip() for o in os.environ.get(
@@ -65,8 +76,6 @@ BANK = engine.load_bank()
 EN_TEXT = {(a["category"], a.get("variant", 0)): a["text"]
            for a in BANK["attacks"] if a["lang"] == "en"}
 _live_slots = threading.Semaphore(MAX_LIVE)
-_jobs: "OrderedDict[str, Job]" = OrderedDict()
-_jobs_lock = threading.Lock()
 
 
 # --------------------------------------------------------------------------- #
@@ -89,19 +98,6 @@ class HardenRequest(BaseModel):
     broken_categories: list[str] = Field(default_factory=list, max_length=10)
 
 
-class Job:
-    def __init__(self, req: ScanRequest, live: bool, model: str | None):
-        self.id = uuid.uuid4().hex[:12]
-        self.req, self.live, self.model = req, live, model
-        self.rows: list[dict] = []
-        self.total = 0
-        self.out: dict | None = None
-        self.error: str | None = None
-        self.finished = False
-        self.lock = threading.Lock()
-        self.created = time.time()
-
-
 # --------------------------------------------------------------------------- #
 # Shaping engine output for the browser
 # --------------------------------------------------------------------------- #
@@ -116,8 +112,7 @@ def web_row(r: dict) -> dict:
             "reply": (r.get("reply") or "")[:REPLY_CHARS]}
 
 
-def web_result(job: Job) -> dict:
-    out = job.out
+def web_result(out: dict, req: ScanRequest, scan_id: str) -> dict:
     cap = out.get("capability") or {}
     limited = set(cap.get("capability_limited") or [])
     langs = [{"code": c, "name": d["name"], "native": d.get("native", ""),
@@ -131,7 +126,7 @@ def web_result(job: Job) -> dict:
     broken = defenses.broken_categories_from(out["results"])
     vm = out.get("victim") or {}
     return {
-        "id": job.id,
+        "id": scan_id,
         "mock": out["mock"],
         # A simulated run attacked nothing, so it names no model (AUDIT.md 57).
         "victim": None if out["mock"] else {"label": vm.get("label"),
@@ -149,7 +144,7 @@ def web_result(job: Job) -> dict:
                   "token_collision": out.get("token_collision"),
                   "capability_limited": sorted(limited),
                   "controls_per_language": cap.get("controls_per_lang"),
-                  "phrasings": job.req.phrasings},
+                  "phrasings": req.phrasings},
         "broken_categories": broken,
         "fixes": defenses.recommend(broken) if broken else [],
         "results": [web_row(r) for r in out["results"]],
@@ -169,45 +164,6 @@ def _live_available() -> bool:
 def _passcode_ok(given: str | None) -> bool:
     need = providers.resolve_key("POLYGUARD_PASSCODE")
     return (not need) or (given is not None and hmac.compare_digest(given, need))
-
-
-def _run(job: Job) -> None:
-    def on_result(row, done, total):
-        with job.lock:
-            job.rows.append(web_row(row))
-            job.total = total
-
-    try:
-        victim = providers.build_victim(job.model) if job.live else None
-        out = engine.scan(job.req.prompt, langs=job.req.langs, categories=job.req.categories,
-                          mock=not job.live, victim=victim, max_variants=job.req.phrasings,
-                          extraction_reference=job.req.extraction_reference,
-                          on_result=on_result)
-        with job.lock:
-            job.out = out
-    except Exception as e:  # never a stack trace to the browser
-        with job.lock:
-            job.error = f"The scan could not finish: {type(e).__name__}."
-    finally:
-        with job.lock:
-            job.finished = True
-        if job.live:
-            _live_slots.release()
-
-
-def _store(job: Job) -> None:
-    with _jobs_lock:
-        _jobs[job.id] = job
-        while len(_jobs) > MAX_JOBS:
-            _jobs.popitem(last=False)
-
-
-def _get(job_id: str) -> Job:
-    with _jobs_lock:
-        job = _jobs.get(job_id)
-    if job is None:
-        raise HTTPException(404, "No scan with that id. It may have expired.")
-    return job
 
 
 # --------------------------------------------------------------------------- #
@@ -263,8 +219,12 @@ def game():
     return {"code": GAME_CODE, "items": items}
 
 
-@app.post("/api/scans")
-def start_scan(req: ScanRequest, x_polyguard_passcode: str | None = Header(default=None)):
+def _sse(event: str, data) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@app.post("/api/scan")
+def run_scan(req: ScanRequest, x_polyguard_passcode: str | None = Header(default=None)):
     bad_langs = [c for c in req.langs if c not in BANK["languages"]]
     bad_cats = [c for c in req.categories if c not in BANK["categories"]]
     if bad_langs or bad_cats:
@@ -277,66 +237,56 @@ def start_scan(req: ScanRequest, x_polyguard_passcode: str | None = Header(defau
         model = req.model or providers.DEFAULT_MODEL
         if model not in ready:
             raise HTTPException(422, f"Model {model} is not available on this server.")
+        planned = len(req.langs) * len(req.categories) * req.phrasings
+        if HOSTED and planned > HOSTED_LIVE_MAX_ATTACKS:
+            raise HTTPException(422, f"A live scan on the hosted site can fire at most {HOSTED_LIVE_MAX_ATTACKS} "
+                                     f"attacks so it finishes inside the host's time limit, and this one would fire "
+                                     f"{planned}. Pick fewer languages or one phrasing, or run the full scan locally.")
         if not _live_slots.acquire(blocking=False):
             raise HTTPException(429, "Two live scans are already running. Try again in a minute.")
 
-    job = Job(req, live, model)
-    _store(job)
-    threading.Thread(target=_run, args=(job,), daemon=True).start()
-    return {"id": job.id, "live": live}
+    scan_id = uuid.uuid4().hex[:12]
+    inbox: queue.Queue = queue.Queue()
 
+    def on_result(row, done, total):
+        inbox.put(("result", {"row": web_row(row), "done": done, "total": total}))
 
-def _sse(event: str, data) -> str:
-    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+    def work():
+        try:
+            victim = providers.build_victim(model) if live else None
+            out = engine.scan(req.prompt, langs=req.langs, categories=req.categories,
+                              mock=not live, victim=victim, max_variants=req.phrasings,
+                              extraction_reference=req.extraction_reference, on_result=on_result)
+            report = report_html.build_report(cli.scan_payload(out, req.prompt, None))
+            inbox.put(("done", {"result": web_result(out, req, scan_id), "report": report}))
+        except Exception as e:  # never a stack trace to the browser
+            inbox.put(("done", {"error": f"The scan could not finish: {type(e).__name__}."}))
+        finally:
+            if live:
+                _live_slots.release()
 
-
-@app.get("/api/scans/{job_id}/stream")
-def stream(job_id: str):
-    job = _get(job_id)
+    threading.Thread(target=work, daemon=True).start()
 
     def events():
-        sent = 0
-        yield _sse("start", {"id": job.id, "live": job.live})
+        yield _sse("start", {"id": scan_id, "live": live})
         while True:
-            with job.lock:
-                fresh = job.rows[sent:]
-                total, finished, error = job.total, job.finished, job.error
-            for row in fresh:
-                yield _sse("result", {"row": row, "done": sent + 1, "total": total})
-                sent += 1
-                if not job.live:
-                    # A simulation finishes instantly. Pace the replay so the
-                    # grid can be watched; the pacing is labelled as simulated.
-                    time.sleep(min(0.05, 7.0 / max(total, 1)))
-            if finished and sent >= len(job.rows):
-                yield _sse("done", {"id": job.id, "error": error})
+            try:
+                kind, data = inbox.get(timeout=KEEPALIVE_SECONDS)
+            except queue.Empty:
+                # A live attack can take a while. A comment line keeps the
+                # connection from looking idle to proxies along the way.
+                yield ": still scanning\n\n"
+                continue
+            yield _sse(kind, data)
+            if kind == "done":
                 return
-            time.sleep(0.15)
+            if not live:
+                # A simulation finishes instantly. Pace the replay so the board
+                # can be watched; the pacing is labelled as simulated.
+                time.sleep(min(0.05, 7.0 / max(data["total"], 1)))
 
     return StreamingResponse(events(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-
-
-@app.get("/api/scans/{job_id}")
-def result(job_id: str):
-    job = _get(job_id)
-    with job.lock:
-        finished, error = job.finished, job.error
-    if error:
-        raise HTTPException(500, error)
-    if not finished or job.out is None:
-        raise HTTPException(409, "This scan is still running.")
-    return web_result(job)
-
-
-@app.get("/api/scans/{job_id}/report", response_class=HTMLResponse)
-def report(job_id: str):
-    job = _get(job_id)
-    if not job.finished or job.out is None:
-        raise HTTPException(409, "This scan is still running.")
-    payload = cli.scan_payload(job.out, job.req.prompt, None)
-    return HTMLResponse(report_html.build_report(payload),
-                        headers={"Content-Disposition": 'attachment; filename="polyguard-report.html"'})
 
 
 @app.post("/api/harden")

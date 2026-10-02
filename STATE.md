@@ -43,11 +43,16 @@ If any of those fail, something regressed. They all pass as of this writing.
 2. **The 35 low-resource languages.** The bank holds 20 languages: 16 high, 4
    mid, **0 low**. The central hypothesis is therefore untested, not supported.
    `python expand_languages.py --tier low` fills them, needs the key.
-3. **Deploy.** The repo is public at https://github.com/IshKej/polyguard and the
-   web app runs locally (`web/`, see `web/README.md`). Hosting it needs a home for
-   the Python API as well as the front end; the API serves `web/dist` itself once
-   built, so one host can do both. Once it has an address, make `og:image` in
-   `web/index.html` an absolute URL.
+3. **Deploy (Vercel, Ishaan's own account).** `vercel.json` defines two Vercel
+   Services in one project: the Vite site (`web/`) at `/` and the FastAPI API at
+   `/api/*` (entrypoint `api.server:app`). The API keeps nothing between requests:
+   `POST /api/scan` runs a scan inside the request that streams it, which is what
+   serverless hosting needs. A hosted live scan is capped at 60 attacks so it ends
+   inside the free plan's 300 second limit; full scans run locally. Deploy from
+   the CLI logged in as Ishaan (`npx vercel whoami` first; the claude.ai Vercel
+   connector is Anish's team, never use it). Set `ANTHROPIC_API_KEY` and
+   `POLYGUARD_PASSCODE` in the Vercel project's environment variables, never in
+   the repo. Once it has an address, make `og:image` in `web/index.html` absolute.
 
 ## The web app
 

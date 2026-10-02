@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "web": {
+      "root": "web/",
+      "framework": "vite",
+      "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+    },
+    "api": {
+      "root": "./",
+      "entrypoint": "api.server:app",
+      "functions": {
+        "api/server.py": {
+          "maxDuration": 300,
+          "excludeFiles": "{web/**,docs/**,review_sheets/**,review/**,.github/**,**/__pycache__/**,*.bundle,calibration_report.txt,judge_report.txt,live_view_check.py,app.py}"
+        }
+      }
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
+}

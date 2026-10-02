@@ -25,7 +25,8 @@ cd web && npm run build
 ```
 
 The API serves `web/dist` from its own origin when that folder exists, so one
-deployment covers both.
+server can run both locally. On Vercel the two deploy as Services of one project
+(`../vercel.json`): the site at `/`, the API at `/api/*`.
 
 ## How it is put together
 

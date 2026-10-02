@@ -35,38 +35,76 @@ async function call(path, options = {}) {
 
 export const getMeta = () => call('/api/meta', { headers: headers(false) })
 
-export const startScan = (body) =>
-  call('/api/scans', { method: 'POST', headers: headers(true), body: JSON.stringify(body) })
-
-export const getResult = (id) => call(`/api/scans/${id}`)
-
 // Real messages from the bank for the spot the attack game.
 export const getGame = () => call('/api/game')
 
 export const harden = (prompt, broken_categories) =>
   call('/api/harden', { method: 'POST', headers: headers(true), body: JSON.stringify({ prompt, broken_categories }) })
 
-export const reportUrl = (id) => `${BASE}/api/scans/${id}/report`
-
-// Streams one scan. Calls onResult for every attack as it lands and resolves
-// when the server says the scan is done. Returns a function that stops listening.
-export function streamScan(id, { onResult, onDone, onError }) {
-  const es = new EventSource(`${BASE}/api/scans/${id}/stream`)
+// Runs one scan and streams it back over a single request: onStart once, then
+// onResult for every attack as it lands, then onDone with the finished result and
+// its report. Nothing waits on the server between requests, which is what lets the
+// API run on serverless hosting. Returns a function that stops the scan's request.
+export function runScan(body, { onStart, onResult, onDone, onError }) {
+  const ctrl = new AbortController()
   let finished = false
-  es.addEventListener('result', (e) => onResult(JSON.parse(e.data)))
-  es.addEventListener('done', (e) => {
-    finished = true
-    es.close()
-    const { error } = JSON.parse(e.data)
-    if (error) onError(new Error(error))
-    else onDone()
-  })
-  es.onerror = () => {
-    if (finished) return
-    es.close()
-    onError(new Error('Lost the connection to the scan. Try again.'))
+  const fail = (message) => { if (!finished && !ctrl.signal.aborted) { finished = true; onError(new Error(message)) } }
+
+  const read = async () => {
+    let res
+    try {
+      res = await fetch(BASE + '/api/scan', {
+        method: 'POST', headers: headers(true), body: JSON.stringify(body), signal: ctrl.signal,
+      })
+    } catch {
+      fail("Can't reach the PolyGuard server. Is it running?")
+      return
+    }
+    if (!res.ok) {
+      let detail = ''
+      try {
+        const j = await res.json()
+        detail = typeof j.detail === 'string' ? j.detail : ''
+      } catch { /* not JSON */ }
+      fail(detail || `The server answered ${res.status}.`)
+      return
+    }
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    try {
+      for (;;) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        let cut
+        while ((cut = buffer.indexOf('\n\n')) >= 0) {
+          const block = buffer.slice(0, cut)
+          buffer = buffer.slice(cut + 2)
+          let event = 'message'
+          let data = ''
+          for (const line of block.split('\n')) {
+            if (line.startsWith('event: ')) event = line.slice(7)
+            else if (line.startsWith('data: ')) data += line.slice(6)
+          }
+          if (!data) continue // a keepalive comment while a live attack is in flight
+          const payload = JSON.parse(data)
+          if (event === 'start') onStart?.(payload)
+          else if (event === 'result') onResult(payload)
+          else if (event === 'done') {
+            if (payload.error) fail(payload.error)
+            else { finished = true; onDone(payload) }
+          }
+        }
+      }
+    } catch {
+      fail('Lost the connection to the scan. Try again.')
+      return
+    }
+    fail('The scan ended before it finished. Try again.')
   }
-  return () => { finished = true; es.close() }
+  read()
+  return () => { finished = true; ctrl.abort() }
 }
 
 // The opening sentence of an attack, cut before its payload.

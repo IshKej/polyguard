@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getMeta, getResult, startScan, streamScan } from './api'
+import { getMeta, runScan } from './api'
 import { Loader, Nav } from './components/Chrome'
 import { jumpToTop, startSmoothScroll, stopSmoothScroll } from './lib/smooth'
 import Landing from './components/Landing'
@@ -47,30 +47,22 @@ export default function App() {
   useEffect(() => () => wipeTimers.current.forEach(clearTimeout), [])
   useEffect(() => { startSmoothScroll(); return stopSmoothScroll }, [])
 
-  const launch = useCallback(async (cfg, { hardened, keepBaseline } = {}) => {
+  const launch = useCallback((cfg, { hardened, keepBaseline } = {}) => {
     stop.current?.()
     setConfig(cfg); setRows([]); setTotal(cfg.langs.length * cfg.categories.length * cfg.phrasings)
-    setScanError(''); setResult(null)
+    setScanError(''); setResult(null); setScanLive(false)
     if (!keepBaseline) setBaseline(null)
     go('live')
-    try {
-      const { id, live } = await startScan({
-        prompt: hardened ?? cfg.prompt, langs: cfg.langs, categories: cfg.categories,
-        phrasings: cfg.phrasings, model: cfg.model,
-        ...(hardened ? { extraction_reference: cfg.prompt } : {}),
-      })
-      setScanLive(live)
-      stop.current = streamScan(id, {
-        onResult: ({ row, total: t }) => { setRows((r) => [...r, row]); if (t) setTotal(t) },
-        onDone: async () => {
-          try {
-            const res = await getResult(id)
-            setResult(res); go('results')
-          } catch (e) { setScanError(e.message) }
-        },
-        onError: (e) => setScanError(e.message),
-      })
-    } catch (e) { setScanError(e.message) }
+    stop.current = runScan({
+      prompt: hardened ?? cfg.prompt, langs: cfg.langs, categories: cfg.categories,
+      phrasings: cfg.phrasings, model: cfg.model,
+      ...(hardened ? { extraction_reference: cfg.prompt } : {}),
+    }, {
+      onStart: ({ live }) => setScanLive(live),
+      onResult: ({ row, total: t }) => { setRows((r) => [...r, row]); if (t) setTotal(t) },
+      onDone: ({ result: res, report }) => { setResult({ ...res, report }); go('results') },
+      onError: (e) => setScanError(e.message),
+    })
   }, [go])
 
   // The live board's state, derived from the rows that have arrived so far.

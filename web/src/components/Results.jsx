@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { harden, label, pct, reportUrl } from '../api'
+import { harden, label, pct } from '../api'
 import Board from './Board'
 import Drawer from './Drawer'
 import { jumpToTop } from '../lib/smooth'
@@ -37,6 +37,15 @@ function Row({ k, children }) {
 
 export default function Results({ result, baseline, config, onAgain, onRescan }) {
   const [open, setOpen] = useState(null)
+  // The report arrives with the result, so it is saved straight from the browser.
+  const downloadReport = () => {
+    const url = URL.createObjectURL(new Blob([result.report], { type: 'text/html' }))
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'polyguard-report.html' })
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 2000)
+  }
   // The bars by kind of attack fill once they scroll into view.
   const bars = useRef(null)
   const [barsIn, setBarsIn] = useState(false)
@@ -249,7 +258,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan })
 
       <div className="mt-10 flex flex-wrap gap-3">
         <button type="button" onClick={onAgain} className="btn btn-solid">Scan another chatbot</button>
-        <a href={reportUrl(result.id)} className="btn btn-line">Download the report</a>
+        {result.report && <button type="button" onClick={downloadReport} className="btn btn-line">Download the report</button>}
       </div>
 
       {openLang && <Drawer lang={openLang} rows={byLang[open] || []} onClose={closeDrawer} />}
