@@ -7,6 +7,15 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-02** `docs/pilot-plan.md`: the bounded live pilot plan (stages,
+  call counts, token caps, worst case cost, $10 hard cap). Plan only, not run;
+  needs Ishaan's key and written approval.
+- **2026-10-02** `99a3091` Spanish (10 lines) and Vietnamese (1 line) native
+  speaker feedback integrated in `generate_attack_bank.py`. Bank SHA-256 now
+  `d8dfa081...`, appended to the PREREGISTRATION.md deviation log, whose stale
+  13 high / 7 mid count is fixed to 16 / 4. Docs and the site say "received and
+  integrated", never "validated". Portuguese feedback pending, nothing changed.
+
 - **2026-10-01** Live on Vercel: **https://polyguard-ten.vercel.app**, project
   `ishaan-s-projects14/polyguard` in Ishaan's own Vercel account (CLI user
   `ishkej`). GitHub repo connected, so every push to main deploys. Checked on the
@@ -38,6 +47,23 @@ the web app and hosting.
 
 ## In progress
 
+- **Motion (Ishaan's top complaint about the live site).** His Windows has
+  Animation effects off, so every browser sends `prefers-reduced-motion: reduce`
+  and the site freezes: `web/src/index.css` ends with a rule that kills every
+  animation and transition, and about ten components skip their motion (hero
+  cycle, highlighter demo, 3D spin, scroll story, Lenis, loader, wipe, closing
+  stretch). The Playwright window ignored the setting, which is why localhost
+  looked right. Plan: reduced motion becomes "calm", not frozen (hero still
+  cycles, scroll story still pins and steps, with fades instead of movement;
+  drop Lenis, 3D spin, page wipe, marquee, card tilt, font stretch), plus a
+  Motion switch that defaults to the OS setting and is saved per visitor.
+- **Scroll story at short screens.** At 1366x650 and 1536x730 the progress ruler
+  under the story is pushed below the fold. Tighten the left column when the
+  screen is short (only the active step shows its description).
+- **Slim API dependencies.** `pyproject.toml` (anthropic and fastapi only) and
+  the `chunkSizeWarningLimit` in `web/vite.config.js` are uncommitted. The
+  preview build used them; still to do: check `/api/meta`, `/api/game` and a
+  scan on the preview with `npx vercel curl`, then commit.
 - Supabase (see Next, item 2).
 
 ## Next
