@@ -49,8 +49,8 @@ If any of those fail, something regressed. They all pass as of this writing.
    `POST /api/scan` runs a scan inside the request that streams it, which is what
    serverless hosting needs. A hosted live scan is capped at 60 attacks so it ends
    inside the free plan's 300 second limit; full scans run locally. Deploy from
-   the CLI logged in as Ishaan (`npx vercel whoami` first; the claude.ai Vercel
-   connector is Anish's team, never use it). Set `ANTHROPIC_API_KEY` and
+   the CLI logged in as Ishaan's own account (`npx vercel whoami` first). Set
+   `ANTHROPIC_API_KEY` and
    `POLYGUARD_PASSCODE` in the Vercel project's environment variables, never in
    the repo. Once it has an address, make `og:image` in `web/index.html` absolute.
 
