@@ -8,10 +8,21 @@ import Results from './components/Results'
 import Method from './components/Method'
 import Setup from './components/Setup'
 
+// Every screen has an address, so the browser's back and forward buttons move
+// between screens, and /how can be shared. A scan's own screens only make sense
+// with that scan in memory, so opening them fresh lands on the setup screen.
+const PATHS = { landing: '/', setup: '/scan', live: '/scan/live', results: '/scan/results', method: '/how' }
+function viewFromPath(path) {
+  if (path.startsWith('/how')) return 'method'
+  if (path.startsWith('/scan')) return 'setup'
+  return 'landing'
+}
+
 export default function App() {
   const [meta, setMeta] = useState(null)
   const [metaError, setMetaError] = useState('')
-  const [view, setView] = useState('landing')
+  const [view, setView] = useState(() => viewFromPath(window.location.pathname))
+  const viewRef = useRef(view)
   const [config, setConfig] = useState(null)
   const [rows, setRows] = useState([])
   const [total, setTotal] = useState(0)
@@ -35,9 +46,13 @@ export default function App() {
   // screen changes underneath it, and it carries on up and away.
   const [wipe, setWipe] = useState('idle')
   const wipeTimers = useRef([])
-  const go = useCallback((v) => {
+  const go = useCallback((v, { replace = false, fromHistory = false } = {}) => {
     const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     wipeTimers.current.forEach(clearTimeout)
+    viewRef.current = v
+    if (!fromHistory && window.location.pathname !== PATHS[v]) {
+      window.history[replace ? 'replaceState' : 'pushState']({ view: v }, '', PATHS[v])
+    }
     if (instant) { setView(v); jumpToTop(); return }
     setWipe('in')
     wipeTimers.current = [
@@ -46,6 +61,19 @@ export default function App() {
     ]
   }, [])
   useEffect(() => () => wipeTimers.current.forEach(clearTimeout), [])
+
+  // Back and forward. Leaving a running scan stops it, so its results cannot
+  // pull the reader back to a screen they just left.
+  useEffect(() => {
+    const onPop = () => {
+      const target = window.history.state?.view || viewFromPath(window.location.pathname)
+      if (viewRef.current === 'live' && target !== 'live') stop.current?.()
+      const usable = (target === 'results' && !result) || target === 'live' ? 'setup' : target
+      go(usable, { fromHistory: target === usable, replace: target !== usable })
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [go, result])
   useEffect(() => { startSmoothScroll(); return stopSmoothScroll }, [])
 
   const launch = useCallback((cfg, { hardened, keepBaseline } = {}) => {
@@ -61,7 +89,7 @@ export default function App() {
     }, {
       onStart: ({ live }) => setScanLive(live),
       onResult: ({ row, total: t }) => { setRows((r) => [...r, row]); if (t) setTotal(t) },
-      onDone: ({ result: res, report }) => { setResult({ ...res, report }); go('results') },
+      onDone: ({ result: res, report }) => { setResult({ ...res, report }); go('results', { replace: true }) },
       onError: (e) => setScanError(e.message),
     })
   }, [go])

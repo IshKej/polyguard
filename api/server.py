@@ -300,6 +300,10 @@ def harden(req: HardenRequest):
 # deployment is enough. During development Vite serves it instead.
 _dist = ROOT / "web" / "dist"
 if _dist.is_dir():
+    from fastapi.responses import FileResponse
     from fastapi.staticfiles import StaticFiles
 
+    # The site's own addresses all load the same page; the page picks the screen.
+    for _path in ("/how", "/scan", "/scan/live", "/scan/results"):
+        app.add_api_route(_path, lambda: FileResponse(_dist / "index.html"), include_in_schema=False)
     app.mount("/", StaticFiles(directory=str(_dist), html=True), name="web")
