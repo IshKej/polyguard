@@ -2,6 +2,8 @@
 
 **Does your chatbot hold up in every language?**
 
+**Live: https://polyguard-ten.vercel.app** (scans there are simulated until an API key is configured)
+
 ![The PolyGuard web app: the cursor is a highlighter that shows the same attack in other languages, and a speech bubble answers no in each one](docs/hero.png)
 
 Most AI safety testing happens in English. PolyGuard takes a chatbot's system prompt, attacks a live copy of that bot with **5 kinds of prompt injection** in **every language in its attack bank**, and shows, per language and per resource tier, which attacks got through. The point is to measure the gap between how well a bot is defended in English and how well it is defended in everyone else's language.

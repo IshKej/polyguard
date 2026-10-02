@@ -7,6 +7,14 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-01** Live on Vercel: **https://polyguard-ten.vercel.app**, project
+  `ishaan-s-projects14/polyguard` in Ishaan's own Vercel account (CLI user
+  `ishkej`). GitHub repo connected, so every push to main deploys. Checked on the
+  live site: meta, game, a streamed scan, results, report download, `/how`, no
+  errors. Previews are behind Vercel Authentication; production is public.
+- **2026-10-01** `4827c98` Every screen has an address (`/`, `/scan`,
+  `/scan/live`, `/scan/results`, `/how`); back and forward work; leaving a running
+  scan stops it.
 - **2026-10-01** `71f953e` How we know page (`web/src/components/Method.jsx`): a
   simulated fair bot, the worst language circled, 1,000 shuffles building the null
   distribution of `engine.max_gap_permutation_test`, a switch for a real weak spot,
@@ -30,18 +38,11 @@ the web app and hosting.
 
 ## In progress
 
-- **Vercel hosting.** Config is committed. Waiting on Ishaan to create his own
-  Vercel account (vercel.com/signup, Hobby, Continue with GitHub as IshKej, in a
-  private window) and run `npx vercel login`. Then: `npx vercel whoami` must show
-  his account, `npx vercel link` (new project `polyguard`), `npx vercel deploy`
-  (preview), check every screen on the preview URL, `npx vercel deploy --prod`,
-  then connect the GitHub repo so pushes deploy.
-- **Browser back button.** Screens have no URLs yet, so Back leaves the site. Fix:
-  history routing (`/`, `/scan`, `/how`), back and forward move between screens.
+- Supabase (see Next, item 2).
 
 ## Next
 
-1. Finish hosting (above). After the first deploy, make `og:image` absolute.
+1. Hosting is done. Keep `og:image` in `web/index.html` pointing at the live address.
 2. Supabase (Ishaan's own account, when he creates a project): saved scans with a
    shareable link, and anonymous game statistics ("people spot attacks in Hindi N%
    of the time"). The Python engine stays on Vercel; Supabase only stores data.
