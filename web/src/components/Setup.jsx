@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { getPasscode, label, setPasscode } from '../api'
-import { TIERS, representative } from '../lib/languages'
+import { NO, TIERS, representative } from '../lib/languages'
 
 function Step({ n, title, hint, children }) {
   return (
@@ -114,10 +114,17 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock }) {
                 return (
                   <button
                     key={l.code} type="button" aria-pressed={on} onClick={() => toggle(langs, setLangs, l.code)}
-                    className={`hl-hover relative rounded-md border-2 px-3 py-2.5 text-left transition-colors ${
+                    className={`hl-hover group relative rounded-md border-2 px-3 py-2.5 text-left transition-colors ${
                       on ? 'border-ink bg-ink text-paper' : 'border-(--line) text-(--mute) hover:border-ink hover:text-ink'
                     }`}
                   >
+                    {/* How the bot should answer an attack in this language. */}
+                    <span
+                      aria-hidden="true" dir="auto" lang={l.code}
+                      className="pointer-events-none absolute -top-8 left-2 z-10 translate-y-1 whitespace-nowrap rounded-[10px] rounded-bl-[3px] bg-hi px-2.5 py-0.5 text-sm font-bold text-ink opacity-0 ring-1 ring-ink transition-[opacity,transform] duration-150 group-hover:translate-y-0 group-hover:opacity-100"
+                    >
+                      {NO[l.code] || 'No.'}
+                    </span>
                     {on && <span aria-hidden="true" className="absolute right-2.5 top-2.5 size-2 rounded-full bg-hi" />}
                     <div dir="auto" lang={l.code} className="truncate pr-4 font-semibold">{on ? l.native : <span className="hl">{l.native}</span>}</div>
                     {l.native !== l.name && <div className={`caption mt-0.5 ${on ? 'text-mute-ink' : ''}`}>{l.name}</div>}

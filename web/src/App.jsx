@@ -133,7 +133,7 @@ export default function App() {
           languages={scanLanguages} outcomes={outcomes}
           expected={config.categories.length * config.phrasings}
           done={rows.length} total={total} broke={rows.filter((r) => r.broke).length}
-          latest={rows[rows.length - 1]} live={scanLive}
+          recent={rows.slice(-4)} live={scanLive}
           title={config.exampleName ? `the ${config.exampleName.toLowerCase()}` : 'your chatbot'}
           error={scanError} onCancel={() => { stop.current?.(); go('setup') }}
         />

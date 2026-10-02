@@ -40,6 +40,9 @@ export const startScan = (body) =>
 
 export const getResult = (id) => call(`/api/scans/${id}`)
 
+// Real messages from the bank for the spot the attack game.
+export const getGame = () => call('/api/game')
+
 export const harden = (prompt, broken_categories) =>
   call('/api/harden', { method: 'POST', headers: headers(true), body: JSON.stringify({ prompt, broken_categories }) })
 

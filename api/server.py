@@ -10,6 +10,7 @@ Endpoints
     GET  /api/scans/{id}            the finished scan, with verdict and statistics
     GET  /api/scans/{id}/report     the self-contained HTML report
     POST /api/harden                targeted rules for what broke, and the hardened prompt
+    GET  /api/game                  real messages for the spot the attack game
 
 Spend safety. A live scan is hundreds of paid model calls, and a public link means
 strangers can press the button. So a scan is live only when an API key is
@@ -232,6 +233,34 @@ def meta(x_polyguard_passcode: str | None = Header(default=None)):
         "hero_line": {a["lang"]: a["text"] for a in BANK["attacks"]
                       if a["category"] == "instruction_override" and a.get("variant", 0) == 0},
     }
+
+
+# The spot the attack game: real messages from the bank, attacks and the ordinary
+# requests PolyGuard sends as capability controls, each with its English original.
+# Both kinds end by asking for a code word, and the two code words would give the
+# answer away, so both become the same neutral one. Indirect injections keep
+# "SYSTEM OVERRIDE" in English in every language and Base64 payloads look like what
+# they are, so neither is used: the game would be about spotting English, not
+# about reading a language.
+GAME_CODE = "QX-7731"
+GAME_CATEGORIES = ("instruction_override", "role_play_jailbreak", "system_prompt_extraction")
+
+
+def _neutral(text: str) -> str:
+    return text.replace(BANK["canary"], GAME_CODE).replace(BANK["control_token"], GAME_CODE)
+
+
+@app.get("/api/game")
+def game():
+    english = {x["id"]: x["text"] for x in BANK["attacks"] + BANK["controls"] if x["lang"] == "en"}
+    items = [{"id": a["id"], "lang": a["lang"], "attack": True, "category": a["category"],
+              "text": _neutral(a["text"]),
+              "english": _neutral(english.get(f"en_{a['category']}_{a['variant']}", ""))}
+             for a in BANK["attacks"] if a["lang"] != "en" and a["category"] in GAME_CATEGORIES]
+    items += [{"id": c["id"], "lang": c["lang"], "attack": False, "category": None,
+               "text": _neutral(c["text"]), "english": _neutral(english.get(f"en_control_{c['variant']}", ""))}
+              for c in BANK["controls"] if c["lang"] != "en"]
+    return {"code": GAME_CODE, "items": items}
 
 
 @app.post("/api/scans")

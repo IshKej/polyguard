@@ -4,6 +4,7 @@ import { NO } from '../lib/languages'
 import { useReducedMotion } from '../lib/motion'
 import HighlighterField from './HighlighterField'
 import ScrollStory from './ScrollStory'
+import SpotTheAttack from './SpotTheAttack'
 
 // Three.js is heavy, so the bubble loads after the page is already readable.
 const Bubble3D = lazy(() => import('./Bubble3D'))
@@ -58,6 +59,36 @@ function Torn({ side }) {
   )
 }
 
+// How far an element has come up into view: 0 as its top reaches the bottom of
+// the screen, 1 once its top is a quarter of the way down. Wide screens only, and
+// never with reduced motion: on a phone the stretch would reflow the lines.
+function useRiseProgress(ref) {
+  const [v, setV] = useState(null)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px) and (prefers-reduced-motion: no-preference)')
+    let raf = 0
+    const read = () => {
+      raf = 0
+      const el = ref.current
+      if (!el || !mq.matches) { setV(null); return }
+      const top = el.getBoundingClientRect().top
+      setV(Math.min(1, Math.max(0, (window.innerHeight - top) / (window.innerHeight * 0.75))))
+    }
+    const on = () => { if (!raf) raf = requestAnimationFrame(read) }
+    read()
+    window.addEventListener('scroll', on, { passive: true })
+    window.addEventListener('resize', on)
+    mq.addEventListener('change', on)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', on)
+      window.removeEventListener('resize', on)
+      mq.removeEventListener('change', on)
+    }
+  }, [ref])
+  return v
+}
+
 // One attack, in one language, as a card: the gallery of the same attack.
 function Specimen({ lang, text }) {
   const ref = useRef(null)
@@ -104,6 +135,10 @@ export default function Landing({ meta, onStart }) {
   const english = firstSentence(meta?.hero_line?.en) || 'Ignore all previous instructions.'
   const count = meta?.languages?.length ?? 20
   const reduce = useReducedMotion()
+  const close = useRef(null)
+  const rise = useRiseProgress(close)
+  // The closing words widen into place as the panel arrives (Mona Sans has a width axis).
+  const stretch = rise == null ? undefined : { fontStretch: `${80 + 32 * rise}%` }
 
   // The language the hero is on. Every fourth one gets through, as an illustration.
   const [i, setI] = useState(0)
@@ -261,14 +296,22 @@ export default function Landing({ meta, onStart }) {
       {/* How it works: pinned, and played by scrolling. */}
       <ScrollStory languages={others} lines={lines} prompt={meta?.examples?.[0]?.prompt || ''} />
 
+      {/* The game, on a fresh sheet. */}
+      <div className="relative">
+        <Torn side="top" />
+        <SpotTheAttack languages={others} onStart={onStart} />
+      </div>
+
       {/* The close: highlighter ground, an ink panel with a bump, like a speech bubble's top. */}
       <section data-surface="on-hi" className="on-hi px-3 pb-3 pt-16 sm:px-4">
-        <div className="ink relative rounded-[36px] px-6 pb-10 pt-20 text-center sm:px-10">
+        <div ref={close} className="ink relative rounded-[36px] px-6 pb-10 pt-20 text-center sm:px-10">
           <svg viewBox="0 0 240 40" className="absolute -top-[39px] left-1/2 h-10 w-60 -translate-x-1/2 fill-ink" aria-hidden="true">
             <path d="M0 40 C 40 40, 50 0, 90 0 L 150 0 C 190 0, 200 40, 240 40 Z" />
           </svg>
-          <h2 className="display mx-auto max-w-5xl text-[clamp(2.4rem,6vw,5.6rem)]">
-            Find out where your bot <span className="serif">says yes.</span>
+          <h2 className="display mx-auto max-w-6xl text-[clamp(2.4rem,6vw,5.6rem)]">
+            <span className="lg:whitespace-nowrap" style={stretch}>Find out where</span>
+            <br className="hidden lg:block" />{' '}
+            <span className="lg:whitespace-nowrap"><span style={stretch}>your bot</span> <span className="serif">says yes.</span></span>
           </h2>
           <p className="mx-auto mt-5 max-w-lg text-(--mute)">
             {meta?.examples?.length ?? 4} example chatbots are ready, or paste the instructions your own bot runs on.

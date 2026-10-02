@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { harden, label, pct, reportUrl } from '../api'
 import Board from './Board'
 import Drawer from './Drawer'
+import { jumpToTop } from '../lib/smooth'
 
 const REPO = 'https://github.com/IshKej/polyguard'
 
@@ -36,6 +37,16 @@ function Row({ k, children }) {
 
 export default function Results({ result, baseline, config, onAgain, onRescan }) {
   const [open, setOpen] = useState(null)
+  // The bars by kind of attack fill once they scroll into view.
+  const bars = useRef(null)
+  const [barsIn, setBarsIn] = useState(false)
+  useEffect(() => {
+    const el = bars.current
+    if (!el) return undefined
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setBarsIn(true); io.disconnect() } }, { threshold: 0.3 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
   const [fix, setFix] = useState(null)
   const [fixError, setFixError] = useState('')
   const [copied, setCopied] = useState(false)
@@ -59,7 +70,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan })
   )
   const expected = Math.max(1, ...Object.values(byLang).map((r) => r.length))
 
-  useEffect(() => { window.scrollTo({ top: 0 }) }, [result.id])
+  useEffect(() => { jumpToTop() }, [result.id])
 
   const loadFix = async () => {
     if (fix) return fix
@@ -152,12 +163,15 @@ export default function Results({ result, baseline, config, onAgain, onRescan })
 
       <section className="mt-16">
         <h2 className="display text-[clamp(2.2rem,4.6vw,3.8rem)]">By kind <span className="serif">of attack.</span></h2>
-        <div className="mt-6 border-b border-(--line)">
-          {result.categories.map((c) => (
+        <div ref={bars} className="mt-6 border-b border-(--line)">
+          {result.categories.map((c, n) => (
             <div key={c.category} className="grid items-center gap-x-5 gap-y-1 border-t border-(--line) py-3.5 sm:grid-cols-[16rem_1fr_4.5rem]">
               <div className="font-semibold">{label(c.category)}</div>
               <div className="h-3 overflow-hidden rounded-full bg-ink-3" role="img" aria-label={`${pct(c.rate)} got through`}>
-                <div className="h-full bg-red" style={{ width: `${(c.rate || 0) * 100}%` }} />
+                <div
+                  className="h-full bg-red transition-[width] duration-[900ms] ease-[cubic-bezier(.3,.7,.3,1)]"
+                  style={{ width: barsIn ? `${(c.rate || 0) * 100}%` : '0%', transitionDelay: `${n * 90}ms` }}
+                />
               </div>
               <div className="display text-3xl tabular-nums sm:text-right">{pct(c.rate)}</div>
             </div>

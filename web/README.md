@@ -40,7 +40,8 @@ deployment covers both.
 | `src/components/ScrollStory.jsx` | How it works, pinned and played by scrolling: prompt, attacks, board, red pen and fix |
 | `src/components/Board.jsx` | The scan board, used on every screen; it can circle a row in red pen |
 | `src/components/Setup.jsx` | Choosing a bot, languages and attacks |
-| `src/components/LiveScan.jsx` | The scan as it happens |
+| `src/components/SpotTheAttack.jsx` | The game: six real messages from the bank, attack or safe, with the English revealed |
+| `src/components/LiveScan.jsx` | The scan as it happens, with a feed of the latest attacks |
 | `src/components/Results.jsx` | Verdict, languages, fixes, and the detail for researchers |
 | `src/components/Drawer.jsx` | Every attack in one language, with its English original |
 | `src/lib/smooth.js` | Weighted smooth scrolling (Lenis), off for reduced motion |

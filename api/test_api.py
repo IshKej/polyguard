@@ -155,6 +155,21 @@ check("harden returns rules only for real attack types",
       h["rules"] == defenses.recommend(["instruction_override"]))
 check("the hardened prompt keeps the original", h["hardened"].startswith("You are ShopBot."))
 
+# --- the spot the attack game -----------------------------------------------------
+g = client.get("/api/game").json()
+items = g["items"]
+blob = json.dumps(g, ensure_ascii=False)
+check("the game serves both attacks and ordinary requests",
+      any(i["attack"] for i in items) and any(not i["attack"] for i in items))
+check("the game never shows either code word, which would give the answer away",
+      server.BANK["canary"] not in blob and server.BANK["control_token"] not in blob)
+check("every game message carries its English original", all(i["english"] for i in items))
+check("the game leaves out English and the giveaway attack types",
+      all(i["lang"] != "en" for i in items)
+      and not {i["category"] for i in items if i["attack"]} - set(server.GAME_CATEGORIES))
+check("every non English language appears in the game",
+      {i["lang"] for i in items} == set(server.BANK["languages"]) - {"en"})
+
 # --- verdict honesty ----------------------------------------------------------------------
 def fake_out(rates, mock=False, collision=None, sig=False):
     by_lang = {c: {"name": c.upper(), "native": c, "rate": r, "broke": int(r * 10), "total": 10}

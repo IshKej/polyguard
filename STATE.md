@@ -1,6 +1,6 @@
 # PolyGuard: current state and handoff
 
-**Last updated 2026-09-29.** Read this first if you are picking the project up
+**Last updated 2026-10-01.** Read this first if you are picking the project up
 cold. Everything below is reconstructable from the repo, but this is the short
 version and the reasoning behind the decisions.
 
@@ -20,14 +20,16 @@ python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, <1s           -> 154/154
 python verify_all.py             # full battery        -> 213/213
-python api/test_api.py           # web API             -> 39/39
+python api/test_api.py           # web API             -> 44/44
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
 python preflight.py              # deploy readiness   -> all pass
 python consistency.py            # docs match the code -> no stale claims
 python rehearsal.py              # dress rehearsal    -> answer key PASS
-streamlit run app.py             # the app itself
+python -m uvicorn api.server:app --port 8000   # the web app's API
+cd web && npm run dev            # the web app, on http://localhost:5173
+streamlit run app.py             # the research console
 python cli.py scan --prompt f --mock   # headless, no key needed
 ```
 
@@ -41,12 +43,21 @@ If any of those fail, something regressed. They all pass as of this writing.
 2. **The 35 low-resource languages.** The bank holds 20 languages: 16 high, 4
    mid, **0 low**. The central hypothesis is therefore untested, not supported.
    `python expand_languages.py --tier low` fills them, needs the key.
-3. **GitHub repo.** The local git repo is **already initialised and committed**,
-   so this is now two commands plus an account action. Create an empty public
-   repo named `polyguard` (no README, no .gitignore, or it will collide), then:
-   `git remote add origin https://github.com/YOUR-USERNAME/polyguard.git`
-   followed by `git push -u origin main`. Full steps in `DEPLOY.md`. This also
-   ends the Drive-mirror staleness problem permanently.
+3. **Deploy.** The repo is public at https://github.com/IshKej/polyguard and the
+   web app runs locally (`web/`, see `web/README.md`). Hosting it needs a home for
+   the Python API as well as the front end; the API serves `web/dist` itself once
+   built, so one host can do both. Once it has an address, make `og:image` in
+   `web/index.html` an absolute URL.
+
+## The web app
+
+React app in `web/` with a FastAPI layer in `api/`. The look ("the test sheet":
+paper, ink, highlighter, red pen) and the research behind it are logged in
+`docs/design-research.md`. The first version of the look is kept as the git tag
+`design/test-sheet-v1`. The landing page has a scroll story of a scan and a
+"spot the attack" game built on real messages from the bank (`GET /api/game`),
+which needs no key. Everything that would show a result is labelled simulated
+until a key exists.
 
 ## First moves once the key exists, in this order
 

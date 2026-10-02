@@ -272,3 +272,22 @@ Plan for v2, in order of impact:
   the way: a crash in the hero canvas when the hero briefly had no size, the red
   pen drawing only part of its loop (a Chrome quirk with non scaling strokes), the
   highlighter landing between lines on flex items, and a seam above the torn edge.
+- 2026-10-01, v3 ("add all the stuff make this best possible thing"): the honest
+  version of the break the bot game. A live model needs the key, so the game
+  uses real messages from the bank instead: six messages in six languages,
+  attacks and the ordinary requests PolyGuard sends as controls, and the player
+  calls each one attack or safe before the English is revealed. Both code words
+  are replaced by one neutral code so they cannot give the answer away, and
+  indirect injections (which keep "SYSTEM OVERRIDE" in English) and Base64
+  payloads are left out. New endpoint `GET /api/game` with five tests. Also: the
+  closing headline widens into place on scroll (Mona Sans width axis, wide
+  screens only), a live feed of the latest attacks on the scan screen (paced to
+  two updates a second, sliding in without fading, so a fast simulated scan stays
+  readable), setup
+  shows how the bot should say no when a language is hovered, the results bars
+  fill when they come into view, link preview tags with a share image and a phone
+  icon, and a favicon.ico for crawlers that ask for one.
+- v3 checks: lint clean, build passes, 44 API tests, contrast and sideways
+  scroll audited at 1440, 768 and 390 on every screen (one false positive: text
+  on the highlighter stroke, which is a background image), no page errors, the
+  game played through six rounds to the score.
