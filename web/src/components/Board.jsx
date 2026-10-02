@@ -24,7 +24,23 @@ function rowStatus(seen, expected) {
   return { text: 'Held', tone: 'text-hi', rate: '0%' }
 }
 
-function Row({ lang, seen, expected, onOpen, compact }) {
+// A red pen loop drawn by hand around one row. With `progress` (0 to 1) it is
+// drawn as far as that; without it, it draws itself once.
+function RedPen({ progress }) {
+  const scrubbed = progress !== undefined
+  return (
+    <svg aria-hidden="true" viewBox="0 0 400 60" preserveAspectRatio="none" className="pointer-events-none absolute -left-3 -top-1 z-10 h-[calc(100%+.5rem)] w-[calc(100%+1.25rem)] overflow-visible">
+      <path
+        d="M40 10 C 124 2, 316 3, 380 16 C 406 26, 372 52, 214 54 C 78 56, 4 49, 10 30 C 17 15, 66 8, 136 7"
+        pathLength="1" fill="none" stroke="var(--color-red)" strokeWidth="2.4" strokeLinecap="round"
+        className={scrubbed ? '' : 'animate-[pen_.9s_.4s_cubic-bezier(.6,0,.3,1)_both]'}
+        style={{ strokeDasharray: 1, strokeDashoffset: scrubbed ? 1 - Math.min(1, Math.max(0, progress)) : undefined }}
+      />
+    </svg>
+  )
+}
+
+function Row({ lang, seen, expected, onOpen, compact, marked, markProgress }) {
   const st = rowStatus(seen, expected)
   const Tag = onOpen ? 'button' : 'div'
   const sameName = !lang.native || lang.native === lang.name
@@ -37,6 +53,7 @@ function Row({ lang, seen, expected, onOpen, compact }) {
         compact ? 'grid-cols-[minmax(0,1fr)_auto] py-2 pl-3' : 'grid-cols-[minmax(0,1fr)_auto] py-2.5 pl-3 sm:grid-cols-[minmax(0,1fr)_auto_11.5rem]'
       } ${onOpen ? 'cursor-pointer' : ''}`}
     >
+      {marked && <RedPen progress={markProgress} />}
       {/* The row under the cursor gets a highlighter edge, the way a finger runs down a list. */}
       <span aria-hidden="true" className="absolute inset-y-1 left-0 w-1 origin-top scale-y-0 rounded-full bg-hi transition-transform duration-150 group-hover:scale-y-100 group-focus-visible:scale-y-100" />
       <div className={`min-w-0 ${compact ? 'flex items-baseline gap-2.5' : ''}`}>
@@ -66,7 +83,7 @@ function Row({ lang, seen, expected, onOpen, compact }) {
   )
 }
 
-export default function Board({ languages, outcomes, expected, onOpen, compact = false, columns = 1, caption }) {
+export default function Board({ languages, outcomes, expected, onOpen, compact = false, columns = 1, caption, mark, markProgress }) {
   const split = columns === 2 && languages.length > 8
   const half = Math.ceil(languages.length / 2)
   const groups = split ? [languages.slice(0, half), languages.slice(half)] : [languages]
@@ -84,7 +101,10 @@ export default function Board({ languages, outcomes, expected, onOpen, compact =
           <div key={gi}>
             {!compact && head}
             {group.map((lang) => (
-              <Row key={lang.code} lang={lang} seen={outcomes[lang.code] || []} expected={expected} onOpen={onOpen} compact={compact} />
+              <Row
+                key={lang.code} lang={lang} seen={outcomes[lang.code] || []} expected={expected} onOpen={onOpen} compact={compact}
+                marked={mark === lang.code} markProgress={markProgress}
+              />
             ))}
           </div>
         ))}

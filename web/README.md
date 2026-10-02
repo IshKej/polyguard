@@ -37,11 +37,13 @@ deployment covers both.
 | `src/components/Landing.jsx` | The landing page |
 | `src/components/HighlighterField.jsx` | The hero's paper: the cursor is a highlighter that reveals the attack in other languages |
 | `src/components/Bubble3D.jsx` | The 3D speech bubble (Three.js, loaded after the page) that says no in each language |
-| `src/components/Board.jsx` | The scan board, used on every screen |
+| `src/components/ScrollStory.jsx` | How it works, pinned and played by scrolling: prompt, attacks, board, red pen and fix |
+| `src/components/Board.jsx` | The scan board, used on every screen; it can circle a row in red pen |
 | `src/components/Setup.jsx` | Choosing a bot, languages and attacks |
 | `src/components/LiveScan.jsx` | The scan as it happens |
 | `src/components/Results.jsx` | Verdict, languages, fixes, and the detail for researchers |
 | `src/components/Drawer.jsx` | Every attack in one language, with its English original |
+| `src/lib/smooth.js` | Weighted smooth scrolling (Lenis), off for reduced motion |
 | `src/index.css` | The grounds, the type, the highlighter stroke and the buttons |
 
 The look is the test sheet: paper and ink grounds, one highlighter colour for

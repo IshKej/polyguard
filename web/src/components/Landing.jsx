@@ -2,8 +2,8 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { firstSentence } from '../api'
 import { NO } from '../lib/languages'
 import { useReducedMotion } from '../lib/motion'
-import Board from './Board'
 import HighlighterField from './HighlighterField'
+import ScrollStory from './ScrollStory'
 
 // Three.js is heavy, so the bubble loads after the page is already readable.
 const Bubble3D = lazy(() => import('./Bubble3D'))
@@ -27,47 +27,33 @@ function Marked({ children, again, className = '', ...rest }) {
   return <span ref={ref} className={`hl ${className}`} {...rest}>{children}</span>
 }
 
-// A self-playing preview of the scan board. The outcomes are generated here in
-// the browser, from a fixed pattern, and the caption says so.
-function PreviewBoard({ languages }) {
-  const expected = 10
-  const reduce = useReducedMotion()
-  const shown = useMemo(() => languages.slice(0, 7), [languages])
-  const full = useMemo(() => {
-    const pattern = (li, ai) => ((li * 7 + ai * 13 + li * ai) % 10 < 3 ? 'broke' : 'held')
-    return Object.fromEntries(shown.map((l, li) => [l.code, Array.from({ length: expected }, (_, ai) => pattern(li, ai))]))
-  }, [shown])
-  const [outcomes, setOutcomes] = useState({})
+// The cursor over the hero: a highlighter pen, tip at the lower left.
+const PEN = `url("data:image/svg+xml,${encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34' viewBox='0 0 34 34'><g transform='rotate(45 17 17)'><rect x='13' y='0' width='8' height='21' rx='2' fill='#1a1c15' stroke='#eeede5' stroke-width='1.5'/><path d='M13 21h8l-1.6 7h-4.8z' fill='#e6ff2e' stroke='#1a1c15' stroke-width='1.3' stroke-linejoin='round'/></g></svg>",
+)}") 6 27, crosshair`
 
-  useEffect(() => {
-    if (reduce || !shown.length) return undefined
-    let step = 0
-    let holdUntil = 0
-    const order = []
-    for (let ai = 0; ai < expected; ai++) shown.forEach((l) => order.push(l.code))
-    const id = setInterval(() => {
-      if (Date.now() < holdUntil) return
-      if (step >= order.length) {
-        if (holdUntil === 0) { holdUntil = Date.now() + 2800; return }
-        holdUntil = 0
-        step = 0
-        setOutcomes({})
-        return
-      }
-      const code = order[step]
-      setOutcomes((prev) => {
-        const have = prev[code] || []
-        return { ...prev, [code]: [...have, full[code][have.length]] }
-      })
-      step += 1
-    }, 110)
-    return () => clearInterval(id)
-  }, [shown, full, reduce])
+// A torn edge, so a paper section reads as a sheet torn from a pad. It is a strip
+// of the same paper, grain and all, cut along a fixed but irregular line.
+const TEAR = (() => {
+  let seed = 7
+  const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
+  const pts = []
+  for (let x = 0; x < 100; x += 0.5 + rand() * 1.2) pts.push([x, 2 + rand() * 9])
+  pts.push([100, 6])
+  return pts
+})()
+const at = ([x, y]) => `${x.toFixed(2)}% ${y.toFixed(1)}px`
+const TORN = {
+  bottom: `polygon(0 0, 100% 0, ${[...TEAR].reverse().map(at).join(', ')})`,
+  top: `polygon(${TEAR.map(([x, y]) => at([x, 14 - y])).join(', ')}, 100% 14px, 0 14px)`,
+}
 
+function Torn({ side }) {
   return (
-    <Board
-      languages={shown} outcomes={reduce ? full : outcomes} expected={expected} compact
-      caption="A preview with made up outcomes. Highlighter held. Red got through."
+    <div
+      aria-hidden="true"
+      className={`paper pointer-events-none absolute inset-x-0 z-10 h-3.5 ${side === 'top' ? '-top-3.5' : '-bottom-3.5'}`}
+      style={{ clipPath: TORN[side] }}
     />
   )
 }
@@ -108,13 +94,6 @@ const REASONS = [
   ['PolyGuard measures', 'the difference.', 'The same attack in every language, scored the same way, with statistics honest enough to say when there is no gap at all.'],
 ]
 
-const STEPS = [
-  ['Pick a chatbot', 'Paste the instructions it runs on, or start from an example.'],
-  ['Attack it', 'Five kinds of prompt injection, in every language, several phrasings each.'],
-  ['Watch the board', 'A judge that reads any language decides whether the bot held or gave in.'],
-  ['Close the gap', 'See which languages broke, whether it is more than chance, and the rules that fix it.'],
-]
-
 export default function Landing({ meta, onStart }) {
   const others = useMemo(() => (meta?.languages || []).filter((l) => l.code !== 'en'), [meta])
   const headline = useMemo(() => others.filter((l) => l.native.length <= 10), [others])
@@ -128,21 +107,32 @@ export default function Landing({ meta, onStart }) {
 
   // The language the hero is on. Every fourth one gets through, as an illustration.
   const [i, setI] = useState(0)
+  const [picked, setPicked] = useState(null)
   useEffect(() => {
-    if (reduce || headline.length < 2) return undefined
+    if (reduce || picked || headline.length < 2) return undefined
     const id = setInterval(() => setI((n) => (n + 1) % headline.length), EVERY)
     return () => clearInterval(id)
-  }, [headline.length, reduce])
-  const lang = headline[i] || { native: 'Hindi', name: 'Hindi', code: 'hi', tier: 'high' }
-  const broke = i % 4 === 2
+  }, [headline.length, reduce, picked])
+  const lang = (picked && others.find((l) => l.code === picked)) || headline[i] || { native: 'Hindi', name: 'Hindi', code: 'hi', tier: 'high' }
+  const broke = !picked && i % 4 === 2
+
+  // Keep the strip's chosen language in view as the hero cycles.
+  const strip = useRef(null)
+  useEffect(() => {
+    const box = strip.current
+    const chip = box?.querySelector(`[data-code="${lang.code}"]`)
+    if (!box || !chip) return
+    box.scrollTo({ left: chip.offsetLeft - box.clientWidth / 2 + chip.clientWidth / 2, behavior: reduce ? 'auto' : 'smooth' })
+  }, [lang.code, reduce])
+  const nudge = (dir) => strip.current?.scrollBy({ left: dir * 320, behavior: reduce ? 'auto' : 'smooth' })
   const gallery = useMemo(() => lines.slice(0, 8).map((l) => ({ ...l, lang: others.find((o) => o.code === l.code) })), [lines, others])
 
   return (
     <main>
       {/* Hero: paper, the highlighter, the bubble. */}
-      <section data-surface="paper" className="paper relative min-h-[max(100svh,680px)] overflow-hidden">
+      <section data-surface="paper" className="paper relative flex min-h-[max(100svh,700px)] flex-col overflow-hidden" style={{ cursor: PEN }}>
         <HighlighterField english={english} lines={lines} />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-6 px-5 pb-10 pt-32 lg:min-h-[max(100svh,680px)] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,.7fr)] lg:pt-24">
+        <div className="relative mx-auto grid w-full max-w-7xl flex-1 items-center gap-6 px-5 pb-8 pt-32 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,.7fr)] lg:pt-24">
           <div>
             <h1 className="display text-[clamp(2.2rem,4.15vw,4.1rem)]">
               Your chatbot
@@ -152,7 +142,7 @@ export default function Landing({ meta, onStart }) {
               Does it say <span className="serif text-[1.1em]">no</span>
               <br />
               in{' '}
-              <Marked again={lang.code} dir="auto" lang={lang.code} className="serif whitespace-nowrap text-[1.1em]">{lang.native}</Marked>?
+              <Marked again={lang.code} dir="auto" lang={lang.code} className={`serif text-[1.1em] ${lang.native.length <= 10 ? 'whitespace-nowrap' : ''}`}>{lang.native}</Marked>?
             </h1>
             <p className="mt-7 max-w-md text-lg text-(--mute)">
               PolyGuard sends the same attacks in {count} languages and shows where a chatbot’s guardrails hold, and
@@ -179,7 +169,36 @@ export default function Landing({ meta, onStart }) {
             </div>
           </div>
         </div>
-        <p className="caption absolute bottom-4 right-5 hidden text-(--mute) lg:block">Move the cursor. It is a highlighter.</p>
+        {/* Every language in the bank, Duolingo style: find yours, and the page answers in it. */}
+        <div className="relative border-t border-(--line) bg-(--bg)/90">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-3">
+            <span className="caption hidden shrink-0 sm:block">Pick your language</span>
+            <button type="button" onClick={() => nudge(-1)} aria-label="Earlier languages" className="hidden size-8 shrink-0 place-items-center rounded-md border border-(--line) hover:border-ink sm:grid">
+              <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+            </button>
+            <div ref={strip} className="flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none]" role="group" aria-label="Pick your language">
+              {others.map((l) => {
+                const on = l.code === lang.code
+                return (
+                  <button
+                    key={l.code} data-code={l.code} type="button" aria-pressed={on}
+                    onClick={() => setPicked(l.code)} title={l.name}
+                    className={`hl-hover shrink-0 rounded-md px-3 py-1.5 font-semibold transition-colors ${on ? 'bg-ink text-paper' : 'hover:text-ink'}`}
+                  >
+                    <span dir="auto" lang={l.code} className={on ? '' : 'hl'}>{l.native}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <button type="button" onClick={() => nudge(1)} aria-label="More languages" className="hidden size-8 shrink-0 place-items-center rounded-md border border-(--line) hover:border-ink sm:grid">
+              <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
+            </button>
+            {picked && (
+              <button type="button" onClick={() => setPicked(null)} className="hl-hover caption hidden shrink-0 md:block"><span className="hl">Cycle again</span></button>
+            )}
+            <span className="caption hidden shrink-0 text-(--mute) xl:block">Move the cursor. It is a highlighter.</span>
+          </div>
+        </div>
       </section>
 
       {/* The same attack, scrolling past in every script. */}
@@ -218,7 +237,9 @@ export default function Landing({ meta, onStart }) {
       </section>
 
       {/* The gallery: one attack, written eight more ways. */}
-      <section data-surface="paper" className="paper">
+      <section data-surface="paper" className="paper relative">
+        <Torn side="top" />
+        <Torn side="bottom" />
         <div className="ruler" />
         <div className="mx-auto max-w-7xl px-5 py-20 sm:py-24">
           <div className="flex flex-wrap items-end justify-between gap-6">
@@ -237,30 +258,8 @@ export default function Landing({ meta, onStart }) {
         </div>
       </section>
 
-      {/* How it works, with the board running beside it. */}
-      <section id="how" data-surface="ink" className="ink scroll-mt-16">
-        <div className="mx-auto grid max-w-7xl items-start gap-14 px-5 py-20 sm:py-28 lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
-          <div>
-            <h2 className="display text-[clamp(2.4rem,5.6vw,5rem)]">
-              How it <span className="serif">works.</span>
-            </h2>
-            <ol className="mt-10 space-y-7">
-              {STEPS.map(([title, body], n) => (
-                <li key={title} className="hl-hover grid grid-cols-[3.25rem_1fr] gap-x-4">
-                  <span aria-hidden="true" className="display grid size-12 place-items-center rounded-md bg-hi text-2xl text-ink">{n + 1}</span>
-                  <div>
-                    <h3 className="display text-[1.7rem]"><span className="hl">{title}</span></h3>
-                    <p className="mt-1.5 max-w-sm text-(--mute)">{body}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-          <div className="lg:sticky lg:top-24 lg:pt-6">
-            <PreviewBoard languages={others} />
-          </div>
-        </div>
-      </section>
+      {/* How it works: pinned, and played by scrolling. */}
+      <ScrollStory languages={others} lines={lines} prompt={meta?.examples?.[0]?.prompt || ''} />
 
       {/* The close: highlighter ground, an ink panel with a bump, like a speech bubble's top. */}
       <section data-surface="on-hi" className="on-hi px-3 pb-3 pt-16 sm:px-4">

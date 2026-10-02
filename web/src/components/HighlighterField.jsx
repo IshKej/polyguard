@@ -54,6 +54,7 @@ export default function HighlighterField({ english, lines }) {
     }
 
     const draw = () => {
+      if (!cv.width || !cv.height) return // the hero has no size for a moment while a screen changes
       ctx.setTransform(1, 0, 0, 1, 0, 0)
       ctx.clearRect(0, 0, cv.width, cv.height)
       ctx.drawImage(printed, 0, 0)
@@ -97,6 +98,7 @@ export default function HighlighterField({ english, lines }) {
     const layout = () => {
       w = box.clientWidth
       h = box.clientHeight
+      if (!w || !h) return
       for (const c of [cv, printed, under, mask, comp]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr) }
       cv.style.width = `${w}px`
       cv.style.height = `${h}px`

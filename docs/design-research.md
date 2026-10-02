@@ -189,6 +189,53 @@ What PolyGuard takes from the detail pass:
   accessible and light.
 - Do better than Lando on one thing: honour reduced motion everywhere.
 
+## Every site, not just Lando (2026-10-01)
+
+Ishaan: "u did 40 sites think of all of them not just lando". The first version is
+saved as the git tag `design/test-sheet-v1` (commit d65c65d), so it can always be
+restored with `git checkout design/test-sheet-v1`.
+
+Each site's single best idea, and what PolyGuard does with it:
+
+| Site | Its best idea | For PolyGuard |
+|---|---|---|
+| Lando Norris | cursor brush reveal, mixed type, scroll cinematics | taken in v1 (highlighter reveal, mixed type) |
+| Oryzo (Lusion) | the hero object stays with you and changes as you scroll; ruler marks; selection handles on hover | **take: a scroll story where the scan plays out as you scroll** |
+| Duolingo | a strip of languages along the bottom of the first screen, so you find yours | **take: a language strip under the hero; pick your language and the page answers in it** |
+| Gandalf (Lakera) | a game: you try to trick the bot yourself | later, needs a live key; a scripted version would not be honest |
+| Lama Lama | dotted pixel trail behind the cursor, live clock in the footer bar | partly: the cursor itself becomes a highlighter pen |
+| Gumroad | objects drift against the cursor | already: gallery cards tilt to the cursor |
+| Arc | grain texture, wavy section edges | **take: paper grain on paper grounds, a torn paper edge where a sheet meets ink** |
+| Clay, Teenage Engineering, Oryzo | tactile, physical materials | same as above: the paper should feel like paper |
+| Playdate | a rotated sticker on the hero ("PRE-ORDER IT!") | considered; skipped, it would compete with the bubble |
+| Not Boring | 3D objects breaking through the wordmark | considered; the bubble already carries the 3D |
+| Mat Voyce (juror pick) | type that stretches and snaps on scroll | possible later with Mona Sans width axis |
+| Scout Motors, Lando | weighted smooth scrolling (Lenis) | **take, off for reduced motion, so the scroll story feels like the award sites** |
+| Messenger | one clear "BEGIN" button in a game world | already: one call to action per screen |
+| Cash App, Figma | the real product UI as the hero object | **take inside the scroll story: the real board fills as you scroll** |
+| PostHog | humour in small copy | light touches only; PolyGuard's subject is serious |
+| Headspace, Discord | characters and mascots | skipped; the bubble is the character |
+| Spotify | giant type cut over video | skipped; no video yet (Ishaan's CAC video could go here later) |
+| Lusion, Immersive Garden | counting preloader | v1 loader already does this job |
+| Nothing | dot matrix type | skipped, it would be a second visual language |
+| Tailscale, 1Password, Lakera, Promptfoo | (category sites) | the anti reference: dark glow, Inter, gradient words |
+
+Small verification finding while reviewing: Tailwind 4 resets buttons to the arrow
+cursor. Award sites all show the pointer on anything clickable. Fix globally.
+
+Plan for v2, in order of impact:
+1. The scroll story: How it works pins to the screen and plays the scan as you
+   scroll. Step 1 types the system prompt, step 2 fires attacks in other
+   languages into the chat, step 3 fills the real board, step 4 circles the worst
+   language in red pen and highlights the fix, rule by rule.
+2. The language strip: every language in the bank along the bottom of the hero;
+   choosing one sets the headline and the bubble to it.
+3. The cursor becomes a highlighter pen over the hero.
+4. Paper grain and torn paper edges.
+5. Lenis smooth scrolling.
+6. A red pen circle around the worst language on a live results page (not on a
+   simulated one, where it would mark noise as a finding).
+
 ## Build log
 
 - 2026-10-01: built. Paper and ink grounds, highlighter `#e6ff2e`, red pen
@@ -206,3 +253,22 @@ What PolyGuard takes from the detail pass:
   and the bubble's float.
 - Not yet checked: the fix and rescan path (needs a live key), Safari, a real
   phone's touch behaviour on the highlighter.
+- 2026-10-01, v2 (after saving v1 as the tag `design/test-sheet-v1`): the scroll
+  story (How it works pins and plays: the prompt types, attacks arrive in five
+  languages and the bot answers, the board fills, the worst row is circled in red
+  pen and three real rules from defenses.py get highlighted; scrolling back
+  reverses it; the steps are clickable; a ruler fills along the bottom). The hero
+  language strip (pick your language and the page answers in it; picking stops the
+  cycling, "Cycle again" restarts it). A highlighter pen cursor over the hero.
+  Paper grain, and torn edges cut from the same grained paper. Lenis smooth
+  scrolling, off for reduced motion; the drawer and the prompt box keep their own
+  wheel. Pointer cursor on everything clickable. On a live results page, the red
+  pen circles the worst language only when the permutation test says it is worse
+  than chance (p < 0.05); never on a simulated scan.
+- v2 checks: lint clean, build passes, no page errors, no sideways scroll at 390px,
+  the story read at seven scroll points on desktop and three on a phone (phones
+  get the compact board so it fits), reduced motion shows the static steps and the
+  finished board, the wheel inside the drawer scrolls only the drawer. Fixed on
+  the way: a crash in the hero canvas when the hero briefly had no size, the red
+  pen drawing only part of its loop (a Chrome quirk with non scaling strokes), the
+  highlighter landing between lines on flex items, and a seam above the torn edge.

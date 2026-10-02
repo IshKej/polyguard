@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getMeta, getResult, startScan, streamScan } from './api'
 import { Loader, Nav } from './components/Chrome'
+import { jumpToTop, startSmoothScroll, stopSmoothScroll } from './lib/smooth'
 import Landing from './components/Landing'
 import LiveScan from './components/LiveScan'
 import Results from './components/Results'
@@ -36,14 +37,15 @@ export default function App() {
   const go = useCallback((v) => {
     const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     wipeTimers.current.forEach(clearTimeout)
-    if (instant) { setView(v); window.scrollTo({ top: 0 }); return }
+    if (instant) { setView(v); jumpToTop(); return }
     setWipe('in')
     wipeTimers.current = [
-      setTimeout(() => { setView(v); window.scrollTo({ top: 0 }); setWipe('out') }, 380),
+      setTimeout(() => { setView(v); jumpToTop(); setWipe('out') }, 380),
       setTimeout(() => setWipe('idle'), 820),
     ]
   }, [])
   useEffect(() => () => wipeTimers.current.forEach(clearTimeout), [])
+  useEffect(() => { startSmoothScroll(); return stopSmoothScroll }, [])
 
   const launch = useCallback(async (cfg, { hardened, keepBaseline } = {}) => {
     stop.current?.()

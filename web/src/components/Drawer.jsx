@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { label, pct } from '../api'
+import { holdScroll } from '../lib/smooth'
 
 // Everything that happened in one language: each attack as it was sent, the same
 // attack in English so anyone can read it, and what the bot said back.
@@ -12,9 +13,11 @@ export default function Drawer({ lang, rows, onClose }) {
     const onKey = (e) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
+    holdScroll(true)
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
+      holdScroll(false)
       previous?.focus?.()
     }
   }, [onClose])
@@ -42,7 +45,7 @@ export default function Drawer({ lang, rows, onClose }) {
           <button type="button" onClick={onClose} className="btn btn-line btn-sm shrink-0">Close</button>
         </header>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-6">
+        <div data-lenis-prevent className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-6">
           {ordered.map((r) => (
             <article key={r.id} className="card p-5">
               <div className="mb-4 flex flex-wrap items-center gap-3">

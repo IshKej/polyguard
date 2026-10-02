@@ -86,6 +86,21 @@ export default function Results({ result, baseline, config, onAgain, onRescan })
   const tt = v.tier_test
   const wl = st.worst_language_test
 
+  // The red pen goes round the worst language only when it is worse than chance
+  // would make some language look (the permutation test), and only on a live scan.
+  // Some language always comes out worst; circling it otherwise would mark noise.
+  const worst = useMemo(() => {
+    if (result.mock || wl?.p == null || wl.p >= 0.05) return undefined
+    let best
+    for (const l of result.languages) {
+      const rows = byLang[l.code] || []
+      const scored = rows.filter((r) => !r.error).length
+      const broke = rows.filter((r) => r.broke).length
+      if (scored && broke && (!best || broke / scored > best.rate)) best = { code: l.code, rate: broke / scored }
+    }
+    return best?.code
+  }, [result, byLang, wl])
+
   return (
     <main data-surface="ink" className="ink min-h-screen">
       <div className="mx-auto max-w-7xl px-5 pb-28 pt-28">
@@ -123,7 +138,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan })
           Most broken first. Open a language to read every attack, in English too, and what the bot said back.
         </p>
         <div className="mt-6">
-          <Board languages={languages} outcomes={outcomes} expected={expected} onOpen={setOpen} columns={2} />
+          <Board languages={languages} outcomes={outcomes} expected={expected} onOpen={setOpen} columns={2} mark={worst} />
         </div>
         {st.capability_limited.length > 0 && (
           <p className="mt-5 border-l-4 border-hi pl-4">

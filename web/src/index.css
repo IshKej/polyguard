@@ -40,6 +40,17 @@
     from { transform: perspective(240px) rotateX(-92deg); }
     to { transform: perspective(240px) rotateX(0); }
   }
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(8px) scale(.96); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes pen {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+  }
   @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
@@ -47,6 +58,9 @@
 }
 
 html { background: var(--color-ink); scroll-behavior: smooth; }
+html.lenis-smooth { scroll-behavior: auto; }
+/* Anything clickable shows the pointer. Tailwind 4 resets buttons to the arrow. */
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, label[for], select { cursor: pointer; }
 body {
   margin: 0;
   min-height: 100vh;
@@ -67,6 +81,8 @@ body {
     --bg: var(--color-paper); --fg: var(--color-ink); --mute: var(--color-mute); --line: var(--color-rule);
     --card: var(--color-paper-2); --btn: var(--color-ink); --btn-text: var(--color-hi);
     background: var(--bg); color: var(--fg);
+    /* A faint grain, so the paper reads as paper and not as a flat fill. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.11  0 0 0 0 0.08  0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   .ink {
     --bg: var(--color-ink); --fg: var(--color-paper); --mute: var(--color-mute-ink); --line: var(--color-ink-3);

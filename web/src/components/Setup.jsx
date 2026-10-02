@@ -93,6 +93,7 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock }) {
             </div>
             <label htmlFor="prompt" className="caption mb-2 mt-7 block">System prompt</label>
             <textarea
+              data-lenis-prevent
               id="prompt" value={prompt} maxLength={8000} rows={6}
               onChange={(e) => { setPrompt(e.target.value); setExampleName('') }}
               placeholder="You are a helpful assistant for ..."
