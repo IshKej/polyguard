@@ -432,8 +432,8 @@ export default function Method({ meta, onStart, onBack }) {
           <div className="mt-14 max-w-3xl border-l-4 border-ink pl-5">
             <h3 className="display text-[1.5rem]">What is not proven yet</h3>
             <p className="mt-2 text-(--mute)">
-              No live scan has run, the attack bank has no low resource languages yet, and no translation has been
-              checked by a native speaker. Until those change, PolyGuard has a method, not a result. The full audit
+              No live scan has run, the attack bank has no low resource languages yet, and only two languages have
+              had feedback from a native speaker. Until those change, PolyGuard has a method, not a result. The full audit
               trail and the preregistration are public.
             </p>
             <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption mt-3 inline-block"><span className="hl">Source, audit and preregistration</span></a>

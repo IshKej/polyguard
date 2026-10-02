@@ -1,15 +1,19 @@
 # Native speaker review
 
-**Status as of 2026-09-17: zero languages have been reviewed by a native speaker.
-That includes the 20 hand-authored ones.**
+**Status as of 2026-10-02: native speaker feedback has been received and
+integrated for 2 of the 20 hand-authored languages, Spanish and Vietnamese.
+Portuguese feedback is pending. The other 17 have had no native review.** Feedback
+received and integrated is not a validation: it means a speaker read the lines and
+their corrections are now in the bank, not that the language is certified correct.
+The bank's `native_reviewed` flag is still false for every language.
 
 This document exists because the bank used to carry a `verified: True` flag on
 those 20 languages. It meant "the project author wrote this". It did not mean
 anyone who speaks Gujarati had ever read the Gujarati. A reader of the app or of
 an exported CSV had no way to tell those apart, and the word "verified" invited
 the wrong reading. The flag is gone. Provenance is now stated as `author` or
-`machine`, and native review is tracked here as a separate fact that is currently
-false everywhere.
+`machine`, and native review is tracked here as a separate fact, language by
+language.
 
 ## Why it matters more than it sounds
 
@@ -85,20 +89,29 @@ not the same as where it is easiest to find a speaker.
 
 ## Review log
 
+Reviewers are not named in this public repository unless they agree to be
+credited.
+
 | Language | Reviewer | Date | Verdict | Changes applied |
 |---|---|---|---|---|
-| (none yet) | | | | |
+| Spanish | Native speaker (name withheld) | 2026-10-01 | Suggestions on 10 of 21 lines, to read more naturally or closer to the English | All 10 applied 2026-10-02 in `generate_attack_bank.py`: 6 attacks (`es_instruction_override_1`, `es_system_prompt_extraction_2`, `es_obfuscated_payload_1`, `es_obfuscated_payload_2`, `es_indirect_injection_1`, `es_indirect_injection_2`) and 4 controls (`es_control_1`, `es_control_2`, `es_control_4`, `es_control_5`) |
+| Vietnamese | Native speaker (name withheld) | 2026-10-01 | Tone marks correct; understandable, though unnatural in places; one line needed rewording | `vi_role_play_jailbreak_2` reworded as suggested ("tuân theo tất cả" to "tuân theo mọi mệnh lệnh", final period after the canary), 2026-10-02 |
+
+Both changes are logged, with the new bank fingerprint, in the deviation log of
+`PREREGISTRATION.md`.
 
 ## Honest statement for the writeup
 
-Until this table has entries, the correct phrasing anywhere this project is
-described is:
+The correct phrasing anywhere this project is described is:
 
 > Attack strings for 20 languages were written by the author and validated
-> automatically for script, encoding, length and uniqueness. The remainder were
-> machine-translated and additionally verified by reverse translation. No
-> language has been reviewed by a native speaker, so translation quality is a
-> known limitation and a possible confound.
+> automatically for script, encoding, length and uniqueness. Native speaker
+> feedback has been received and integrated for two of them, Spanish and
+> Vietnamese; the other 18 have had no native review. Languages added later are
+> machine-translated and checked by reverse translation. Translation quality is
+> a known limitation and a possible confound.
 
-Do not write "verified", "professionally translated", or "human-checked" about
-any language in this project until the row exists above.
+Do not write "verified", "validated", "professionally translated", or
+"human-checked" about any language in this project, including Spanish and
+Vietnamese. Feedback received and integrated is what happened, so that is what
+to say.

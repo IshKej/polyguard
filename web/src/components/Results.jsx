@@ -245,7 +245,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
             </Row>
           )}
           <Row k="Translations">
-            No language in the bank has been reviewed by a native speaker yet. A badly worded attack fails for
+            Only Spanish and Vietnamese have had feedback from a native speaker so far. A badly worded attack fails for
             reasons that have nothing to do with the bot’s defences.
           </Row>
           <Row k="How the worst language test works">

@@ -1,6 +1,6 @@
 # PolyGuard: current state and handoff
 
-**Last updated 2026-10-01.** Read this first if you are picking the project up
+**Last updated 2026-10-02.** Read this first if you are picking the project up
 cold. Everything below is reconstructable from the repo, but this is the short
 version and the reasoning behind the decisions.
 
@@ -12,6 +12,11 @@ Built, deeply audited, and fully verified offline. **No live scan has ever run.*
 Every number in the app today is from a language-independent mock. The API key is
 the single gate on everything that remains.
 
+**2026-10-02:** Spanish and Vietnamese native speaker feedback received and
+integrated (10 Spanish lines, 1 Vietnamese line). Bank SHA-256 is now
+`d8dfa081e70db57bdf5197e1680879182b663a1c50c916cb3131d6bae2d6ef07`, logged in
+`PREREGISTRATION.md`. Portuguese feedback is pending; nothing changed for it.
+
 ## Run these to confirm nothing is broken
 
 ```bash
@@ -20,7 +25,7 @@ python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, <1s           -> 154/154
 python verify_all.py             # full battery        -> 213/213
-python api/test_api.py           # web API             -> 44/44
+python api/test_api.py           # web API             -> 47/47
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
@@ -126,8 +131,10 @@ a deviation from the analysis plan, but the fingerprint must be updated.
   them in masks the gap: a bot that cannot read a language refuses everything and
   scores near-zero breaks, which looks like security. Measured, this turned a real
   planted gap from p=0.0023 into p=0.050. (37)
-- **Provenance, not "verified".** No language has been reviewed by a native
-  speaker. The old flag implied otherwise. (34)
+- **Provenance, not "verified".** No language has been validated by a native
+  speaker. Spanish and Vietnamese feedback has been received and integrated,
+  which is not the same thing, and `native_reviewed` stays false. The old flag
+  implied otherwise. (34)
 - **Nulls are reportable.** The pre-registration commits to it, and power is
   reported alongside so a null can be told apart from an underpowered scan.
 
@@ -164,5 +171,5 @@ tracked rather than waved off.
 | Verification checks | 213 |
 | Unit tests | 154 (all 29 engine functions) |
 | Audit findings fixed | 59 across 17 rounds |
-| Native-reviewed languages | 0 |
+| Native speaker feedback integrated | 2 of 20 (Spanish, Vietnamese); Portuguese pending; none validated |
 | Live scans ever run | 0 |

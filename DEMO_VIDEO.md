@@ -195,11 +195,11 @@ of every flaw I found, and the list is longer than I expected.
 
 **6. What would you change in a 2.0?**
 Native speaker review. Right now the attack text for twenty languages was written
-by me and the rest is machine translated, and no language has been checked by
-somebody who actually speaks it. Published research shows machine translation
+by me, the other 67 will be machine translated, and only two languages, Spanish
+and Vietnamese, have had feedback from somebody who actually speaks them. Published research shows machine translation
 quality is the biggest confound in this whole area, and that bad translations make
 a language look safer than it is. I built the export tool for review sheets, but
-getting real reviewers is the single change that would most improve the results.
+getting reviewers for every language is the single change that would most improve the results.
 
 ---
 
