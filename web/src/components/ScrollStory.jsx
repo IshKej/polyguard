@@ -206,7 +206,7 @@ export default function ScrollStory({ languages, lines, prompt }) {
           <li key={title}>
             <button
               type="button" onClick={() => jump(n)} aria-current={on ? 'step' : undefined}
-              className={`hl-hover grid w-full grid-cols-[3rem_1fr] gap-x-4 rounded-md py-2.5 text-left transition-opacity duration-300 ${on || reduce ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
+              className={`hl-hover grid w-full grid-cols-[3rem_1fr] gap-x-4 rounded-md py-2.5 text-left transition-opacity duration-300 ${on || reduce ? 'opacity-100' : 'opacity-75 hover:opacity-100'}`}
             >
               <span aria-hidden="true" className={`display grid size-12 place-items-center rounded-md text-2xl transition-colors duration-300 ${on || reduce ? 'bg-hi text-ink' : 'bg-ink-3 text-paper'}`}>{n + 1}</span>
               <span>

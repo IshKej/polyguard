@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getMeta, runScan } from './api'
+import { getMeta, getSavedScan, runScan } from './api'
 import { Loader, Nav } from './components/Chrome'
 import { isMotionOff, useMotionOff } from './lib/motion'
 import { jumpToTop, startSmoothScroll, stopSmoothScroll } from './lib/smooth'
@@ -13,7 +13,10 @@ import Setup from './components/Setup'
 // between screens, and /how can be shared. A scan's own screens only make sense
 // with that scan in memory, so opening them fresh lands on the setup screen.
 const PATHS = { landing: '/', setup: '/scan', live: '/scan/live', results: '/scan/results', method: '/how' }
+// A share link: /s/ and 22 characters of base64url, the saved scan's id.
+const SHARED = /^\/s\/([A-Za-z0-9_-]{22})\/?$/
 function viewFromPath(path) {
+  if (SHARED.test(path)) return 'shared'
   if (path.startsWith('/how')) return 'method'
   if (path.startsWith('/scan')) return 'setup'
   return 'landing'
@@ -31,7 +34,11 @@ export default function App() {
   const [scanError, setScanError] = useState('')
   const [result, setResult] = useState(null)
   const [baseline, setBaseline] = useState(null)
+  // Where a result came from when it was not just scanned: a share link or a file.
+  const [source, setSource] = useState(null)
+  const [sharedError, setSharedError] = useState('')
   const stop = useRef(null)
+  const launching = useRef(false)
 
   const loadMeta = useCallback(
     () => getMeta().then((m) => { setMeta(m); setMetaError(''); return m }).catch((e) => { setMetaError(e.message); return null }),
@@ -41,6 +48,17 @@ export default function App() {
     let alive = true
     getMeta().then((m) => alive && setMeta(m)).catch((e) => alive && setMetaError(e.message))
     return () => { alive = false; stop.current?.() }
+  }, [])
+
+  // Opened from a share link: fetch the saved scan once.
+  useEffect(() => {
+    const m = window.location.pathname.match(SHARED)
+    if (!m) return undefined
+    let alive = true
+    getSavedScan(m[1])
+      .then((s) => { if (alive) { setResult(s.result); setConfig(null); setSource({ kind: 'link', id: m[1], ...s }) } })
+      .catch((e) => alive && setSharedError(e.message))
+    return () => { alive = false }
   }, [])
 
   // Moving between screens: a highlighter panel wipes up over the page, the
@@ -84,7 +102,12 @@ export default function App() {
   }, [motionOff])
 
   const launch = useCallback((cfg, { hardened, keepBaseline } = {}) => {
+    // One press, one scan: a second click during the screen change does nothing.
+    if (launching.current) return
+    launching.current = true
+    setTimeout(() => { launching.current = false }, 1500)
     stop.current?.()
+    setSource(null)
     setConfig(cfg); setRows([]); setTotal(cfg.langs.length * cfg.categories.length * cfg.phrasings)
     setScanError(''); setResult(null); setScanLive(false)
     if (!keepBaseline) setBaseline(null)
@@ -156,6 +179,7 @@ export default function App() {
           onBack={() => go('landing')}
           onLaunch={(cfg) => launch(cfg)}
           onUnlock={async () => { const m = await loadMeta(); return !!m?.live }}
+          onOpenFile={(r) => { setResult(r); setConfig(null); setBaseline(null); setSource({ kind: 'file' }); go('results') }}
         />
       )}
       {view === 'live' && config && (
@@ -168,13 +192,27 @@ export default function App() {
           error={scanError} onCancel={() => { stop.current?.(); go('setup') }}
         />
       )}
-      {view === 'results' && result && (
+      {(view === 'results' || view === 'shared') && result && (
         <Results
-          result={result} baseline={baseline} config={config}
-          onAgain={() => go('setup')}
+          result={result} baseline={baseline} config={config} source={source}
+          canShare={!!meta?.saving}
+          onAgain={() => { setSource(null); go('setup') }}
           onMethod={() => go('method')}
           onRescan={(hardened) => { setBaseline(result); launch(config, { hardened, keepBaseline: true }) }}
         />
+      )}
+      {view === 'shared' && !result && (
+        <main data-surface="ink" className="ink mx-auto min-h-screen px-5 pb-24 pt-36">
+          <div className="mx-auto max-w-2xl">
+            {sharedError ? (
+              <>
+                <h1 className="display text-5xl">That link <span className="serif">has nothing behind it.</span></h1>
+                <p className="mt-4 text-(--mute)">{sharedError} Saved scans are removed after 30 days, or sooner if whoever saved one deleted it.</p>
+                <button type="button" onClick={() => go('landing')} className="btn btn-solid mt-8">Go to PolyGuard</button>
+              </>
+            ) : <p className="caption text-(--mute)">Opening the saved scan…</p>}
+          </div>
+        </main>
       )}
     </>
   )

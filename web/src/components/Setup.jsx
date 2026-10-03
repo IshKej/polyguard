@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { getPasscode, label, setPasscode } from '../api'
+import { useMemo, useRef, useState } from 'react'
+import { getPasscode, label, readResultFile, setPasscode } from '../api'
 import { NO, TIERS, representative } from '../lib/languages'
 
 function Step({ n, title, hint, children }) {
@@ -32,7 +32,32 @@ function Chip({ on, onClick, children }) {
   )
 }
 
-export default function Setup({ meta, initial, onLaunch, onBack, onUnlock }) {
+// Why live scans are off, in the visitor's words. "locked" is the only state a
+// passcode can change; the others are the owner's to fix.
+const LIVE_OFF = {
+  no_key: 'No model is connected to this site yet, so every scan is simulated.',
+  no_passcode_configured: 'Live scans are switched off: the owner has not set a passcode, and without one they stay off.',
+  no_guard: 'Live scans are switched off: the spend guard that limits them is not set up.',
+}
+
+// An upper bound on what a live scan can cost, never an estimate of a typical one:
+// every reply at its length cap, every reply judged, every character a token.
+function costBound(meta, model, promptChars, attacks, controls) {
+  const cm = meta.cost_model
+  if (!cm) return null
+  const victim = cm.prices_per_mtok[model]
+  const judge = cm.prices_per_mtok[cm.judge_model]
+  const calls = attacks + controls
+  if (!victim || !judge) return { calls, usd: null }
+  const vIn = calls * (promptChars + cm.max_attack_chars)
+  const vOut = calls * cm.victim_max_output_tokens
+  const jIn = calls * cm.judge_input_tokens
+  const jOut = calls * cm.judge_max_output_tokens
+  const usd = (vIn * victim[0] + vOut * victim[1] + jIn * judge[0] + jOut * judge[1]) / 1e6
+  return { calls, usd }
+}
+
+export default function Setup({ meta, initial, onLaunch, onBack, onUnlock, onOpenFile }) {
   const examples = meta.examples
   const [exampleName, setExampleName] = useState(initial?.exampleName ?? examples[0]?.name ?? '')
   const [prompt, setPrompt] = useState(initial?.prompt ?? examples[0]?.prompt ?? '')
@@ -51,7 +76,23 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock }) {
   const preset = same(langs, all) ? 'all' : same(langs, quick) ? 'quick' : 'custom'
   const tiersPresent = TIERS.filter((t) => meta.languages.some((l) => l.tier === t))
   const hasLow = tiersPresent.includes('low')
-  const locked = meta.live_configured && meta.needs_passcode && !meta.live
+  const locked = meta.live_reason === 'locked'
+  const controls = langs.length * (meta.cost_model?.controls_per_language ?? 0)
+  const bound = meta.live ? costBound(meta, model, prompt.length, attacks, controls) : null
+  const hostedMax = meta.limits?.hosted_live_max_attacks
+  const tooBig = meta.live && hostedMax != null && attacks > hostedMax
+  const modelLabel = meta.models.find((m) => m.key === model)?.label ?? model
+  const vendor = meta.models.find((m) => m.key === model)?.vendor ?? 'the model’s maker'
+
+  // A scan saved from this site, opened again with no server involved.
+  const fileInput = useRef(null)
+  const [fileError, setFileError] = useState('')
+  const openFile = async (e) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    try { onOpenFile(readResultFile(await f.text())) } catch (x) { setFileError(x.message) }
+  }
 
   const pickExample = (ex) => { setExampleName(ex.name); setPrompt(ex.prompt) }
   const toggle = (list, set, v) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
@@ -72,6 +113,15 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock }) {
         <h1 className="display text-[clamp(2.8rem,7vw,5.6rem)]">
           Set up <span className="serif">the scan.</span>
         </h1>
+        <p className="mt-4 text-(--mute)">
+          Have a scan saved from this site?{' '}
+          <button type="button" onClick={() => fileInput.current?.click()} className="hl-hover font-semibold text-ink">
+            <span className="hl">Open the file</span>
+          </button>{' '}
+          to see it again. It stays on your computer.
+          <input ref={fileInput} type="file" accept="application/json,.json" onChange={openFile} className="hidden" />
+        </p>
+        {fileError && <p role="alert" className="mt-2 font-semibold text-red-text">{fileError}</p>}
 
         <div className="mt-10 space-y-4">
           <Step n="1" title="Pick a chatbot" hint="Start from an example, or paste the system prompt your own bot runs on.">
@@ -176,6 +226,48 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock }) {
             )}
           </Step>
 
+          <Step n="4" title="Before you launch" hint="What this scan sends, and what it can cost.">
+            <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-[12rem_1fr]">
+              <dt className="font-semibold">What happens</dt>
+              <dd className="text-(--mute)">
+                {meta.live
+                  ? <>Your system prompt and each attack go to {modelLabel} ({vendor}), one message at a time. A reply
+                    that contains the code word goes to a judge, {meta.cost_model?.judge_model ?? 'a fixed model'} (Anthropic),
+                    to decide whether the bot really gave in. Nothing is kept afterwards unless you make a share link.</>
+                  : <>Nothing leaves this server: no model is attacked. A stand-in that ignores your prompt makes the outcomes
+                    up, so the board can be watched. None of it is a measurement.</>}
+              </dd>
+              <dt className="font-semibold">Messages</dt>
+              <dd className="text-(--mute)">
+                {attacks} attacks and {controls} harmless capability checks ({langs.length} languages).
+                {meta.live && ` Up to ${2 * (attacks + controls)} paid calls: the bot, then the judge, for each.`}
+              </dd>
+              {meta.live && (
+                <>
+                  <dt className="font-semibold">Cost, at most</dt>
+                  <dd className="text-(--mute)">
+                    {bound?.usd != null
+                      ? <>${bound.usd.toFixed(2)}. An upper bound, with every reply at full length and every one judged; a real
+                        scan costs less.</>
+                      : <>No price is listed for {modelLabel}, so no bound is shown. Check its maker’s pricing.</>}
+                  </dd>
+                </>
+              )}
+              {tooBig && (
+                <>
+                  <dt className="font-semibold text-red-text">Too big here</dt>
+                  <dd className="text-red-text">
+                    A live scan on this site can fire at most {hostedMax} attacks, to finish inside the host’s time limit.
+                    Pick fewer languages or one phrasing, or run the full scan from a laptop.
+                  </dd>
+                </>
+              )}
+            </dl>
+            {!meta.live && LIVE_OFF[meta.live_reason] && (
+              <p className="mt-5 border-l-4 border-ink pl-4">{LIVE_OFF[meta.live_reason]}</p>
+            )}
+          </Step>
+
           {locked && (
             <form onSubmit={unlock} className="card flex flex-wrap items-end gap-3 p-6">
               <div>
@@ -206,7 +298,7 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock }) {
             </div>
           </div>
           <button
-            type="button" disabled={!ready}
+            type="button" disabled={!ready || tooBig}
             onClick={() => onLaunch({ prompt, exampleName, langs, categories: cats, phrasings, model })}
             className="btn btn-solid"
           >

@@ -226,7 +226,19 @@ def meta(x_polyguard_passcode: str | None = Header(default=None)):
         "saving": get_store() is not None,
         "limits": {"daily_call_budget": guard.DAILY_CALL_BUDGET, "live_per_hour": guard.LIVE_PER_HOUR,
                    "hosted_live_max_attacks": HOSTED_LIVE_MAX_ATTACKS if HOSTED else None},
-        "models_priced": {k: v for k, v in providers.PRICES_PER_MTOK.items()},
+        # What the preflight needs to show an upper bound on cost before a live scan:
+        # every call at its output cap and every character of input a token.
+        "cost_model": {
+            "prices_per_mtok": {k: list(v) for k, v in providers.PRICES_PER_MTOK.items()},
+            "judge_model": engine.JUDGE_MODEL,
+            "victim_max_output_tokens": 300,
+            "judge_max_output_tokens": 50,
+            # The judge reads its instructions (a token per character at most) and one
+            # reply, which the victim's own output cap holds to 300 tokens.
+            "judge_input_tokens": len(engine.JUDGE_COMPLIANCE_PROMPT) + 300 + 20,
+            "max_attack_chars": max(len(a["text"]) for a in BANK["attacks"] + BANK["controls"]),
+            "controls_per_language": max(CONTROLS_PER_LANG.values(), default=0),
+        },
         "languages": [{"code": c, "name": m["name"], "native": m["native"], "tier": tier_of(c),
                        "native_reviewed": bool(m.get("native_reviewed"))}
                       for c, m in BANK["languages"].items()],

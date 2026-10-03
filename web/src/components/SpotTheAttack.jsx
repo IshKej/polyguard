@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getGame, label } from '../api'
+import { getGame, getGameStats, label, postGameAnswer } from '../api'
 
 const ROUNDS = 6
 
@@ -34,6 +34,7 @@ export default function SpotTheAttack({ languages, onStart }) {
   const [answers, setAnswers] = useState([])
   const [revealed, setRevealed] = useState(false)
   const [finished, setFinished] = useState(false)
+  const [crowd, setCrowd] = useState(null)
 
   // Load the messages only when the game is close to the screen.
   useEffect(() => {
@@ -57,11 +58,12 @@ export default function SpotTheAttack({ languages, onStart }) {
 
   const guess = useCallback((attack) => {
     if (!item || revealed) return
-    setAnswers((a) => [...a, { id: item.id, correct: attack === item.attack }])
+    setAnswers((a) => [...a, { id: item.id, lang: item.lang, correct: attack === item.attack }])
     setRevealed(true)
+    postGameAnswer(item.id, attack)       // anonymous: which message, and the guess
   }, [item, revealed])
   const next = () => setRevealed(false)
-  const again = () => { setDeck(deal(items)); setAnswers([]); setRevealed(false); setFinished(false) }
+  const again = () => { setDeck(deal(items)); setAnswers([]); setRevealed(false); setFinished(false); setCrowd(null) }
 
   // A and S answer from the keyboard, Enter moves on, once the game has focus.
   const onKey = (e) => {
@@ -72,6 +74,20 @@ export default function SpotTheAttack({ languages, onStart }) {
   }
 
   const dots = useMemo(() => Array.from({ length: ROUNDS }, (_, n) => answers[n]), [answers])
+
+  // At the end, how everyone else did in the same languages, once a language has
+  // enough answers for the number to mean something.
+  useEffect(() => {
+    if (!finished) return undefined
+    let alive = true
+    getGameStats().then((g) => alive && setCrowd(g)).catch(() => alive && setCrowd({ languages: [], min_answers: 10 }))
+    return () => { alive = false }
+  }, [finished])
+  const crowdHere = useMemo(() => {
+    if (!crowd) return []
+    const mine = new Set(answers.map((a) => a.lang))
+    return crowd.languages.filter((l) => mine.has(l.lang))
+  }, [crowd, answers])
 
   return (
     <section ref={section} data-surface="paper" className="paper relative" onKeyDown={onKey}>
@@ -86,7 +102,7 @@ export default function SpotTheAttack({ languages, onStart }) {
             Six messages, each in a different language. Some are attacks, some are ordinary requests. A chatbot has to
             tell them apart every time, in every language.
           </p>
-          <div className="mt-8 flex gap-2" aria-label={`${score} right of ${answers.length} answered`}>
+          <div className="mt-8 flex gap-2" role="img" aria-label={`${score} right of ${answers.length} answered`}>
             {dots.map((a, n) => (
               <span
                 key={n}
@@ -112,6 +128,23 @@ export default function SpotTheAttack({ languages, onStart }) {
                   {score}<span className="serif text-[.6em] text-(--mute)"> of {deck.length}</span>
                 </div>
                 <p className="mt-4 max-w-md text-lg">{VERDICT.find(([min]) => score >= min)[1]}</p>
+                {crowd && (
+                  <div className="mt-6 max-w-md">
+                    <div className="caption text-(--mute)">Everyone else, in the same languages</div>
+                    {crowdHere.length ? (
+                      <ul className="mt-2 space-y-1">
+                        {crowdHere.map((l) => (
+                          <li key={l.lang}>
+                            {l.name}: <span className="font-semibold">{Math.round(l.accuracy * 100)}%</span> right
+                            <span className="text-(--mute)">, from {l.answers} answers</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-(--mute)">Not enough answers yet. A language shows here once it has {crowd.min_answers}.</p>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="mt-8 flex flex-wrap gap-3">
                 <button type="button" onClick={onStart} className="btn btn-solid">Scan a chatbot</button>

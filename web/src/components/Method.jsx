@@ -113,7 +113,7 @@ function RatesChart({ rows, worst }) {
                 <span className="caption ml-1.5 text-(--mute)">{isEn ? 'baseline' : row.name}</span>
               </div>
               <div
-                tabIndex={0}
+                tabIndex={0} role="img"
                 onPointerMove={(e) => show(e, row)}
                 onFocus={(e) => show(e, row)}
                 onBlur={() => setTip(null)}
@@ -195,7 +195,7 @@ function NullChart({ bins, observed, total }) {
               const tail = K_MIN + i >= obsK
               return (
                 <div
-                  key={i} tabIndex={0}
+                  key={i} tabIndex={0} role="img"
                   onPointerMove={(e) => show(e, i, count)} onFocus={(e) => show(e, i, count)} onBlur={() => setTip(null)}
                   aria-label={`${count} shuffles where the worst language came out ${pts((K_MIN + i) / PER_LANG)} points against English`}
                   className="flex h-full min-w-0 flex-1 cursor-default items-end"
