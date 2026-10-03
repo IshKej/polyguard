@@ -15,6 +15,7 @@ uvicorn>=0.30,<1         # serves the web API
 # openai>=1.40,<2          # GPT-4o mini, GPT-4.1 mini, and Groq/Together via base_url
 # google-genai>=1.0,<2     # Gemini 2.0 Flash
 
-# Maintainer tools only, never imported by the app. Install locally to build
-# formatted native review sheets with `python review_sheet.py --all --xlsx`.
-# openpyxl>=3.1,<4
+# Native review sheets: building them (review_sheet.py --xlsx) and reading what
+# reviewers send back (review_ingest.py, whose self-test runs in CI). Never
+# imported by the app or the API.
+openpyxl>=3.1,<4

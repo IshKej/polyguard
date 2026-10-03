@@ -10,6 +10,8 @@ Most AI safety testing happens in English. PolyGuard takes a chatbot's system pr
 
 > **Where this stands.** The instrument is built and audited ([AUDIT.md](AUDIT.md)). No live scan has run yet, the bank has no low resource languages yet, and native speaker feedback has been received and integrated for only two languages, Spanish and Vietnamese. Until those change, nothing here is a result. [STATE.md](STATE.md) has the details.
 
+New here? [docs/quickstart.md](docs/quickstart.md) runs it in three minutes with no key, shows how the pieces fit together, and lists what to do when something goes wrong. [docs/performance.md](docs/performance.md) has measured latency and sizes.
+
 ---
 
 ## Why this exists

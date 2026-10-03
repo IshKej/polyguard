@@ -44,17 +44,31 @@ Spanish and Vietnamese are in Pilot A because they are the only languages with
 native speaker feedback integrated so far.
 
 ```bash
+python setup_key.py      # once: verifies the key for free, writes .env, sets the site passcode
 python -c "import examples; print(examples.EXAMPLES['Retail support bot'])" > pilot_prompt.txt
 export POLYGUARD_JUDGE_MODEL=claude-haiku-4-5
 
-# Stage 1, Pilot A
+# Stage 1, Pilot A: a reproducible bundle (the scan with per-attack evidence, the
+# report, and a manifest with the commit, the bank and judge fingerprints and the
+# exact command)
 python cli.py scan --prompt pilot_prompt.txt --model claude-haiku-4-5 --langs en,es,vi \
-  --out pilot/pilot_a.json --html pilot/pilot_a.html
+  --bundle pilot/pilot_a --bundle-include-prompt
+python cli.py replay pilot/pilot_a/scan.json     # every number recomputed from its evidence
 
 # Stage 2, Pilot B (only after a second approval)
 python cli.py scan --prompt pilot_prompt.txt --model claude-haiku-4-5 \
-  --out pilot/pilot_b.json --html pilot/pilot_b.html
+  --bundle pilot/pilot_b --bundle-include-prompt
+python cli.py replay pilot/pilot_b/scan.json
 ```
+
+The example prompt is public, so including it in the bundle reveals nothing. For a
+real bot's prompt, leave `--bundle-include-prompt` off; the manifest keeps its
+SHA-256, so the prompt can still be matched without being published.
+
+After each stage, inspect every failure before going on. The scan file's
+`completeness` lists errors by kind (rate limit, key, model, timeout, network,
+bad request, provider), and every unscored row says why. A stage with any `auth`,
+`model` or `bad_request` error stops the pilot until the cause is understood.
 
 ### How the worst case is computed
 

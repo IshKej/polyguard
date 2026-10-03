@@ -286,6 +286,42 @@ def game():
     return {"code": GAME_CODE, "items": items}
 
 
+# --------------------------------------------------------------------------- #
+# Signing: a share link only for a result this server produced, unchanged
+#
+# A share link opens on this site's own address, so it must not be able to carry
+# a result someone wrote by hand: a made-up "live scan" with a made-up verdict
+# would look like PolyGuard's own finding. Every result is signed when it is
+# produced (HMAC-SHA256 over its canonical JSON, keyed by a server secret), and
+# only a result whose signature still matches can be saved behind a link.
+# --------------------------------------------------------------------------- #
+_LOCAL_SIGNING_KEY = secrets.token_bytes(32)      # one process on a laptop
+
+
+def _signing_key() -> bytes:
+    explicit = os.environ.get("POLYGUARD_SIGNING_KEY")
+    if explicit:
+        return explicit.encode("utf-8")
+    secret = os.environ.get("SUPABASE_SECRET_KEY")
+    if secret:      # every serverless copy shares it, so every copy agrees
+        return hashlib.sha256(("polyguard-sign|" + secret).encode("utf-8")).digest()
+    return _LOCAL_SIGNING_KEY
+
+
+def _canonical(result: dict) -> bytes:
+    body = {k: v for k, v in result.items() if k not in ("signature", "report")}
+    return json.dumps(body, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+def sign_result(result: dict) -> str:
+    return hmac.new(_signing_key(), _canonical(result), hashlib.sha256).hexdigest()
+
+
+def signature_ok(result: dict) -> bool:
+    sig = result.get("signature")
+    return isinstance(sig, str) and hmac.compare_digest(sig, sign_result(result))
+
+
 def _sse(event: str, data) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
@@ -347,7 +383,9 @@ def run_scan(req: ScanRequest, request: Request,
                       attacks=out["n_attacks"], broke=out["n_broke"],
                       errors_by_kind=out.get("errors_by_kind"),
                       duration_ms=round((time.time() - started) * 1000))
-            inbox.put(("done", {"result": web_result(out, req, scan_id), "report": report}))
+            res = web_result(out, req, scan_id)
+            res["signature"] = sign_result(res)
+            inbox.put(("done", {"result": res, "report": report}))
         except Exception as e:  # never a stack trace to the browser
             guard.log("scan_failed", scan_id=scan_id, reason=type(e).__name__)
             inbox.put(("done", {"error": f"The scan could not finish: {type(e).__name__}."}))
@@ -396,7 +434,8 @@ def harden(req: HardenRequest):
 # --------------------------------------------------------------------------- #
 SCAN_ID = re.compile(r"^[A-Za-z0-9_-]{22}$")
 SAVED_FIELDS = ("schema", "id", "mock", "instrument", "completeness", "victim", "totals", "verdict",
-                "languages", "categories", "stats", "broken_categories", "fixes", "results")
+                "languages", "categories", "stats", "broken_categories", "fixes", "results",
+                "heldout_variant")
 
 
 class SaveRequest(BaseModel):
@@ -419,6 +458,11 @@ def save_scan(req: SaveRequest, request: Request):
     if r.get("schema") != SCAN_SCHEMA or not isinstance(r.get("results"), list) \
             or not isinstance(r.get("languages"), list) or not isinstance(r.get("mock"), bool):
         raise HTTPException(422, "That is not a PolyGuard scan result.")
+    if len(json.dumps(r, ensure_ascii=False).encode("utf-8")) > 2 * MAX_SAVED_BYTES:
+        raise HTTPException(413, "That scan is too large to save.")
+    if not signature_ok(r):
+        raise HTTPException(422, "Only scans run on this site can be shared, exactly as they came back. "
+                                 "This one was changed, or made somewhere else.")
     clean = {k: r[k] for k in SAVED_FIELDS if k in r}
     if not req.keep_replies:
         clean["results"] = [{**row, "reply": "", "reply_redacted": True} if isinstance(row, dict) else row

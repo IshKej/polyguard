@@ -75,6 +75,9 @@ def start_server() -> tuple[str, subprocess.Popen]:
 
 
 def axe(page, where: str) -> None:
+    # Measure the page at rest: no hover, no colour change half finished.
+    page.mouse.move(1, 1)
+    page.wait_for_timeout(500)
     page.add_script_tag(path=str(AXE))
     found = page.evaluate("""async () => {
         const r = await axe.run(document, { resultTypes: ['violations'] });

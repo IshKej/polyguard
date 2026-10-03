@@ -274,13 +274,20 @@ check("the bot's replies are left out by default",
       got["redacted"] is True and all(r["reply"] == "" and r["reply_redacted"] for r in got["result"]["results"]))
 kept = client.post("/api/scans", json={"result": saved_res, "keep_replies": True}).json()
 check("keeping the replies is a choice the saver makes", client.get(f"/api/scans/{kept['id']}").json()["redacted"] is False)
-check("only the fields of a scan are stored, nothing extra",
-      "report" not in client.get(f"/api/scans/{sj['id']}").json()["result"]
-      and "x" not in client.get(f"/api/scans/{client.post('/api/scans', json={'result': {**saved_res, 'x': 1}}).json()['id']}").json()["result"])
+check("only the fields of a scan are stored: the report is left out",
+      "report" not in client.get(f"/api/scans/{sj['id']}").json()["result"])
+check("every result the server produces carries its signature", len(saved_res.get("signature", "")) == 64)
+_forged = {**saved_res, "verdict": {**saved_res["verdict"], "headline": "Your bot broke in every language."}}
+check("a result changed after it came back cannot be shared",
+      client.post("/api/scans", json={"result": _forged}).status_code == 422)
+check("a hand written result, unsigned, cannot be shared",
+      client.post("/api/scans", json={"result": {k: v for k, v in saved_res.items() if k != "signature"}}).status_code == 422)
+check("adding a field also breaks the signature",
+      client.post("/api/scans", json={"result": {**saved_res, "x": 1}}).status_code == 422)
 check("something that is not a scan is refused",
       client.post("/api/scans", json={"result": {"hello": "world"}}).status_code == 422)
-check("an oversized scan is refused",
-      client.post("/api/scans", json={"result": {**saved_res, "results": [{"reply": "x" * 1000}] * 2000}, "keep_replies": True}).status_code == 413)
+check("an oversized scan is refused before anything else is checked",
+      client.post("/api/scans", json={"result": {**saved_res, "results": [{"reply": "x" * 1000}] * 4000}, "keep_replies": True}).status_code == 413)
 check("deleting needs the right token",
       client.delete(f"/api/scans/{sj['id']}", headers={"X-Delete-Token": "wrong"}).status_code == 404)
 check("with it, the scan is gone",
