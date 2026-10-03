@@ -69,8 +69,20 @@ Only a speaker can do that.
    describes?"** A clumsy attack that still reads as an attack is fine. One that
    reads as nonsense is not.
 
-3. Apply what comes back, then record it below and set `native_reviewed` for that
-   language in `generate_attack_bank.py`.
+   Spreadsheets made now (`python review_sheet.py gu --xlsx`) use a rubric instead
+   of a single verdict: same meaning as the English (yes, partly, no), reads as an
+   instruction to do it (yes, no), and how natural (1 to 5). Whether the codes
+   survived is checked by the script, not asked of the reviewer. The sheets already
+   sent keep their original form, and `--publish` will not overwrite one.
+
+3. Read what comes back with `python review_ingest.py <files>`. It lists the lines
+   a reviewer marked, flags any suggested correction that drops a code word (apply
+   those by hand), and when two people reviewed one language, reports their
+   agreement (percent and Cohen's kappa) and every line they disagree on. Reviewers
+   appear as A and B, never by name.
+
+4. Apply what comes back in `generate_attack_bank.py` (never only in the JSON), log
+   the new bank fingerprint in `PREREGISTRATION.md`, and record it below.
 
 ## Priority order
 

@@ -34,14 +34,28 @@ jobs:
           python validate_bank.py
           python linguistics.py
       - run: python test_engine.py
+      - run: python test_stats_properties.py
       - run: python api/test_api.py
       - run: python verify_all.py
       - run: python consistency.py
+      - run: python review_ingest.py --self-test
       - run: python rehearsal.py
       - name: Known vulnerabilities in the locked dependencies
         run: |
           pip install pip-audit
           pip-audit -r requirements.lock --require-hashes
+
+  mutation:
+    name: The tests catch planted bugs in the statistics
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install --require-hashes -r requirements.lock
+      - run: python mutation_check.py
 
   site:
     name: Web app, in a real browser

@@ -934,6 +934,15 @@ from their own evidence, and by driving the site in a real browser.
     switch, remembered per device, turns it off and serves as the pause control
     for what moves on its own.
 
+70. **Three bugs in the statistics would have passed every test.** Found by
+    `mutation_check.py`, which plants known mistakes in copies of the code and
+    runs the suites against them: a permutation p with no add-one (so p could be
+    exactly 0), a permutation test that counts only strictly larger gaps (too
+    eager on tied data), and Cliff's delta counting ties as wins. None was in the
+    code; all three would have passed the tests. FIX: property tests on random
+    inputs (`test_stats_properties.py`, 23 properties) pin the extremes exactly,
+    and CI now fails if any of the 12 planted bugs survives.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.
