@@ -1,0 +1,18 @@
+# The web API as Vercel deploys it (vercel.json, service "api"), and nothing else.
+#
+# Only what the API imports at runtime is listed here. The research console's
+# dependencies (Streamlit, pandas, Altair) live in requirements.txt and never reach
+# the server: with them, the function bundle was 345 MB and Vercel had to install
+# packages on every cold start, which made the first visit after a quiet spell slow
+# enough to fail. Install for local work with `pip install -r requirements.txt`.
+[project]
+name = "polyguard-api"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.40,<1",
+    "fastapi>=0.115,<1",
+]
+
+[tool.vercel]
+entrypoint = "api.server:app"
