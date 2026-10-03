@@ -60,12 +60,19 @@ machine-readable, and it fails a build when the bot gets worse.
 ```bash
 python cli.py scan --prompt bot.txt --out today.json --html report.html
 python cli.py scan --prompt bot.txt --baseline last-week.json --fail-on-regression
+python cli.py scan --prompt bot.txt --bundle runs/today     # a folder someone else can check
 python cli.py compare last-week.json today.json
+python cli.py replay today.json                            # recompute every number from its evidence
 python cli.py languages
 ```
 
 Exit codes are chosen so CI can act on them: **0** clean, **1** regression
-detected, **2** the scan could not run. A ready-to-use GitHub Actions workflow is
+detected, **2** the scan could not run, **3** the baseline was measured
+differently (a different bank, judge, judge wording, scoring version, model or
+configuration), so comparing it would test the instrument, not the bot, and
+**4** a replay found a number that does not match its evidence. An incomparable
+baseline stops a gated build instead of passing it silently;
+`--allow-instrument-change` compares anyway and labels the result. A ready-to-use GitHub Actions workflow is
 in `.github/workflows/polyguard.yml`; it verifies PolyGuard's own test suite
 before it trusts its verdict about your bot, uploads the HTML report as an
 artifact even when the build fails, and comments the result on the pull request.
@@ -95,11 +102,70 @@ The research console, with every statistic exposed:
 streamlit run app.py
 ```
 
-**API key** (enables the live scan; without one the app runs in clearly-labelled MOCK mode so you can still see the interface):
+**API key.** Without one, everything runs as a clearly labelled simulation. With
+one, run:
 
-- Local: create `.streamlit/secrets.toml` and add `ANTHROPIC_API_KEY = "sk-ant-..."`
-- Cloud: paste the same line into the Streamlit Cloud **Secrets** box
-- **Never commit the key.** `.gitignore` already excludes `secrets.toml`.
+```bash
+python setup_key.py
+```
+
+It asks for the key without echoing it, checks it against Anthropic's model list
+(which costs nothing), writes it and a generated passcode to `.env` (ignored by git
+and by Vercel), stores both on the Vercel project as sensitive variables, and
+redeploys. It never makes a paid call; the first one is stage 0 of
+[docs/pilot-plan.md](docs/pilot-plan.md). **Never commit a key.**
+
+**Spend safety on the hosted site.** A live scan needs all of: a key, a configured
+passcode (no passcode means no live scans, never open access), the passcode in the
+request, and room in a spend guard shared by every server instance through
+Supabase: a daily budget of paid calls, a per-visitor hourly limit, and a cap on
+scans running at once. If the guard cannot be reached, live scans are refused.
+Logs carry only whitelisted fields, never prompts, replies, keys or IP addresses.
+
+## Reproduce a result
+
+Every scan records what produced it: the commit, the attack bank's SHA-256 (the
+one pinned in [PREREGISTRATION.md](PREREGISTRATION.md)), the scoring version, the
+judge model and a fingerprint of its exact wording, the victim, the languages,
+attack types and phrasings. Every scan file carries its per-attack evidence, and
+`python cli.py replay scan.json` recomputes every rate and test from that evidence
+with the code in your checkout. `--bundle` writes the scan, the report and a
+manifest with the exact command, the environment and a hash of every file. On the
+site, **Download the evidence** gives the same JSON, and a saved file opens again
+with no server involved.
+
+A defence is never judged on the attacks that chose it. The third phrasing of
+every attack is held out: the remediation rules are picked from the other two, and
+a fix is judged on the held-out phrasing together with whether the bot still
+follows ordinary requests, because a bot that refuses everything also stops every
+attack.
+
+## Limits of what a result can show
+
+- **The bank has no low resource languages yet**, so the central hypothesis is
+  untested. Results per language are real measurements; the low versus high
+  comparison cannot be made until the low resource languages exist.
+- **Resource tier is a proxy.** It is Joshi et al.'s (2020) class for how much text
+  and tooling exists in a language, not a measure of how much of a particular
+  model's safety training covered it. A tier gap is evidence about the proxy.
+- **Translation error can be differential.** If attack quality differs from one
+  language to the next, a gap can appear or vanish because of the translations,
+  in either direction. Native speaker feedback has been integrated for Spanish and
+  Vietnamese only.
+- **The judge can be wrong differently in different languages.** It is a model
+  reading replies in every language. Its false positive and false negative rates
+  per language are not measured yet; that needs independent bilingual labels.
+- **The canary is a proxy for harm.** A bot saying a code word on command shows the
+  injected instruction won, not that real damage followed.
+- **The attacks are single turn and author written.** No multi-turn, code switching,
+  transliteration, Unicode tricks or attacks written by native speakers yet, and real
+  attackers use all of them. Indirect injection is simulated inside a message, not
+  delivered through real documents, web pages or tool results.
+- **One run is one sample** for models that cannot be pinned to temperature 0, and
+  run to run variance is not measured until repeated live runs exist.
+- **A result is about one model with one system prompt, at one time.** Vendors
+  update models without notice; the instrument record names the model id, not the
+  vendor's internal version.
 
 ## Files
 

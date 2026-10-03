@@ -8,9 +8,11 @@ Deadline: **Congressional App Challenge, 26 October 2026.**
 
 ## One-line status
 
-Built, deeply audited, and fully verified offline. **No live scan has ever run.**
-Every number in the app today is from a language-independent mock. The API key is
-the single gate on everything that remains.
+Built, audited, verified offline, and **live at https://polyguard-ten.vercel.app**
+(Ishaan's Vercel account, with a Supabase database for share links, game answers
+and the spend guard). **No live scan has ever run.** Every number in the app today
+is from a language-independent mock. The API key is the single gate on the
+research; `python setup_key.py` plugs it in everywhere at once.
 
 **2026-10-02:** Spanish and Vietnamese native speaker feedback received and
 integrated (10 Spanish lines, 1 Vietnamese line). Bank SHA-256 is now
@@ -23,9 +25,12 @@ integrated (10 Spanish lines, 1 Vietnamese line). Bank SHA-256 is now
 python generate_attack_bank.py   # rebuild corpus       -> 300 attacks + 120 controls
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
-python test_engine.py            # unit, <1s           -> 154/154
-python verify_all.py             # full battery        -> 213/213
-python api/test_api.py           # web API             -> 47/47
+python test_engine.py            # unit, <1s           -> 168/168
+python verify_all.py             # full battery        -> 221/221
+python api/test_api.py           # web API             -> 86/86
+python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 21/21
+python api/test_cancellation.py  # OPEN: 2/6 until server-side cancellation lands
+python cli.py replay scan.json   # recompute a saved scan from its evidence
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
 python selection_bias_demo.py    # why worst-language needs correction
@@ -48,16 +53,17 @@ If any of those fail, something regressed. They all pass as of this writing.
 2. **The 35 low-resource languages.** The bank holds 20 languages: 16 high, 4
    mid, **0 low**. The central hypothesis is therefore untested, not supported.
    `python expand_languages.py --tier low` fills them, needs the key.
-3. **Deploy (Vercel, Ishaan's own account).** `vercel.json` defines two Vercel
-   Services in one project: the Vite site (`web/`) at `/` and the FastAPI API at
-   `/api/*` (entrypoint `api.server:app`). The API keeps nothing between requests:
-   `POST /api/scan` runs a scan inside the request that streams it, which is what
-   serverless hosting needs. A hosted live scan is capped at 60 attacks so it ends
-   inside the free plan's 300 second limit; full scans run locally. Deploy from
-   the CLI logged in as Ishaan's own account (`npx vercel whoami` first). Set
-   `ANTHROPIC_API_KEY` and
-   `POLYGUARD_PASSCODE` in the Vercel project's environment variables, never in
-   the repo. Once it has an address, make `og:image` in `web/index.html` absolute.
+3. **Server-side cancellation (Ishaan's, in progress).** Closing the tab does not
+   stop a paid scan: 228 more calls after a visitor leaves, measured. Brief and
+   acceptance tests: `docs/design/cancellation.md`, `api/test_cancellation.py`.
+   The spend guard and the hosted size cap bound the cost meanwhile.
+
+Hosting is done, not a blocker: two Vercel Services in one project (the Vite site
+at `/`, FastAPI at `/api/*`), every push to main deploys, and CI
+(`.github/workflows/ci.yml`) runs every check on every push. The API keeps nothing
+between requests; shared state (spend guard, share links, game answers) is in
+Supabase (`supabase/migrations/`), reached only with the server's secret key.
+Always run `npx vercel whoami` before any Vercel command: it must be `ishkej`.
 
 ## The web app
 
@@ -168,8 +174,8 @@ tracked rather than waved off.
 | Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
 | Capability controls | 120 (6 per language) |
 | Languages in bank | 20 of a planned 87 (16 high, 4 mid, **0 low**) |
-| Verification checks | 213 |
-| Unit tests | 154 (all 29 engine functions) |
-| Audit findings fixed | 59 across 17 rounds |
+| Verification checks | 221 |
+| Unit tests | 168 (every public engine function) |
+| Audit findings | 69 across 18 rounds (68 fixed; 62, cancellation, open and assigned) |
 | Native speaker feedback integrated | 2 of 20 (Spanish, Vietnamese); Portuguese pending; none validated |
 | Live scans ever run | 0 |

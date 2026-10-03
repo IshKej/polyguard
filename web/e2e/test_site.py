@@ -38,8 +38,7 @@ def check(name, cond):
     print(f"  [{'PASS' if cond else 'FAIL'}] {name}", flush=True)
     if not cond and os.environ.get("GITHUB_ACTIONS"):
         # An annotation, so a failure can be read from the run page and the API.
-        print(f"::error title=browser test::{name}".replace("
-", " ")[:900], flush=True)
+        print(f"::error title=browser test::{name}".replace(chr(10), " ")[:900], flush=True)
 
 
 def free_port() -> int:
@@ -55,16 +54,23 @@ def start_server() -> tuple[str, subprocess.Popen]:
     port = free_port()
     env = {k: v for k, v in os.environ.items()
            if k not in ("SUPABASE_URL", "SUPABASE_SECRET_KEY", "ANTHROPIC_API_KEY", "VERCEL")}
+    log = open(Path(tempfile.gettempdir()) / "polyguard-e2e-server.log", "w+", encoding="utf-8")
     proc = subprocess.Popen([sys.executable, "-m", "uvicorn", "api.server:app", "--port", str(port)],
-                            cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                            cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
     base = f"http://127.0.0.1:{port}"
-    for _ in range(100):
+    deadline = time.time() + 60          # a cold CI machine imports slowly
+    while time.time() < deadline and proc.poll() is None:
         try:
-            with socket.create_connection(("127.0.0.1", port), timeout=0.2):
+            with socket.create_connection(("127.0.0.1", port), timeout=0.5):
                 return base, proc
         except OSError:
-            time.sleep(0.1)
+            time.sleep(0.25)
     proc.kill()
+    log.seek(0)
+    tail = log.read()[-1500:]
+    print(tail)
+    if os.environ.get("GITHUB_ACTIONS"):
+        print("::error title=browser test::the local server did not start: " + tail.replace(chr(10), " | ")[-800:])
     raise SystemExit("the local server did not start")
 
 
