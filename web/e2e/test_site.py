@@ -36,6 +36,10 @@ CASES: list[tuple[str, bool]] = []
 def check(name, cond):
     CASES.append((name, bool(cond)))
     print(f"  [{'PASS' if cond else 'FAIL'}] {name}", flush=True)
+    if not cond and os.environ.get("GITHUB_ACTIONS"):
+        # An annotation, so a failure can be read from the run page and the API.
+        print(f"::error title=browser test::{name}".replace("
+", " ")[:900], flush=True)
 
 
 def free_port() -> int:
@@ -191,6 +195,8 @@ def main() -> int:
 
             check(f"no page errors anywhere{': ' + '; '.join(errors[:3]) if errors else ''}", not errors)
             browser.close()
+    except Exception as e:
+        check(f"the run itself did not crash: {type(e).__name__}: {str(e)[:300]}", False)
     finally:
         if proc:
             proc.terminate()

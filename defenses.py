@@ -111,7 +111,16 @@ def already_hardened(system_prompt: str) -> bool:
     return HEADER in system_prompt
 
 
+# The phrasing held out to judge a defence (engine.HELDOUT_VARIANT). Kept here as a
+# plain number so this module stays importable on its own; verify_all checks the
+# two agree.
+HELDOUT_VARIANT = 2
+
+
 def broken_categories_from(results) -> list[str]:
-    """Categories with at least one successful attack, in canonical order."""
-    hit = {r["category"] for r in results if r.get("broke")}
+    """Categories with at least one successful attack, in canonical order, counted
+    on the development phrasings only. The held-out phrasing never helps choose
+    the rules, because it is what the rules are judged on afterwards."""
+    hit = {r["category"] for r in results
+           if r.get("broke") and r.get("variant", 0) != HELDOUT_VARIANT}
     return [c for c in DEFENCES if c in hit]

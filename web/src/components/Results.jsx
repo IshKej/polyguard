@@ -146,6 +146,24 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
 
   useEffect(() => { jumpToTop() }, [result.id])
 
+  // A fix is judged on the held-out phrasing only: the third phrasing of every
+  // attack, which never helped choose the rules. And on whether the bot still
+  // does its ordinary job, because a bot that refuses everything stops every
+  // attack too.
+  const fixCheck = useMemo(() => {
+    if (!baseline) return null
+    const H = result.heldout_variant ?? 2
+    const count = (rows) => {
+      const scored = rows.filter((r) => !r.error)
+      return { scored: scored.length, broke: scored.filter((r) => r.broke).length }
+    }
+    const before = count(baseline.results.filter((r) => r.variant === H))
+    const after = count(result.results.filter((r) => r.variant === H))
+    const benign = (tt) => (tt?.controls_scored ? tt.controls_followed / tt.controls_scored : null)
+    return { before, after, held: before.scored > 0 && after.scored > 0,
+             benignBefore: benign(baseline.totals), benignAfter: benign(result.totals) }
+  }, [baseline, result])
+
   const loadFix = async () => {
     if (fix) return fix
     if (!config) return null
@@ -219,15 +237,37 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
         <Stat value={pct(t.english_rate)} labelText="English" note="The baseline every language is compared against" />
       </section>
 
-      {baseline && (
+      {baseline && fixCheck && (
         <section className="card mt-10 p-7">
           <h2 className="display text-4xl">Before and after <span className="serif">the fix.</span><ModeTag mock={result.mock} /></h2>
+          {fixCheck.held ? (
+            <p className="mt-2 max-w-3xl text-(--mute)">
+              Judged on held-out attacks only: the third phrasing of every attack, which never helped choose these rules.
+            </p>
+          ) : (
+            <p className="mt-2 max-w-3xl border-l-4 border-hi pl-4">
+              These are the same attacks that chose the rules, so they flatter the fix. Scan with three phrasings to judge it on
+              attacks it was not chosen for.
+            </p>
+          )}
           <div className="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-3">
-            <Stat value={baseline.totals.broke} labelText="Got through the original" />
-            <Stat value={t.broke} labelText="Got through the hardened version" tone={t.broke < baseline.totals.broke ? 'text-hi' : 'text-red'} />
+            {fixCheck.held ? (
+              <>
+                <Stat value={`${fixCheck.before.broke}/${fixCheck.before.scored}`} labelText="Held-out attacks through, before" />
+                <Stat value={`${fixCheck.after.broke}/${fixCheck.after.scored}`} labelText="Held-out attacks through, after"
+                  tone={fixCheck.after.broke < fixCheck.before.broke ? 'text-hi' : fixCheck.after.broke > fixCheck.before.broke ? 'text-red' : ''} />
+              </>
+            ) : (
+              <>
+                <Stat value={baseline.totals.broke} labelText="Got through the original" />
+                <Stat value={t.broke} labelText="Got through the hardened version" tone={t.broke < baseline.totals.broke ? 'text-hi' : 'text-red'} />
+              </>
+            )}
             <Stat
-              value={baseline.totals.broke ? pct((baseline.totals.broke - t.broke) / baseline.totals.broke) : 'n/a'}
-              labelText="Of the holes closed"
+              value={fixCheck.benignAfter == null ? 'n/a' : pct(fixCheck.benignAfter)}
+              labelText="Ordinary requests still followed"
+              note={fixCheck.benignBefore == null ? null : `${pct(fixCheck.benignBefore)} before the fix. A fix that refuses everything is not a fix.`}
+              tone={fixCheck.benignAfter != null && fixCheck.benignBefore != null && fixCheck.benignAfter < fixCheck.benignBefore - 0.1 ? 'text-red' : ''}
             />
           </div>
         </section>

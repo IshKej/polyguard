@@ -666,6 +666,32 @@ check("a scan carries its instrument and its error kinds",
       _out["instrument"]["bank_sha256"] == engine.bank_sha256() and _out["errors_by_kind"] == {}
       and _out["planned"] == 2)
 
+# --- the held-out split: a defence is never judged on the attacks that chose it ----
+import defenses as _def  # noqa: E402
+
+_bank = engine.load_bank()
+check("split_of puts exactly the third phrasing of every cell in the held-out set",
+      engine.split_of({"variant": 2}) == "heldout" and engine.split_of({"variant": 0}) == "dev"
+      and engine.split_of({}) == "dev"
+      and sum(1 for a in _bank["attacks"] if engine.split_of(a) == "heldout") == len(_bank["attacks"]) // 3)
+check("heldout_sha256 fingerprints the held-out attacks and is stable",
+      engine.heldout_sha256() == engine.heldout_sha256(_bank) and len(engine.heldout_sha256()) == 64)
+_rows = [{"variant": 0, "category": "instruction_override", "broke": True},
+         {"variant": 2, "category": "role_play_jailbreak", "broke": True}]
+check("a category broken only on the held-out phrasing does not choose a rule",
+      _def.broken_categories_from(_rows) == ["instruction_override"])
+_before = [{"variant": 2, "broke": True}, {"variant": 2, "broke": True}, {"variant": 0, "broke": True}]
+_after = [{"variant": 2, "broke": False}, {"variant": 2, "broke": True, "error": None},
+          {"variant": 2, "broke": False, "error": "timeout"}, {"variant": 0, "broke": False}]
+_ev = engine.defense_evaluation(_before, _after, [{"followed": True}] * 4, [{"followed": True}, {"followed": False}])
+check("defense_evaluation judges on held-out rows, without errors, and reports benign behaviour",
+      _ev["has_heldout"] and _ev["heldout_before"] == {"scored": 2, "broke": 2, "rate": 1.0}
+      and _ev["heldout_after"] == {"scored": 2, "broke": 1, "rate": 0.5}
+      and _ev["in_sample_before"]["broke"] == 1 and _ev["benign_after"]["rate"] == 0.5
+      and _ev["benign_before"]["rate"] == 1.0)
+check("with no held-out phrasing in either scan, it says so instead of judging",
+      engine.defense_evaluation([{"variant": 0, "broke": True}], [{"variant": 0}])["has_heldout"] is False)
+
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}")

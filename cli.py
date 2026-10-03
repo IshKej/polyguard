@@ -145,8 +145,14 @@ def compare_scans(before: dict, after: dict, alpha: float = 0.05,
     # language whose intervals moved apart entirely. Both are language-level.
     regressed = bool(regressions) or bool(sign["significant"] and direction_worse)
 
+    # When both files carry their evidence, say how the change looks on the
+    # held-out phrasing alone, which is the only fair test of a defence.
+    defense = (engine.defense_evaluation(before["results"], after["results"])
+               if before.get("results") and after.get("results") else None)
+
     return {
         "comparable": True,
+        "defense_evaluation": defense,
         "instrument_changed": bool(diffs),
         "instrument_differences": diffs,
         "languages_compared": len(shared),

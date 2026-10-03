@@ -1325,6 +1325,13 @@ for _s in range(8):
     _p105.add(engine.max_gap_permutation_test(_rr)["p"])
 ck("115. the worst-language test gives one p whatever order the rows arrive in", len(_p105) == 1)
 
+# 117. The held-out set is fixed in one place and honoured by the defence picker.
+import defenses as _defs
+ck("117. defenses and engine agree on which phrasing is held out",
+   _defs.HELDOUT_VARIANT == engine.HELDOUT_VARIANT)
+ck("117b. the held-out fingerprint is the one pre-registered",
+   engine.heldout_sha256() in (HERE / "PREREGISTRATION.md").read_text(encoding="utf-8"))
+
 # 116. A scan file carries its evidence, and replay recomputes it exactly.
 import tempfile
 with tempfile.TemporaryDirectory() as _d:

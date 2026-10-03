@@ -164,7 +164,13 @@ def web_result(out: dict, req: ScanRequest, scan_id: str) -> dict:
                                             "thinking_forced": vm.get("thinking_forced")},
         "totals": {"attacks": out["n_attacks"], "broke": out["n_broke"],
                    "errors": out["n_errors"], "overall_rate": out["overall_rate"],
-                   "english_rate": out["en_rate"]},
+                   "english_rate": out["en_rate"],
+                   # Harmless requests the bot followed: a defence that refuses
+                   # everything shows up here, not in the attack numbers.
+                   "controls_scored": sum(1 for c in out.get("controls") or [] if not c.get("error")),
+                   "controls_followed": sum(1 for c in out.get("controls") or []
+                                            if not c.get("error") and c.get("followed"))},
+        "heldout_variant": engine.HELDOUT_VARIANT,
         "verdict": verdict(out),
         "languages": langs,
         "categories": cats,
