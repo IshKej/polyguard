@@ -7,6 +7,32 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-02, the hardening pass** (commits `12e0fac` to `e8f8821`), from Ishaan's
+  47 item review list:
+  - Spend: live scans fail closed without a passcode; a shared guard in Supabase
+    (daily call budget, per visitor hourly limit, site wide running cap,
+    idempotency keys) that refuses live scans when it is missing or unreachable;
+    per call timeouts and error kinds; whitelisted structured logs.
+  - Results: instrument record on every scan (commit, bank SHA, scoring version,
+    judge model and wording fingerprint, config); completeness before any rate;
+    per attack evidence; `cli.py replay` and `--bundle`; baselines measured
+    differently refused (exit 3); results signed so share links cannot be forged.
+  - Research: the third phrasing of every attack is held out (pre-registered with
+    its fingerprint); defences are judged on it and on benign follow rates;
+    README limits section; review rubric and `review_ingest.py` with agreement.
+  - Site: share links (`/s/<id>`, private, redacted, 30 days, deletable),
+    evidence download and reopening, preflight with cost upper bound, mode tags,
+    game crowd stats, double launch guard.
+  - Supabase: project `polyguard-db` (free, iad1) through the Vercel marketplace,
+    env vars injected into Vercel; migration in `supabase/migrations/`.
+  - Testing: CI on every push (`.github/workflows/ci.yml`); browser e2e with
+    axe-core; 23 statistical properties; mutation check (12 of 12 planted bugs
+    caught, after it found 3 test holes); gitleaks; pip-audit and npm audit on
+    locked installs (`requirements.lock`, `uv.lock`).
+  - `setup_key.py`: plugs in the API key everywhere when it exists, no paid call.
+  - Measured performance in `docs/performance.md`; quickstart, diagram and
+    troubleshooting in `docs/quickstart.md`. Audit round 18, findings 60 to 71.
+
 - **2026-10-02** Motion plays for everyone; the system reduced motion setting
   is no longer read (it froze the site on Ishaan's PC, Windows Animation effects
   off). A Motion on/off switch in the nav (wide screens) and footer turns it off,
@@ -54,7 +80,10 @@ the web app and hosting.
 
 ## In progress
 
-- Supabase (see Next, item 2).
+- **Server-side cancellation: Ishaan's own piece** (for the CAC "not entirely AI"
+  rule and to be able to defend it). Brief `docs/design/cancellation.md`, tests
+  `api/test_cancellation.py` (2 of 6 pass today by design). Do not implement it
+  for him; review and explain only.
 
 ## Next
 

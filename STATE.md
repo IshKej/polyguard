@@ -27,7 +27,7 @@ python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, <1s           -> 168/168
 python verify_all.py             # full battery        -> 221/221
-python api/test_api.py           # web API             -> 86/86
+python api/test_api.py           # web API             -> 90/90
 python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 21/21
 python test_stats_properties.py  # 23 properties of the statistics on random inputs -> 23/23
 python mutation_check.py         # 12 planted bugs in the statistics, all must be caught -> 12/12
@@ -178,6 +178,6 @@ tracked rather than waved off.
 | Languages in bank | 20 of a planned 87 (16 high, 4 mid, **0 low**) |
 | Verification checks | 221 |
 | Unit tests | 168 (every public engine function) |
-| Audit findings | 70 across 18 rounds (69 fixed; 62, cancellation, open and assigned) |
+| Audit findings | 71 across 18 rounds (70 fixed; 62, cancellation, open and assigned) |
 | Native speaker feedback integrated | 2 of 20 (Spanish, Vietnamese); Portuguese pending; none validated |
 | Live scans ever run | 0 |

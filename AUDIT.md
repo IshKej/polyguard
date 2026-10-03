@@ -943,6 +943,15 @@ from their own evidence, and by driving the site in a real browser.
     inputs (`test_stats_properties.py`, 23 properties) pin the extremes exactly,
     and CI now fails if any of the 12 planted bugs survives.
 
+71. **A share link could have carried a forged result under the site's name.**
+    Found by reading the new save endpoint as an attacker: it accepted any JSON
+    shaped like a scan, and the link opens on PolyGuard's own address, so a
+    hand written "live scan" with an invented verdict would have looked like the
+    project's own finding. FIX: every result is signed when the server produces
+    it (HMAC-SHA256 over canonical JSON, keyed by a secret all serverless copies
+    share), and only a result whose signature still matches can be saved. A
+    changed, unsigned or padded result is refused; API tests cover all three.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.
