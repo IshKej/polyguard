@@ -1,7 +1,8 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { firstSentence } from '../api'
 import { NO } from '../lib/languages'
-import { useReducedMotion } from '../lib/motion'
+import { useMotionOff } from '../lib/motion'
+import { MotionSwitch } from './Chrome'
 import HighlighterField from './HighlighterField'
 import ScrollStory from './ScrollStory'
 import SpotTheAttack from './SpotTheAttack'
@@ -61,16 +62,16 @@ function Torn({ side }) {
 
 // How far an element has come up into view: 0 as its top reaches the bottom of
 // the screen, 1 once its top is a quarter of the way down. Wide screens only, and
-// never with reduced motion: on a phone the stretch would reflow the lines.
-function useRiseProgress(ref) {
+// never with motion off: on a phone the stretch would reflow the lines.
+function useRiseProgress(ref, off) {
   const [v, setV] = useState(null)
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px) and (prefers-reduced-motion: no-preference)')
+    const mq = window.matchMedia('(min-width: 1024px)')
     let raf = 0
     const read = () => {
       raf = 0
       const el = ref.current
-      if (!el || !mq.matches) { setV(null); return }
+      if (!el || off || !mq.matches) { setV(null); return }
       const top = el.getBoundingClientRect().top
       setV(Math.min(1, Math.max(0, (window.innerHeight - top) / (window.innerHeight * 0.75))))
     }
@@ -85,14 +86,14 @@ function useRiseProgress(ref) {
       window.removeEventListener('resize', on)
       mq.removeEventListener('change', on)
     }
-  }, [ref])
+  }, [ref, off])
   return v
 }
 
 // One attack, in one language, as a card: the gallery of the same attack.
 function Specimen({ lang, text }) {
   const ref = useRef(null)
-  const reduce = useReducedMotion()
+  const reduce = useMotionOff()
   const onMove = (e) => {
     if (reduce) return
     const r = ref.current.getBoundingClientRect()
@@ -134,9 +135,9 @@ export default function Landing({ meta, onStart, onMethod }) {
   )
   const english = firstSentence(meta?.hero_line?.en) || 'Ignore all previous instructions.'
   const count = meta?.languages?.length ?? 20
-  const reduce = useReducedMotion()
+  const reduce = useMotionOff()
   const close = useRef(null)
-  const rise = useRiseProgress(close)
+  const rise = useRiseProgress(close, reduce)
   // The closing words widen into place as the panel arrives (Mona Sans has a width axis).
   const stretch = rise == null ? undefined : { fontStretch: `${80 + 32 * rise}%` }
 
@@ -329,9 +330,12 @@ export default function Landing({ meta, onStart, onMethod }) {
           <button type="button" onClick={onStart} className="btn btn-solid mt-8">Scan a chatbot</button>
           <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-(--line) pt-6 text-sm sm:flex-row">
             <p className="text-(--mute)">PolyGuard is a defensive tool. Test only systems you own or are authorized to test.</p>
-            <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption">
-              <span className="hl">Source, audit and preregistration</span>
-            </a>
+            <div className="flex items-center gap-5">
+              <MotionSwitch />
+              <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption">
+                <span className="hl">Source, audit and preregistration</span>
+              </a>
+            </div>
           </div>
         </div>
       </section>

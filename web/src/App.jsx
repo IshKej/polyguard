@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getMeta, runScan } from './api'
 import { Loader, Nav } from './components/Chrome'
+import { isMotionOff, useMotionOff } from './lib/motion'
 import { jumpToTop, startSmoothScroll, stopSmoothScroll } from './lib/smooth'
 import Landing from './components/Landing'
 import LiveScan from './components/LiveScan'
@@ -47,7 +48,7 @@ export default function App() {
   const [wipe, setWipe] = useState('idle')
   const wipeTimers = useRef([])
   const go = useCallback((v, { replace = false, fromHistory = false } = {}) => {
-    const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const instant = isMotionOff()
     wipeTimers.current.forEach(clearTimeout)
     viewRef.current = v
     if (!fromHistory && window.location.pathname !== PATHS[v]) {
@@ -74,7 +75,13 @@ export default function App() {
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [go, result])
-  useEffect(() => { startSmoothScroll(); return stopSmoothScroll }, [])
+  // Weighted scrolling while motion is on; the Motion switch turns it off and on live.
+  const motionOff = useMotionOff()
+  useEffect(() => {
+    if (motionOff) return undefined
+    startSmoothScroll()
+    return stopSmoothScroll
+  }, [motionOff])
 
   const launch = useCallback((cfg, { hardened, keepBaseline } = {}) => {
     stop.current?.()

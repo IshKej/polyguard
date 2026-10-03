@@ -291,3 +291,22 @@ Plan for v2, in order of impact:
   scroll audited at 1440, 768 and 390 on every screen (one false positive: text
   on the highlighter stroke, which is a background image), no page errors, the
   game played through six rounds to the score.
+- 2026-10-02, v4 ("dont turn of 3d stuff and all"): **motion now plays for
+  everyone, and the system's reduced motion setting is no longer read.** This
+  replaces the earlier decision to honour reduced motion everywhere. Why: on
+  Ishaan's own PC, Windows "Animation effects" is off, which makes every browser
+  send `prefers-reduced-motion: reduce`, and the site froze (no hero cycle, no 3D
+  spin, no scroll story, no smooth scroll); the test browser ignored the setting,
+  so localhost looked right and the live site looked broken. That setting is
+  often switched off for speed rather than chosen, so judges would hit the same
+  frozen page. Instead, a **Motion on/off switch** (nav on wide screens, and the
+  footer) turns everything off for anyone who wants it, remembered on the device
+  (`src/lib/motion.js`, `html[data-motion]`). It is also the pause control for
+  what moves on its own. Same round: the scroll story fits laptop screens. Under
+  about 840 pixels tall the column tightens and the compact board is used (the
+  full board ran over the progress ruler at 1366x650 and 1536x730), and under
+  640 (a zoomed in browser) only the step on show keeps its description.
+- v4 checks, with reduced motion forced on at 1536x730, 1366x650, 1229x584,
+  1440x900 and a 390 phone: motion on, Lenis on, the 3D bubble renders and spins,
+  the hero cycles, the story pins and steps through all four scenes with the
+  ruler on screen, the switch works both ways and persists, no page errors.

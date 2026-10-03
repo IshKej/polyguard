@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { NO } from '../lib/languages'
-import { useReducedMotion } from '../lib/motion'
+import { useMotionOff } from '../lib/motion'
 import { glideTo } from '../lib/smooth'
 import Board from './Board'
 
@@ -26,8 +26,10 @@ const CHAT_BROKE = 3 // the fourth attack in the chat gets through, as an illust
 const clamp = (v) => Math.min(1, Math.max(0, v))
 const outcomeFor = (li, ai) => ((li * 7 + ai * 13 + li * ai) % 10 < 3 ? 'broke' : 'held')
 
-// Wide screens show the full board; a phone shows the compact one, which fits.
-const WIDE = '(min-width: 1024px)'
+// Big screens show the full board. A phone, or a laptop screen under a browser's
+// toolbars (often 650 to 730 pixels tall), shows the compact one, which fits;
+// the full board would run over the progress ruler.
+const WIDE = '(min-width: 1024px) and (min-height: 841px)'
 const subscribeWide = (cb) => {
   const mq = window.matchMedia(WIDE)
   mq.addEventListener('change', cb)
@@ -153,7 +155,7 @@ function Fix({ local }) {
 
 export default function ScrollStory({ languages, lines, prompt }) {
   const section = useRef(null)
-  const reduce = useReducedMotion()
+  const reduce = useMotionOff()
   const p = useProgress(section, !reduce)
   const wide = useWide()
   const step = reduce ? 3 : Math.min(3, Math.floor(p * 4))
@@ -209,7 +211,7 @@ export default function ScrollStory({ languages, lines, prompt }) {
               <span aria-hidden="true" className={`display grid size-12 place-items-center rounded-md text-2xl transition-colors duration-300 ${on || reduce ? 'bg-hi text-ink' : 'bg-ink-3 text-paper'}`}>{n + 1}</span>
               <span>
                 <span className="display block text-[1.55rem]"><span className={`hl ${on ? 'drawn' : ''}`}>{title}</span></span>
-                <span className="mt-1 block max-w-sm text-(--mute)">{body}</span>
+                <span className="story-desc mt-1 max-w-sm text-(--mute)" data-on={on || undefined}>{body}</span>
               </span>
             </button>
           </li>
@@ -236,10 +238,10 @@ export default function ScrollStory({ languages, lines, prompt }) {
   return (
     <section id="how" ref={section} data-surface="ink" className="ink relative" style={{ height: 'calc(100svh + 360svh)' }}>
       <div className="sticky top-0 flex h-[100svh] flex-col overflow-hidden">
-        <div className="mx-auto grid w-full max-w-7xl flex-1 items-center gap-6 px-5 pb-16 pt-20 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] lg:gap-14 lg:pt-24">
+        <div className="story-grid mx-auto grid w-full max-w-7xl flex-1 items-center gap-6 px-5 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] lg:gap-14">
           <div>
-            <h2 className="display text-[clamp(2.2rem,5vw,4.6rem)]">How it <span className="serif">works.</span></h2>
-            <div className="mt-8 hidden lg:block">{steps}</div>
+            <h2 className="display story-title">How it <span className="serif">works.</span></h2>
+            <div className="story-steps hidden lg:block">{steps}</div>
             {/* On a phone only the step being shown is written out. */}
             <div className="mt-4 lg:hidden">
               <div className="display text-2xl"><span className="text-hi">{step + 1}</span> {STEPS[step][0]}</div>

@@ -1,7 +1,23 @@
 import { useEffect, useState } from 'react'
 import { NO } from '../lib/languages'
+import { isMotionOff, setMotionOff, useMotionOff } from '../lib/motion'
 
 const REPO = 'https://github.com/IshKej/polyguard'
+
+// Turns the page's motion off and on: the 3D bubble, the smooth scroll, the
+// scroll story, the hero cycle. Remembered on this device.
+export function MotionSwitch({ className = '' }) {
+  const off = useMotionOff()
+  return (
+    <button
+      type="button" onClick={() => setMotionOff(!off)} aria-pressed={!off}
+      title={off ? 'Turn the animations back on' : 'Stop the animations'}
+      className={`hl-hover caption ${className}`}
+    >
+      <span className="hl">Motion {off ? 'off' : 'on'}</span>
+    </button>
+  )
+}
 
 // The wordmark: "Poly" in the serif voice over "GUARD" in the heavy one.
 export function Wordmark() {
@@ -69,6 +85,7 @@ export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) 
               <span className="hl">How we know</span>
             </button>
           )}
+          <MotionSwitch className="hidden text-[.8rem] lg:inline" />
           <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption hidden text-[.8rem] sm:inline">
             <span className="hl">GitHub</span>
           </a>
@@ -87,10 +104,10 @@ const LOADER_KEY = 'polyguard.seen'
 const CYCLE = ['en', 'hi', 'es', 'ar', 'zh', 'ru', 'ja', 'fr', 'ko', 'gu']
 
 // First visit only: one second of highlighter, the word "no" turning over in
-// language after language. Skipped for reduced motion and on later visits.
+// language after language. Skipped with motion off and on later visits.
 export function Loader() {
   const [show, setShow] = useState(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false
+    if (isMotionOff()) return false
     try { return !sessionStorage.getItem(LOADER_KEY) } catch { return false }
   })
   const [n, setN] = useState(0)

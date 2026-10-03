@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { useReducedMotion } from '../lib/motion'
+import { useMotionOff } from '../lib/motion'
 
 const ROW = 40        // px between lines of text
 const SIZE = 20       // px text size
@@ -14,7 +14,7 @@ const FADE = 0.032    // how much of the highlight fades each frame
 export default function HighlighterField({ english, lines }) {
   const host = useRef(null)
   const canvas = useRef(null)
-  const reduce = useReducedMotion()
+  const reduce = useMotionOff()
 
   useEffect(() => {
     const box = host.current

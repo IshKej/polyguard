@@ -1,13 +1,14 @@
 import Lenis from 'lenis'
 import 'lenis/dist/lenis.css'
+import { isMotionOff } from './motion'
 
 let lenis = null
 
-// Weighted scrolling, the way the award sites feel. Off for reduced motion, and
-// touch screens keep their own scrolling, which is already right.
+// Weighted scrolling, the way the award sites feel. Off when the visitor turns
+// motion off, and touch screens keep their own scrolling, which is already right.
 export function startSmoothScroll() {
   if (lenis) return lenis
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null
+  if (isMotionOff()) return null
   lenis = new Lenis({ autoRaf: true, lerp: 0.11, anchors: { offset: -12 }, allowNestedScroll: true })
   return lenis
 }

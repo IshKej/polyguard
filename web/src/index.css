@@ -175,6 +175,27 @@ body {
     padding: .4rem .55rem; border-radius: 3px; white-space: nowrap;
   }
 
+  /* The pinned How it works story. A laptop screen under a browser's toolbars
+     is often 650 to 730 pixels tall, and the full layout needs about 820, so on
+     a short screen the column tightens; otherwise the progress ruler is pushed
+     off the bottom. Shorter still (a zoomed in browser), only the step on show
+     keeps its description. */
+  .story-grid { padding-top: 5rem; padding-bottom: 4rem; }
+  .story-title { font-size: clamp(2.2rem, 5vw, 4.6rem); }
+  .story-steps { margin-top: 2rem; }
+  .story-desc { display: block; }
+  @media (min-width: 1024px) {
+    .story-grid { padding-top: 6rem; }
+  }
+  @media (min-width: 1024px) and (max-height: 840px) {
+    .story-grid { padding-top: 4rem; padding-bottom: 1rem; }
+    .story-title { font-size: clamp(2rem, 4vw, 3.4rem); }
+    .story-steps { margin-top: 1.25rem; }
+  }
+  @media (min-width: 1024px) and (max-height: 640px) {
+    .story-steps .story-desc:not([data-on]) { display: none; }
+  }
+
   /* Ruler ticks along the top of a paper section: PolyGuard measures. */
   .ruler {
     height: 14px;
@@ -186,6 +207,8 @@ body {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+/* The Motion switch (lib/motion.js) sets this. The system's reduced motion
+   setting is deliberately not read; see the note there. */
+html[data-motion="off"], html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after {
+  animation: none !important; transition: none !important; scroll-behavior: auto !important;
 }

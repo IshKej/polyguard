@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useReducedMotion } from '../lib/motion'
+import { useMotionOff } from '../lib/motion'
 
 const REPO = 'https://github.com/IshKej/polyguard'
 const PER_LANG = 15        // attacks per language in a full scan: 5 kinds, 3 phrasings
@@ -238,7 +238,7 @@ const SAFEGUARDS = [
 ]
 
 export default function Method({ meta, onStart, onBack }) {
-  const reduce = useReducedMotion()
+  const reduce = useMotionOff()
   const languages = useMemo(() => {
     const ls = meta?.languages || []
     return [...ls.filter((l) => l.code === 'en'), ...ls.filter((l) => l.code !== 'en')]

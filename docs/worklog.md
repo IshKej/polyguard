@@ -7,6 +7,13 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-02** Motion plays for everyone; the system reduced motion setting
+  is no longer read (it froze the site on Ishaan's PC, Windows Animation effects
+  off). A Motion on/off switch in the nav (wide screens) and footer turns it off,
+  remembered per device. The scroll story fits laptop screens (compact board and
+  a tighter column under 840 pixels tall). The API ships with only anthropic and
+  fastapi (`pyproject.toml`), checked on a preview: meta, game and a streamed scan.
+
 - **2026-10-02** `docs/pilot-plan.md`: the bounded live pilot plan (stages,
   call counts, token caps, worst case cost, $10 hard cap). Plan only, not run;
   needs Ishaan's key and written approval.
@@ -47,23 +54,6 @@ the web app and hosting.
 
 ## In progress
 
-- **Motion (Ishaan's top complaint about the live site).** His Windows has
-  Animation effects off, so every browser sends `prefers-reduced-motion: reduce`
-  and the site freezes: `web/src/index.css` ends with a rule that kills every
-  animation and transition, and about ten components skip their motion (hero
-  cycle, highlighter demo, 3D spin, scroll story, Lenis, loader, wipe, closing
-  stretch). The Playwright window ignored the setting, which is why localhost
-  looked right. Plan: reduced motion becomes "calm", not frozen (hero still
-  cycles, scroll story still pins and steps, with fades instead of movement;
-  drop Lenis, 3D spin, page wipe, marquee, card tilt, font stretch), plus a
-  Motion switch that defaults to the OS setting and is saved per visitor.
-- **Scroll story at short screens.** At 1366x650 and 1536x730 the progress ruler
-  under the story is pushed below the fold. Tighten the left column when the
-  screen is short (only the active step shows its description).
-- **Slim API dependencies.** `pyproject.toml` (anthropic and fastapi only) and
-  the `chunkSizeWarningLimit` in `web/vite.config.js` are uncommitted. The
-  preview build used them; still to do: check `/api/meta`, `/api/game` and a
-  scan on the preview with `npx vercel curl`, then commit.
 - Supabase (see Next, item 2).
 
 ## Next

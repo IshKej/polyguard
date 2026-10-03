@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { useReducedMotion } from '../lib/motion'
+import { useMotionOff } from '../lib/motion'
 
 const HI = '#e6ff2e'
 const RED = '#ff5a3d'
@@ -50,7 +50,7 @@ export default function Bubble3D({ word, broke, className = '' }) {
   const wrap = useRef(null)
   const canvasRef = useRef(null)
   const api = useRef(null)
-  const reduce = useReducedMotion()
+  const reduce = useMotionOff()
   const [failed] = useState(() => {
     try { return !document.createElement('canvas').getContext('webgl2') } catch { return true }
   })
@@ -133,7 +133,7 @@ export default function Bubble3D({ word, broke, className = '' }) {
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting })
     io.observe(box)
     let raf = 0
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const still = reduce
     const loop = () => {
       raf = requestAnimationFrame(loop)
       if (!visible) return
