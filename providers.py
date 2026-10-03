@@ -186,11 +186,88 @@ DEFAULT_MODEL = "claude-haiku-4-5"
 
 
 # --------------------------------------------------------------------------- #
+# Timeouts, retries and error kinds
+#
+# Every client gets an explicit per-call timeout, so one stuck request cannot hold
+# a scan (and a paid serverless function) open until the host kills it. Retries
+# are the SDKs' own: up to five, with exponential backoff and jitter, on
+# rate limits, overload, server errors and dropped connections, and never on
+# errors a retry cannot fix, like a bad key.
+# --------------------------------------------------------------------------- #
+CALL_TIMEOUT = float(os.environ.get("POLYGUARD_CALL_TIMEOUT", "60"))
+MAX_RETRIES = 5
+
+# USD per million tokens (input, output), from Anthropic's SDK documentation as of
+# October 2026. Used only for the upper bound shown before a live scan, never for
+# billing. Other vendors are left out rather than guessed; the preflight says so.
+PRICES_PER_MTOK = {"claude-haiku-4-5": (1.00, 5.00), "claude-sonnet-5": (2.00, 10.00)}
+
+ERROR_KINDS = ("rate_limit", "auth", "model", "timeout", "network", "bad_request",
+               "provider", "other")
+
+
+def classify_error(exc: BaseException) -> str:
+    """What kind of failure an exception is, the same way for every vendor.
+
+    The kinds call for different responses: rate_limit means slow down, auth means
+    the key is wrong and nothing will work, model means the model id is wrong,
+    timeout and network are worth retrying later, bad_request is a bug in the
+    request, provider is the vendor's outage. Read from the exception's class name
+    and HTTP status, because the Anthropic, OpenAI and Google SDKs share neither
+    base classes nor module paths.
+    """
+    name = type(exc).__name__
+    status = getattr(exc, "status_code", None)
+    if status is None:
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+    if status is None and isinstance(getattr(exc, "code", None), int):
+        status = exc.code
+    if "RateLimit" in name or status == 429:
+        return "rate_limit"
+    if name in ("AuthenticationError", "PermissionDeniedError") or status in (401, 403):
+        return "auth"
+    if "NotFound" in name or status == 404:
+        return "model"
+    if "Timeout" in name or status == 408:
+        return "timeout"
+    if "Connection" in name:
+        return "network"
+    if "BadRequest" in name or "UnprocessableEntity" in name or status in (400, 413, 422):
+        return "bad_request"
+    if ("InternalServer" in name or "Overloaded" in name or "ServiceUnavailable" in name
+            or (isinstance(status, int) and status >= 500)):
+        return "provider"
+    return "other"
+
+
+# --------------------------------------------------------------------------- #
 # Key resolution
 # --------------------------------------------------------------------------- #
+_DOTENV: dict[str, str] | None = None
+
+
+def _dotenv() -> dict[str, str]:
+    """The repository's local .env (written by setup_key.py, ignored by git and
+    Vercel). Read once. Hosting never has this file; it uses real env variables."""
+    global _DOTENV
+    if _DOTENV is None:
+        _DOTENV = {}
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+        try:
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    if "=" in line and not line.lstrip().startswith("#"):
+                        k, v = line.split("=", 1)
+                        _DOTENV[k.strip()] = v.strip().strip('"').strip("'")
+        except OSError:
+            pass
+    return _DOTENV
+
+
 def resolve_key(env_name: str) -> str | None:
-    """Environment first, then Streamlit secrets. Never a literal in source."""
-    key = os.environ.get(env_name)
+    """Environment first, then the local .env, then Streamlit secrets. Never a
+    literal in source."""
+    key = os.environ.get(env_name) or _dotenv().get(env_name)
     if key:
         return key.strip() or None
     try:
@@ -315,13 +392,14 @@ def build_victim(model_key: str, max_tokens: int = 300) -> VictimClient:
                            f"or in Streamlit secrets.")
     if spec.provider == "anthropic":
         import anthropic
-        client = anthropic.Anthropic(api_key=key, max_retries=5)
+        client = anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES, timeout=CALL_TIMEOUT)
     elif spec.provider == "openai":
         import openai
-        client = openai.OpenAI(api_key=key, max_retries=5)
+        client = openai.OpenAI(api_key=key, max_retries=MAX_RETRIES, timeout=CALL_TIMEOUT)
     elif spec.provider == "openai_compat":
         import openai
-        client = openai.OpenAI(api_key=key, base_url=spec.base_url, max_retries=5)
+        client = openai.OpenAI(api_key=key, base_url=spec.base_url, max_retries=MAX_RETRIES,
+                               timeout=CALL_TIMEOUT)
     elif spec.provider == "google":
         from google import genai
         client = genai.Client(api_key=key)
@@ -344,7 +422,7 @@ def judge_client():
     if key is None:
         return None
     import anthropic
-    return anthropic.Anthropic(api_key=key, max_retries=5)
+    return anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES, timeout=CALL_TIMEOUT)
 
 
 # --------------------------------------------------------------------------- #

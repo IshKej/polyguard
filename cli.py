@@ -10,7 +10,9 @@ between a project and a tool, and it is the whole reason this file exists.
 
     polyguard scan --prompt bot.txt --out today.json
     polyguard scan --prompt bot.txt --baseline last-week.json --fail-on-regression
+    polyguard scan --prompt bot.txt --bundle runs/2026-10-03   # reproducible package
     polyguard compare last-week.json today.json
+    polyguard replay today.json        # recompute every number from the evidence
     polyguard report today.json --html report.html
     polyguard languages
 
@@ -19,6 +21,10 @@ Exit codes, chosen so CI can act on them:
     0   scan completed, and no regression against the baseline
     1   a regression was detected (only with --fail-on-regression)
     2   the scan could not be completed at all
+    3   the baseline cannot be compared: it was measured differently (a different
+        bank, judge, model, scoring version or configuration), so any "regression"
+        would be the instrument changing, not the bot. Only with --fail-on-regression;
+        --allow-instrument-change compares anyway, labelled as such.
 
 Run with --mock to exercise everything offline with no API key. Mock output is
 labelled as simulated in every file it writes, because a JSON report that does
@@ -27,7 +33,9 @@ not say it is fake will eventually be read as though it were real.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import platform
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,13 +45,25 @@ import engine
 import providers
 from languages_catalog import CATALOG, tier_of
 
-VERSION = "1.0"
+VERSION = "1.1"
+SCAN_FILE_SCHEMA = "polyguard.scan-file/1"
+
+
+def instrument_differences(before: dict, after: dict) -> list[str]:
+    """Every way the two scans were measured differently. Empty means comparable."""
+    bi, ai = before.get("instrument"), after.get("instrument")
+    if not bi or not ai:
+        return ["one of the scans has no instrument record (it predates stamping), "
+                "so what produced it is unknown"]
+    return [f"{f}: {bi.get(f)!r} then {ai.get(f)!r}"
+            for f in engine.COMPARABLE_FIELDS if bi.get(f) != ai.get(f)]
 
 
 # --------------------------------------------------------------------------- #
 # Regression detection
 # --------------------------------------------------------------------------- #
-def compare_scans(before: dict, after: dict, alpha: float = 0.05) -> dict:
+def compare_scans(before: dict, after: dict, alpha: float = 0.05,
+                  allow_instrument_change: bool = False) -> dict:
     """
     Did the bot get worse?
 
@@ -58,7 +78,18 @@ def compare_scans(before: dict, after: dict, alpha: float = 0.05) -> dict:
 
     Comparing a mock run against a live one is refused outright. That comparison
     is meaningless and would produce a confident, fabricated verdict.
+
+    So is comparing two scans measured differently: a different attack bank, judge
+    model, judge wording, scoring version, victim, language set or phrasing count.
+    A changed instrument moves the numbers on its own, and calling that a
+    regression in the bot would be a fake finding. `allow_instrument_change`
+    compares anyway and labels the result, for when the change is the point.
     """
+    diffs = instrument_differences(before, after)
+    if diffs and not allow_instrument_change:
+        return {"comparable": False, "instrument_differences": diffs,
+                "reason": "the two scans were measured differently (" + "; ".join(diffs) + "), so a "
+                          "difference between them could be the instrument, not the bot"}
     if bool(before.get("mock")) != bool(after.get("mock")):
         return {"comparable": False,
                 "reason": "one scan is simulated and the other is live; "
@@ -116,6 +147,8 @@ def compare_scans(before: dict, after: dict, alpha: float = 0.05) -> dict:
 
     return {
         "comparable": True,
+        "instrument_changed": bool(diffs),
+        "instrument_differences": diffs,
         "languages_compared": len(shared),
         "regressions": sorted(regressions, key=lambda r: -r["delta"]),
         "improvements": sorted(improvements, key=lambda r: r["delta"]),
@@ -133,10 +166,28 @@ def compare_scans(before: dict, after: dict, alpha: float = 0.05) -> dict:
 # --------------------------------------------------------------------------- #
 # Output
 # --------------------------------------------------------------------------- #
-def scan_payload(out: dict, prompt: str, args) -> dict:
-    """The machine-readable record of one scan. Carries its own caveats."""
+def evidence_rows(results: list[dict], redact_replies: bool = False) -> list[dict]:
+    """One row per attack: what was fired, what came back, and how it was scored.
+    The attack text itself is in the bank, pinned by the instrument's bank_sha256."""
+    keep = ("id", "lang", "category", "variant", "goal", "broke", "evidence", "error",
+            "error_kind", "error_stage")
+    rows = []
+    for r in results:
+        row = {k: r.get(k) for k in keep}
+        if redact_replies:
+            row["reply"], row["reply_redacted"] = "", True
+        else:
+            row["reply"] = r.get("reply") or ""
+        rows.append(row)
+    return rows
+
+
+def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> dict:
+    """The machine-readable record of one scan. Carries its own caveats, what
+    produced it, and the per-attack evidence every number is computed from."""
     vm = out.get("victim") or {}
     return {
+        "schema": SCAN_FILE_SCHEMA,
         "polyguard_version": VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         # Stated first and unmissable. A JSON file outlives the terminal it was
@@ -164,6 +215,9 @@ def scan_payload(out: dict, prompt: str, args) -> dict:
         "by_lang": {c: {**d, "tier": tier_of(c)} for c, d in out["by_lang"].items()},
         "by_category": out["by_cat"],
         "broken_categories": defenses.broken_categories_from(out["results"]),
+        "instrument": out.get("instrument"),
+        "completeness": engine.completeness(out),
+        "results": evidence_rows(out["results"], redact_replies),
     }
 
 
@@ -207,6 +261,10 @@ def print_comparison(cmp: dict) -> None:
     if not cmp["comparable"]:
         print(f"  NOT COMPARABLE: {cmp['reason']}")
         return
+    if cmp.get("instrument_changed"):
+        print("  INSTRUMENT CHANGED (compared anyway, on request):")
+        for d in cmp["instrument_differences"]:
+            print(f"    {d}")
     print(f"  compared {cmp['languages_compared']} shared language(s)")
     if cmp["overall_delta"] is not None:
         print(f"  overall  {cmp['overall_before']:.0%} -> {cmp['overall_after']:.0%} "
@@ -282,7 +340,7 @@ def cmd_scan(args) -> int:
     if not args.quiet:
         print(file=sys.stderr)
 
-    payload = scan_payload(out, prompt, args)
+    payload = scan_payload(out, prompt, args, redact_replies=args.redact_replies)
 
     # A simulated run attacked nothing, so it names no model.
     victim = "none (simulated run)" if payload.get("mock") else payload["model"]
@@ -292,10 +350,15 @@ def cmd_scan(args) -> int:
     exit_code = 0
     if args.baseline:
         base = json.loads(Path(args.baseline).read_text(encoding="utf-8"))
-        cmp = compare_scans(base, payload)
+        cmp = compare_scans(base, payload, allow_instrument_change=args.allow_instrument_change)
         payload["comparison"] = cmp
         print(f"\nCompared against {args.baseline}:")
         print_comparison(cmp)
+        if not cmp["comparable"] and args.fail_on_regression:
+            # Never a silent pass: a gate that cannot compare has not checked anything.
+            print("\n  NOT CHECKED: the baseline cannot be compared, so this build is stopped. "
+                  "Re-baseline, or pass --allow-instrument-change.")
+            exit_code = 3
         if cmp.get("regressed"):
             print("\n  REGRESSION: this bot is measurably easier to break than "
                   "the baseline.")
@@ -311,17 +374,109 @@ def cmd_scan(args) -> int:
         from report_html import write_report
         write_report(payload, Path(args.html))
         print(f"  wrote {args.html}")
+    if args.bundle:
+        write_bundle(Path(args.bundle), payload, prompt, args)
     return exit_code
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_bundle(folder: Path, payload: dict, prompt: str, args) -> None:
+    """A folder someone else can check a result with: the scan file with its
+    per-attack evidence, the report, the exact command, the instrument record,
+    the environment, and a fingerprint of every file."""
+    from report_html import write_report
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "scan.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False),
+                                      encoding="utf-8", newline="\n")
+    write_report(payload, folder / "report.html")
+    if args.bundle_include_prompt:
+        (folder / "prompt.txt").write_text(prompt, encoding="utf-8", newline="\n")
+
+    def version_of(pkg: str) -> str | None:
+        try:
+            from importlib.metadata import version
+            return version(pkg)
+        except Exception:
+            return None
+
+    files = sorted(p for p in folder.iterdir() if p.is_file() and p.name != "manifest.json")
+    manifest = {
+        "schema": "polyguard.bundle/1",
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "mode": payload["mode"],
+        "command": "python cli.py " + " ".join(sys.argv[1:]),
+        "instrument": payload.get("instrument"),
+        "prompt_sha256": payload["prompt_sha256"],
+        "prompt_included": bool(args.bundle_include_prompt),
+        "environment": {"python": platform.python_version(), "platform": platform.platform(),
+                        "anthropic": version_of("anthropic"), "openai": version_of("openai")},
+        "files": {p.name: _sha256(p) for p in files},
+        "how_to_check": [
+            "git checkout <instrument.git_commit>",
+            "python -c \"import engine; print(engine.bank_sha256())\"   # must equal instrument.bank_sha256",
+            "python cli.py replay scan.json   # recomputes every rate and test from the evidence",
+        ],
+    }
+    (folder / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False),
+                                          encoding="utf-8", newline="\n")
+    print(f"  wrote bundle {folder}/ ({len(files) + 1} files)")
+
+
+def cmd_replay(args) -> int:
+    """Recompute every number in a scan file from its per-attack evidence.
+
+    Proves the summary was computed from the evidence it ships with, by the
+    scoring code in this checkout, against the bank it names. Exit 0 when all of
+    it matches, 4 when something does not.
+    """
+    payload = json.loads(Path(args.scan).read_text(encoding="utf-8"))
+    rows = payload.get("results")
+    if not rows:
+        print("This scan file has no per-attack evidence (it predates evidence export).")
+        return 4
+    problems = []
+    inst = payload.get("instrument") or {}
+    if inst.get("bank_sha256") and inst["bank_sha256"] != engine.bank_sha256():
+        problems.append("the attack bank in this checkout is not the one the scan used "
+                        f"({engine.bank_sha256()[:12]} here, {inst['bank_sha256'][:12]} in the scan)")
+    if inst.get("scoring_version") and inst["scoring_version"] != engine.SCORING_VERSION:
+        problems.append(f"scoring version {engine.SCORING_VERSION} here, "
+                        f"{inst['scoring_version']} in the scan")
+    redo = engine.summarize([{**r, "error": r.get("error")} for r in rows], engine.load_bank(),
+                            payload.get("mock", True), payload.get("model"))
+    checks = [("attacks fired", payload["attacks_fired"], redo["n_attacks"]),
+              ("attacks broke", payload["attacks_broke"], redo["n_broke"]),
+              ("errors", payload["errors"], redo["n_errors"]),
+              ("overall break rate", payload["overall_break_rate"], redo["overall_rate"])]
+    for code, d in payload["by_lang"].items():
+        checks.append((f"{code} break rate", d.get("rate"), (redo["by_lang"].get(code) or {}).get("rate")))
+    stored_p = (payload.get("worst_language_test") or {}).get("p")
+    checks.append(("worst language test p", stored_p, (redo.get("max_gap_test") or {}).get("p")))
+    for name, stored, recomputed in checks:
+        same = stored == recomputed or (isinstance(stored, float) and isinstance(recomputed, float)
+                                        and abs(stored - recomputed) < 1e-12)
+        if not same:
+            problems.append(f"{name}: file says {stored!r}, evidence gives {recomputed!r}")
+    print(f"\nReplayed {len(rows)} attacks from {args.scan} ({payload.get('mode')})")
+    if problems:
+        for p in problems:
+            print(f"  MISMATCH  {p}")
+        return 4
+    print(f"  every number matches its evidence ({len(checks)} checks)")
+    return 0
 
 
 def cmd_compare(args) -> int:
     before = json.loads(Path(args.before).read_text(encoding="utf-8"))
     after = json.loads(Path(args.after).read_text(encoding="utf-8"))
-    cmp = compare_scans(before, after)
+    cmp = compare_scans(before, after, allow_instrument_change=args.allow_instrument_change)
     print(f"\n{args.before} -> {args.after}")
     print_comparison(cmp)
     if not cmp["comparable"]:
-        return 2
+        return 3 if cmp.get("instrument_differences") else 2
     return 1 if (cmp["regressed"] and args.fail_on_regression) else 0
 
 
@@ -376,7 +531,8 @@ def build_parser() -> argparse.ArgumentParser:
         description="Test whether a chatbot can be broken in languages other "
                     "than English.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Exit codes: 0 ok, 1 regression detected, 2 scan failed.")
+        epilog="Exit codes: 0 ok, 1 regression detected, 2 scan failed, "
+               "3 baseline measured differently, 4 replay mismatch.")
     p.add_argument("--version", action="version", version=f"polyguard {VERSION}")
     sub = p.add_subparsers(dest="command", required=True)
 
@@ -400,13 +556,25 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--mock", action="store_true",
                    help="run offline with simulated results, no API key needed")
     s.add_argument("--quiet", action="store_true", help="no progress output")
+    s.add_argument("--allow-instrument-change", action="store_true",
+                   help="compare with a baseline measured differently, labelled as such")
+    s.add_argument("--redact-replies", action="store_true",
+                   help="leave the bot's replies out of the JSON (they can contain the prompt)")
+    s.add_argument("--bundle", help="write a reproducible folder: scan, report, manifest")
+    s.add_argument("--bundle-include-prompt", action="store_true",
+                   help="put the system prompt itself in the bundle (off by default)")
     s.set_defaults(func=cmd_scan)
 
     c = sub.add_parser("compare", help="compare two scan JSON files")
     c.add_argument("before")
     c.add_argument("after")
     c.add_argument("--fail-on-regression", action="store_true")
+    c.add_argument("--allow-instrument-change", action="store_true")
     c.set_defaults(func=cmd_compare)
+
+    rp = sub.add_parser("replay", help="recompute every number in a scan file from its evidence")
+    rp.add_argument("scan")
+    rp.set_defaults(func=cmd_replay)
 
     r = sub.add_parser("report", help="render a scan JSON as HTML")
     r.add_argument("scan")

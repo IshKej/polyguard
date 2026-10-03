@@ -18,10 +18,17 @@ sys.path.insert(0, str(ROOT))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
+import contextlib  # noqa: E402
+import io  # noqa: E402
+
 import api.server as server  # noqa: E402
 import engine  # noqa: E402
 import providers  # noqa: E402
+from api import guard  # noqa: E402
+from api.store import MemoryStore, StoreError, set_store  # noqa: E402
 from api.verdict import verdict  # noqa: E402
+
+set_store(MemoryStore())          # tests never touch the real database
 
 CASES = []
 
@@ -91,6 +98,15 @@ check("languages come back sorted most broken first",
       [x["rate"] for x in res["languages"]] == sorted((x["rate"] for x in res["languages"]), reverse=True))
 check("the stream ends with the self-contained report, labelled simulated",
       "<html" in done["report"].lower() and "Simulated run" in done["report"])
+inst = res.get("instrument") or {}
+check("every result is stamped with what produced it",
+      res["schema"] == "polyguard.scan/1" and inst.get("bank_sha256") == engine.bank_sha256()
+      and inst.get("judge_prompt_sha256") == engine.judge_prompt_sha256() and inst.get("git_commit")
+      and inst.get("mode") == "simulated" and inst.get("langs") == ["en", "es"])
+comp = res.get("completeness") or {}
+check("every result says how complete it is before any rate is read",
+      comp.get("planned") == comp.get("fired") == comp.get("scored") == 2 and comp.get("complete") is True
+      and comp.get("errors_by_kind") == {})
 
 # --- input limits --------------------------------------------------------------
 check("an unknown language is refused",
@@ -103,22 +119,68 @@ check("more than three phrasings is refused",
       run_scan({**SMALL, "phrasings": 4})[0] == 422)
 check("an empty prompt is refused",
       run_scan({**SMALL, "prompt": ""})[0] == 422)
-check("nothing is kept between requests: the old job routes are gone",
-      client.get("/api/scans/anything").status_code in (404, 405))
+check("a link that cannot be a saved scan is a 404 without touching the store",
+      client.get("/api/scans/anything").status_code == 404)
+
+# --- fuzzing the edges ---------------------------------------------------------------
+zalgo = ("e\u0301\u0302\u0303\u0304\u0305" * 1300)[:8000]
+check("a prompt of stacked combining marks is scanned, not crashed on",
+      first(run_scan({**SMALL, "prompt": zalgo})[1], "done").get("result") is not None)
+check("direction overrides and NUL bytes in a prompt do not break the stream",
+      first(run_scan({**SMALL, "prompt": "\u202e\u0000\u2066evil\u2069 " * 50})[1], "done").get("result") is not None)
+check("8000 emoji is within the limit, 8001 is not",
+      run_scan({**SMALL, "prompt": "\U0001F600" * 8000})[0] == 200
+      and run_scan({**SMALL, "prompt": "\U0001F600" * 8001})[0] == 422)
+check("a flood of languages is refused by size before validation",
+      run_scan({**SMALL, "langs": ["en"] * 101})[0] == 422)
+check("a repeated language counts once",
+      first(run_scan({**SMALL, "langs": ["en", "en", "es"]})[1], "done")["result"]["totals"]["attacks"] == 2)
+check("wrong types are refused, not coerced into a scan",
+      run_scan({**SMALL, "langs": "en"})[0] == 422 and run_scan({**SMALL, "phrasings": "3"})[0] in (200, 422)
+      and run_scan({**SMALL, "prompt": ["a"]})[0] == 422)
+check("a body that is not JSON is a 422",
+      client.post("/api/scan", content=b"{nope", headers={"Content-Type": "application/json"}).status_code == 422)
+
+# --- logs never carry the prompt -----------------------------------------------------
+MARK = "PROMPT-MARKER-91cf"
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    run_scan({**SMALL, "prompt": f"You are a bot. {MARK}"})
+logged = buf.getvalue()
+check("scans are logged as structured lines", '"event": "scan_start"' in logged and '"event": "scan_done"' in logged)
+check("the logs never contain the prompt, a reply or attack text",
+      MARK not in logged and "PWNED" not in logged and "Ignora" not in logged)
 
 # --- the spend gate --------------------------------------------------------------
-_real = (server._live_available, providers.resolve_key, providers.available_models)
+_real = (server._live_available, providers.resolve_key, providers.available_models, providers.build_victim)
+PASS = {"X-PolyGuard-Passcode": "letmein"}
 try:
     server._live_available = lambda: True
     providers.available_models = lambda: [{"key": "claude-haiku-4-5", "label": "Haiku",
                                            "vendor": "Anthropic", "ready": True}]
-    providers.resolve_key = lambda name: "letmein" if name == "POLYGUARD_PASSCODE" else None
 
+    def no_victim(*a, **k):
+        raise RuntimeError("no key in tests")
+    providers.build_victim = no_victim       # nothing in these tests can spend
+
+    # Fail closed: a key with no passcode configured is NOT open access.
+    providers.resolve_key = lambda name: None
+    open_meta = client.get("/api/meta").json()
+    check("a key without a configured passcode fails closed",
+          open_meta["live"] is False and open_meta["live_reason"] == "no_passcode_configured"
+          and open_meta["needs_passcode"] is True)
+    check("and a scan then runs as a simulation, never live",
+          first(run_scan(SMALL)[1], "start")["live"] is False)
+
+    providers.resolve_key = lambda name: "letmein" if name == "POLYGUARD_PASSCODE" else None
     locked = client.get("/api/meta").json()
     check("with a passcode set, meta reports locked until it is given",
-          locked["live"] is False and locked["live_configured"] and locked["needs_passcode"])
+          locked["live"] is False and locked["live_configured"] and locked["needs_passcode"]
+          and locked["live_reason"] == "locked")
     check("the right passcode unlocks live mode in meta",
-          client.get("/api/meta", headers={"X-PolyGuard-Passcode": "letmein"}).json()["live"] is True)
+          client.get("/api/meta", headers=PASS).json()["live"] is True)
+    check("a passcode that only shares a prefix does not unlock",
+          client.get("/api/meta", headers={"X-PolyGuard-Passcode": "letmei"}).json()["live"] is False)
     _, ev_demo = run_scan({**SMALL, "demo": True})
     check("a demo scan never spends, even when live is possible", first(ev_demo, "start")["live"] is False)
     _, ev_wrong = run_scan(SMALL, headers={"X-PolyGuard-Passcode": "nope"})
@@ -135,16 +197,112 @@ try:
           first(run_scan({**big, "demo": True})[1], "done")["result"]["totals"]["attacks"] == 150)
     server.HOSTED = False
 
-    # Hold both live slots, then ask for a third.
-    got = [server._live_slots.acquire(blocking=False) for _ in range(server.MAX_LIVE)]
-    busy_status, _ = run_scan(SMALL, headers={"X-PolyGuard-Passcode": "letmein"})
-    check("a third concurrent live scan is refused with 429", all(got) and busy_status == 429)
-    for g in got:
-        if g:
-            server._live_slots.release()
+    # The guard, against a fresh shared store each time.
+    def fresh():
+        st = MemoryStore()
+        set_store(st)
+        return st
+
+    st = fresh()
+    status_ok, ev_ok = run_scan(SMALL, headers=PASS)
+    check("an admitted live scan runs and hands its slot back when it ends",
+          status_ok == 200 and first(ev_ok, "start")["live"] is True
+          and st.take("live:running", guard.MAX_LIVE, guard.MAX_LIVE, 60))
+
+    st = fresh()
+    st.take("live:running", guard.MAX_LIVE, guard.MAX_LIVE, 60)
+    check("with every live slot taken site wide, another live scan is refused with 429",
+          run_scan(SMALL, headers=PASS)[0] == 429)
+
+    st = fresh()
+    first_try = run_scan(SMALL, headers={**PASS, "Idempotency-Key": "scan-abc-123"})[0]
+    second_try = run_scan(SMALL, headers={**PASS, "Idempotency-Key": "scan-abc-123"})[0]
+    check("the same idempotency key cannot start, and pay for, a scan twice",
+          first_try == 200 and second_try == 409)
+    check("a malformed idempotency key is refused before anything is spent",
+          run_scan(SMALL, headers={**PASS, "Idempotency-Key": "a b"})[0] == 422)
+
+    st = fresh()
+    _limit = guard.LIVE_PER_HOUR
+    guard.LIVE_PER_HOUR = 1
+    a1, a2 = run_scan(SMALL, headers=PASS)[0], run_scan(SMALL, headers=PASS)[0]
+    guard.LIVE_PER_HOUR = _limit
+    check("a visitor over the hourly live limit is refused with 429", a1 == 200 and a2 == 429)
+
+    st = fresh()
+    _budget = guard.DAILY_CALL_BUDGET
+    guard.DAILY_CALL_BUDGET = 20             # SMALL plans 2 attacks + 12 controls = 28 calls
+    over = run_scan(SMALL, headers=PASS)[0]
+    guard.DAILY_CALL_BUDGET = 40
+    b1, b2 = run_scan(SMALL, headers=PASS)[0], run_scan(SMALL, headers=PASS)[0]
+    guard.DAILY_CALL_BUDGET = _budget
+    check("a scan bigger than the whole daily budget is refused up front", over == 422)
+    check("once the day's budget is spent, live scans stop", b1 == 200 and b2 == 429)
+    check("a refusal for the budget hands the slot straight back",
+          st.take("live:running", guard.MAX_LIVE, guard.MAX_LIVE, 60))
+
+    class DownStore(MemoryStore):
+        def take(self, *a, **k):
+            raise StoreError("down")
+        claim = take
+    set_store(DownStore())
+    down = client.post("/api/scan", json=SMALL, headers=PASS)
+    check("if the guard cannot be reached, live scans are refused, not let through",
+          down.status_code == 503 and down.json()["reason"] == "guard_unreachable")
+    check("while simulated scans still work", first(run_scan({**SMALL, "demo": True})[1], "done").get("result"))
+
+    set_store(None)
+    no_guard = client.get("/api/meta", headers=PASS).json()
+    check("hosting without the shared guard reports live as off",
+          no_guard["live"] is False and no_guard["live_reason"] == "no_guard")
+    check("and a scan falls back to a simulation", first(run_scan(SMALL, headers=PASS)[1], "start")["live"] is False)
 finally:
     server.HOSTED = False
-    server._live_available, providers.resolve_key, providers.available_models = _real
+    (server._live_available, providers.resolve_key, providers.available_models,
+     providers.build_victim) = _real
+    set_store(MemoryStore())
+
+# --- saved scans: share links -------------------------------------------------------
+saved_res = first(run_scan(SMALL)[1], "done")["result"]
+sv = client.post("/api/scans", json={"result": saved_res})
+sj = sv.json()
+check("a finished scan can be saved behind a share link",
+      sv.status_code == 200 and len(sj["id"]) == 22 and sj["path"] == f"/s/{sj['id']}" and sj["delete_token"])
+got = client.get(f"/api/scans/{sj['id']}").json()
+check("the link opens the same scan", got["result"]["id"] == saved_res["id"] and got["mode"] == "simulated")
+check("the bot's replies are left out by default",
+      got["redacted"] is True and all(r["reply"] == "" and r["reply_redacted"] for r in got["result"]["results"]))
+kept = client.post("/api/scans", json={"result": saved_res, "keep_replies": True}).json()
+check("keeping the replies is a choice the saver makes", client.get(f"/api/scans/{kept['id']}").json()["redacted"] is False)
+check("only the fields of a scan are stored, nothing extra",
+      "report" not in client.get(f"/api/scans/{sj['id']}").json()["result"]
+      and "x" not in client.get(f"/api/scans/{client.post('/api/scans', json={'result': {**saved_res, 'x': 1}}).json()['id']}").json()["result"])
+check("something that is not a scan is refused",
+      client.post("/api/scans", json={"result": {"hello": "world"}}).status_code == 422)
+check("an oversized scan is refused",
+      client.post("/api/scans", json={"result": {**saved_res, "results": [{"reply": "x" * 1000}] * 2000}, "keep_replies": True}).status_code == 413)
+check("deleting needs the right token",
+      client.delete(f"/api/scans/{sj['id']}", headers={"X-Delete-Token": "wrong"}).status_code == 404)
+check("with it, the scan is gone",
+      client.delete(f"/api/scans/{sj['id']}", headers={"X-Delete-Token": sj["delete_token"]}).status_code == 204
+      and client.get(f"/api/scans/{sj['id']}").status_code == 404)
+set_store(None)
+check("without a store, saving says it is not set up", client.post("/api/scans", json={"result": saved_res}).status_code == 503)
+set_store(MemoryStore())
+
+# --- the game's crowd numbers ------------------------------------------------------------
+attack_item = next(i for i in client.get("/api/game").json()["items"] if i["attack"])
+check("an answer to a real game item is accepted",
+      client.post("/api/game/answer", json={"item_id": attack_item["id"], "answered_attack": True}).status_code == 204)
+check("an answer to an unknown item is refused",
+      client.post("/api/game/answer", json={"item_id": "zz_fake_1", "answered_attack": True}).status_code == 422)
+check("a language with too few answers is not shown",
+      client.get("/api/game/stats").json()["languages"] == [])
+for k in range(9):
+    client.post("/api/game/answer", json={"item_id": attack_item["id"], "answered_attack": k % 3 != 0})
+gs = client.get("/api/game/stats").json()["languages"]
+check("after enough answers, accuracy is reported from the bank's truth, not the client's",
+      len(gs) == 1 and gs[0]["answers"] == 10 and abs(gs[0]["accuracy"] - 0.7) < 1e-9)
 
 # --- a failure is a sentence, not a stack trace ------------------------------------
 _scan = engine.scan

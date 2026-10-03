@@ -363,7 +363,8 @@ ck("42. max_variants caps phrasings per cell",
 # anything. Every constructed client must ride out rate limits, not just one.
 _pv_src = (HERE / "providers.py").read_text(encoding="utf-8")
 ck("43. every client is configured to ride out rate limits on big scans",
-   _pv_src.count("max_retries=5") >= 4 and "max_variants=depth" in app_src)
+   "MAX_RETRIES = 5" in _pv_src and _pv_src.count("max_retries=MAX_RETRIES") >= 4
+   and _pv_src.count("timeout=CALL_TIMEOUT") >= 3 and "max_variants=depth" in app_src)
 
 # 44-50. audit round 3: statistical validity, evidence labelling, idempotent hardening
 ck("44. clustered (per-language) test exists and works",
@@ -1272,8 +1273,13 @@ ck("102. sign test matches exact binomial values",
    and engine.sign_test(0, 0)["significant"] is False)
 
 # 103. Regression detection must fire on a real shift and stay quiet on noise.
-def _mk(rates, mock=True, model="m"):
-    return {"mock": mock, "model": model,
+def _mk(rates, mock=True, model="m", **instrument_changes):
+    inst = {"mode": "simulated" if mock else "live", "bank_sha256": "b" * 64,
+            "scoring_version": engine.SCORING_VERSION, "judge_model": None if mock else "j",
+            "judge_prompt_sha256": "p" * 64, "victim_model": model, "langs": ["en"],
+            "categories": ["instruction_override"], "max_variants": 3, "with_controls": True}
+    inst.update(instrument_changes)
+    return {"mock": mock, "model": model, "instrument": inst,
             "by_lang": {c: {"name": c, "broke": int(round(r * 10)), "total": 10,
                             "rate": r} for c, r in rates.items()}}
 
@@ -1297,6 +1303,40 @@ ck("103e. different victim models are refused as incomparable",
 ck("103f. the verdict is the paired test, with the pooled one labelled optimistic",
    "pooled_test_optimistic" in cli.compare_scans(_before, _worse)
    and "16.6%" in inspect.getsource(cli.compare_scans))
+ck("103g. a baseline from a different bank or judge wording is refused, not compared",
+   cli.compare_scans(_before, _mk({c: 0.60 for c in _codes10}, bank_sha256="c" * 64))["comparable"] is False
+   and cli.compare_scans(_before, _mk({c: 0.60 for c in _codes10},
+                                      judge_prompt_sha256="q" * 64))["comparable"] is False)
+ck("103h. comparing anyway is possible, and the result says the instrument changed",
+   cli.compare_scans(_before, _mk({c: 0.60 for c in _codes10}, bank_sha256="c" * 64),
+                     allow_instrument_change=True)["instrument_changed"] is True)
+ck("103i. a scan file with no instrument record cannot be compared",
+   cli.compare_scans({**_before, "instrument": None}, _worse)["comparable"] is False)
+
+# 115. Audit round 18: the corrected worst-language p must not depend on the order
+# results arrive in. Live scans finish in thread order, and a seeded shuffle of a
+# differently ordered pool is a different shuffle.
+_r105 = engine.scan("You are ShopBot. Only help with Acme orders.", mock=True,
+                    with_controls=False)["results"]
+_p105 = set()
+for _s in range(8):
+    _rr = _r105[:]
+    _random.Random(_s).shuffle(_rr)
+    _p105.add(engine.max_gap_permutation_test(_rr)["p"])
+ck("115. the worst-language test gives one p whatever order the rows arrive in", len(_p105) == 1)
+
+# 116. A scan file carries its evidence, and replay recomputes it exactly.
+import tempfile
+with tempfile.TemporaryDirectory() as _d:
+    _rc = cli.main(["scan", "--prompt-text", "You are ShopBot. Only help with Acme orders.",
+                    "--mock", "--quiet", "--langs", "en,es,hi", "--bundle", _d])
+    _man = json.loads((Path(_d) / "manifest.json").read_text(encoding="utf-8"))
+    ck("116. a bundle holds the scan, the report and a manifest that fingerprints them",
+       _rc == 0 and set(_man["files"]) == {"scan.json", "report.html"}
+       and _man["instrument"]["bank_sha256"] == engine.bank_sha256()
+       and _man["prompt_included"] is False)
+    ck("116b. replay recomputes every number in the scan from its per-attack evidence",
+       cli.main(["replay", str(Path(_d) / "scan.json")]) == 0)
 
 # 104. The HTML report must carry every caveat the scan carried.
 _payload = {"mock": True, "model": "m", "generated_at": "now",

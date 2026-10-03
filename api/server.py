@@ -4,41 +4,53 @@ PolyGuard web API: the only way the web app reaches the engine.
     uvicorn api.server:app --reload          # from the repository root
 
 Endpoints
-    GET  /api/meta                  languages, attack types, example bots, live or demo
-    POST /api/scan                  run a scan and stream it as server-sent events:
+    GET    /api/meta                languages, attack types, example bots, live or demo
+    POST   /api/scan                run a scan and stream it as server-sent events:
                                     every attack result as it lands, then the verdict,
                                     the statistics and the self-contained report
-    POST /api/harden                targeted rules for what broke, and the hardened prompt
-    GET  /api/game                  real messages for the spot the attack game
+    POST   /api/harden              targeted rules for what broke, and the hardened prompt
+    GET    /api/game                real messages for the spot the attack game
+    POST   /api/game/answer         one anonymous answer to the game
+    GET    /api/game/stats          how well people spot attacks, per language
+    POST   /api/scans               save a finished scan behind a share link
+    GET    /api/scans/{id}          open a saved scan
+    DELETE /api/scans/{id}          delete it (needs the delete token from saving)
 
 Nothing is kept between requests. A scan runs inside the one request that streams
 it, so any instance of the server can take any request. That is what lets the API
 run as serverless functions (Vercel) as well as on a laptop.
 
 Spend safety. A live scan is hundreds of paid model calls, and a public link means
-strangers can press the button. So a scan is live only when an API key is
-configured AND, if POLYGUARD_PASSCODE is set, the request carries it. Everything
-else runs as a clearly labelled simulation. At most MAX_LIVE live scans run at
-once on a server, inputs are bounded, and on hosting with a time limit a live scan
-is capped at HOSTED_LIVE_MAX_ATTACKS so it can finish inside that limit. The
-engine, statistics and honesty rules are the same code the research console and
-CLI use; nothing is re-implemented here.
+strangers can press the button. So a scan is live only when ALL of these hold, and
+anything missing fails closed into a clearly labelled simulation or a refusal:
+an API key is configured, a passcode is configured (no passcode means no live
+scans, never open access), the request carries that passcode, and the shared spend
+guard (api/guard.py) admits it: a daily budget of paid calls, a per-visitor hourly
+limit, and a site-wide cap on scans running at once, all held in Supabase so every
+serverless copy sees the same numbers. Inputs are bounded, and on hosting with a
+time limit a live scan is capped at HOSTED_LIVE_MAX_ATTACKS so it can finish
+inside that limit. The engine, statistics and honesty rules are the same code the
+research console and CLI use; nothing is re-implemented here.
 """
 from __future__ import annotations
 
+import hashlib
 import hmac
 import json
 import os
 import queue
+import random
+import re
+import secrets
 import sys
 import threading
 import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -50,13 +62,17 @@ import defenses  # noqa: E402
 import engine  # noqa: E402
 import providers  # noqa: E402
 import report_html  # noqa: E402
+from api import guard  # noqa: E402
+from api.store import StoreError, expires_in, get_store  # noqa: E402
 from api.verdict import verdict  # noqa: E402
 from examples import DESCRIPTIONS, EXAMPLES  # noqa: E402
 from languages_catalog import tier_of  # noqa: E402
 
 MAX_PROMPT_CHARS = 8000
-MAX_LIVE = 2
 REPLY_CHARS = 1200
+SCAN_SCHEMA = "polyguard.scan/1"
+SAVED_DAYS = 30
+MAX_SAVED_BYTES = 1_500_000
 KEEPALIVE_SECONDS = 10.0
 
 # Vercel sets VERCEL=1. A function there stops after 300 seconds on the free plan,
@@ -69,13 +85,21 @@ HOSTED_LIVE_MAX_ATTACKS = int(os.environ.get("POLYGUARD_HOSTED_LIVE_MAX", "60"))
 app = FastAPI(title="PolyGuard API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 _origins = [o.strip() for o in os.environ.get(
     "POLYGUARD_WEB_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if o.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=_origins, allow_methods=["GET", "POST"],
-                   allow_headers=["Content-Type", "X-PolyGuard-Passcode"])
+app.add_middleware(CORSMiddleware, allow_origins=_origins, allow_methods=["GET", "POST", "DELETE"],
+                   allow_headers=["Content-Type", "X-PolyGuard-Passcode", "Idempotency-Key",
+                                  "X-Delete-Token"])
+
+
+@app.exception_handler(guard.Refused)
+def _refused(_request, exc: guard.Refused):
+    guard.log("refused", status=exc.status, reason=exc.reason)
+    return JSONResponse(status_code=exc.status, content={"detail": exc.message, "reason": exc.reason})
 
 BANK = engine.load_bank()
 EN_TEXT = {(a["category"], a.get("variant", 0)): a["text"]
            for a in BANK["attacks"] if a["lang"] == "en"}
-_live_slots = threading.Semaphore(MAX_LIVE)
+CONTROLS_PER_LANG = {c: sum(1 for x in BANK.get("controls", []) if x["lang"] == c)
+                     for c in BANK["languages"]}
 
 
 # --------------------------------------------------------------------------- #
@@ -126,8 +150,13 @@ def web_result(out: dict, req: ScanRequest, scan_id: str) -> dict:
     broken = defenses.broken_categories_from(out["results"])
     vm = out.get("victim") or {}
     return {
+        "schema": SCAN_SCHEMA,
         "id": scan_id,
         "mock": out["mock"],
+        # What exactly produced this: commit, bank fingerprint, judge wording, config.
+        "instrument": out.get("instrument"),
+        # How complete the run was, stated before any rate is read.
+        "completeness": engine.completeness(out),
         # A simulated run attacked nothing, so it names no model (AUDIT.md 57).
         "victim": None if out["mock"] else {"label": vm.get("label"),
                                             "vendor": vm.get("vendor"),
@@ -162,8 +191,22 @@ def _live_available() -> bool:
 
 
 def _passcode_ok(given: str | None) -> bool:
+    """Fails closed: with no passcode configured, nobody gets a live scan."""
     need = providers.resolve_key("POLYGUARD_PASSCODE")
-    return (not need) or (given is not None and hmac.compare_digest(given, need))
+    return bool(need) and given is not None and hmac.compare_digest(given.encode(), need.encode())
+
+
+def _live_state(given: str | None) -> tuple[bool, str]:
+    """Whether this caller would get a live scan, and if not, the first reason why."""
+    if not _live_available():
+        return False, "no_key"
+    if not providers.resolve_key("POLYGUARD_PASSCODE"):
+        return False, "no_passcode_configured"
+    if get_store() is None:
+        return False, "no_guard"
+    if not _passcode_ok(given):
+        return False, "locked"
+    return True, "ok"
 
 
 # --------------------------------------------------------------------------- #
@@ -171,13 +214,19 @@ def _passcode_ok(given: str | None) -> bool:
 # --------------------------------------------------------------------------- #
 @app.get("/api/meta")
 def meta(x_polyguard_passcode: str | None = Header(default=None)):
-    live = _live_available()
-    needs_passcode = bool(providers.resolve_key("POLYGUARD_PASSCODE"))
-    ready = [s for s in providers.available_models() if s["ready"]] if live else []
+    live_configured = _live_available()
+    live, live_reason = _live_state(x_polyguard_passcode)
+    ready = [s for s in providers.available_models() if s["ready"]] if live_configured else []
     return {
-        "live": live and _passcode_ok(x_polyguard_passcode),
-        "live_configured": live,
-        "needs_passcode": needs_passcode,
+        "live": live,
+        "live_reason": live_reason,
+        "live_configured": live_configured,
+        # A live server always asks for the passcode: there is no open mode.
+        "needs_passcode": live_configured,
+        "saving": get_store() is not None,
+        "limits": {"daily_call_budget": guard.DAILY_CALL_BUDGET, "live_per_hour": guard.LIVE_PER_HOUR,
+                   "hosted_live_max_attacks": HOSTED_LIVE_MAX_ATTACKS if HOSTED else None},
+        "models_priced": {k: v for k, v in providers.PRICES_PER_MTOK.items()},
         "languages": [{"code": c, "name": m["name"], "native": m["native"], "tier": tier_of(c),
                        "native_reviewed": bool(m.get("native_reviewed"))}
                       for c, m in BANK["languages"].items()],
@@ -223,29 +272,47 @@ def _sse(event: str, data) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
+def planned_attacks(req: ScanRequest) -> int:
+    langs, cats = set(req.langs), set(req.categories)
+    return sum(1 for a in BANK["attacks"] if a["lang"] in langs and a["category"] in cats
+               and a.get("variant", 0) < req.phrasings)
+
+
 @app.post("/api/scan")
-def run_scan(req: ScanRequest, x_polyguard_passcode: str | None = Header(default=None)):
+def run_scan(req: ScanRequest, request: Request,
+             x_polyguard_passcode: str | None = Header(default=None),
+             idempotency_key: str | None = Header(default=None)):
+    req.langs = list(dict.fromkeys(req.langs))            # a repeated language is one language
+    req.categories = list(dict.fromkeys(req.categories))
     bad_langs = [c for c in req.langs if c not in BANK["languages"]]
     bad_cats = [c for c in req.categories if c not in BANK["categories"]]
     if bad_langs or bad_cats:
         raise HTTPException(422, f"Unknown languages {bad_langs} or attack types {bad_cats}.")
 
-    live = (not req.demo) and _live_available() and _passcode_ok(x_polyguard_passcode)
-    model = None
+    who = guard.visitor(request.headers, request.client.host if request.client else None)
+    store = get_store()
+    live = (not req.demo) and _live_state(x_polyguard_passcode)[0]
+    model, release = None, (lambda: None)
+    planned = planned_attacks(req)
+    calls = 0
     if live:
         ready = {s["key"] for s in providers.available_models() if s["ready"]}
         model = req.model or providers.DEFAULT_MODEL
         if model not in ready:
             raise HTTPException(422, f"Model {model} is not available on this server.")
-        planned = len(req.langs) * len(req.categories) * req.phrasings
         if HOSTED and planned > HOSTED_LIVE_MAX_ATTACKS:
             raise HTTPException(422, f"A live scan on the hosted site can fire at most {HOSTED_LIVE_MAX_ATTACKS} "
                                      f"attacks so it finishes inside the host's time limit, and this one would fire "
                                      f"{planned}. Pick fewer languages or one phrasing, or run the full scan locally.")
-        if not _live_slots.acquire(blocking=False):
-            raise HTTPException(429, "Two live scans are already running. Try again in a minute.")
+        calls = guard.planned_calls(planned, sum(CONTROLS_PER_LANG.get(c, 0) for c in req.langs))
+        release = guard.admit_live(store, who, calls, idempotency_key)
+    else:
+        guard.limit(store, who, "simulated")
 
     scan_id = uuid.uuid4().hex[:12]
+    started = time.time()
+    guard.log("scan_start", scan_id=scan_id, mode="live" if live else "simulated",
+              langs=len(req.langs), attacks=planned, planned_calls=calls, visitor=who)
     inbox: queue.Queue = queue.Queue()
 
     def on_result(row, done, total):
@@ -258,12 +325,16 @@ def run_scan(req: ScanRequest, x_polyguard_passcode: str | None = Header(default
                               mock=not live, victim=victim, max_variants=req.phrasings,
                               extraction_reference=req.extraction_reference, on_result=on_result)
             report = report_html.build_report(cli.scan_payload(out, req.prompt, None))
+            guard.log("scan_done", scan_id=scan_id, mode="live" if live else "simulated",
+                      attacks=out["n_attacks"], broke=out["n_broke"],
+                      errors_by_kind=out.get("errors_by_kind"),
+                      duration_ms=round((time.time() - started) * 1000))
             inbox.put(("done", {"result": web_result(out, req, scan_id), "report": report}))
         except Exception as e:  # never a stack trace to the browser
+            guard.log("scan_failed", scan_id=scan_id, reason=type(e).__name__)
             inbox.put(("done", {"error": f"The scan could not finish: {type(e).__name__}."}))
         finally:
-            if live:
-                _live_slots.release()
+            release()
 
     threading.Thread(target=work, daemon=True).start()
 
@@ -296,6 +367,141 @@ def harden(req: HardenRequest):
             "hardened": defenses.harden(req.prompt, cats)}
 
 
+# --------------------------------------------------------------------------- #
+# Saved scans: share links
+#
+# Private by default: a saved scan is reachable only through its link, which is
+# 128 random bits, and is listed nowhere. The bot's replies are left out unless the
+# person saving asks to keep them, because a reply to an extraction attack can
+# contain the bot's own system prompt. Links expire after SAVED_DAYS, and whoever
+# saved one gets a delete token (only its hash is stored) to remove it sooner.
+# --------------------------------------------------------------------------- #
+SCAN_ID = re.compile(r"^[A-Za-z0-9_-]{22}$")
+SAVED_FIELDS = ("schema", "id", "mock", "instrument", "completeness", "victim", "totals", "verdict",
+                "languages", "categories", "stats", "broken_categories", "fixes", "results")
+
+
+class SaveRequest(BaseModel):
+    result: dict
+    keep_replies: bool = False
+
+
+def _need_store():
+    store = get_store()
+    if store is None:
+        raise HTTPException(503, "Saving is not set up on this server.")
+    return store
+
+
+@app.post("/api/scans")
+def save_scan(req: SaveRequest, request: Request):
+    store = _need_store()
+    guard.limit(store, guard.visitor(request.headers, request.client.host if request.client else None), "save")
+    r = req.result
+    if r.get("schema") != SCAN_SCHEMA or not isinstance(r.get("results"), list) \
+            or not isinstance(r.get("languages"), list) or not isinstance(r.get("mock"), bool):
+        raise HTTPException(422, "That is not a PolyGuard scan result.")
+    clean = {k: r[k] for k in SAVED_FIELDS if k in r}
+    if not req.keep_replies:
+        clean["results"] = [{**row, "reply": "", "reply_redacted": True} if isinstance(row, dict) else row
+                            for row in clean["results"]]
+    body = json.dumps(clean, ensure_ascii=False)
+    if len(body.encode("utf-8")) > MAX_SAVED_BYTES:
+        raise HTTPException(413, "That scan is too large to save.")
+    scan_id = secrets.token_urlsafe(16)
+    token = secrets.token_urlsafe(24)
+    row = {"id": scan_id, "mode": "simulated" if clean["mock"] else "live",
+           "redacted": not req.keep_replies,
+           "delete_token_sha256": hashlib.sha256(token.encode()).hexdigest(),
+           "size_bytes": len(body.encode("utf-8")), "result": clean,
+           "expires_at": expires_in(SAVED_DAYS)}
+    try:
+        store.save_scan(row)
+        if random.random() < 0.1:
+            store.sweep()
+    except StoreError:
+        raise HTTPException(503, "Saving failed. Try again in a moment.") from None
+    guard.log("scan_saved", saved_id_prefix=scan_id[:4], mode=row["mode"])
+    return {"id": scan_id, "path": f"/s/{scan_id}", "delete_token": token,
+            "expires_at": row["expires_at"], "redacted": row["redacted"]}
+
+
+@app.get("/api/scans/{scan_id}")
+def get_saved_scan(scan_id: str):
+    if not SCAN_ID.match(scan_id):
+        raise HTTPException(404, "No saved scan has that link.")
+    try:
+        row = _need_store().get_scan(scan_id)
+    except StoreError:
+        raise HTTPException(503, "Saved scans cannot be reached right now.") from None
+    if not row:
+        raise HTTPException(404, "No saved scan has that link, or it has expired.")
+    return {"result": row["result"], "mode": row["mode"], "redacted": row["redacted"],
+            "created_at": row.get("created_at"), "expires_at": row["expires_at"]}
+
+
+@app.delete("/api/scans/{scan_id}", status_code=204)
+def delete_saved_scan(scan_id: str, x_delete_token: str | None = Header(default=None)):
+    if not SCAN_ID.match(scan_id) or not x_delete_token or len(x_delete_token) > 64:
+        raise HTTPException(404, "No saved scan matches that link and token.")
+    try:
+        ok = _need_store().delete_scan(scan_id, hashlib.sha256(x_delete_token.encode()).hexdigest())
+    except StoreError:
+        raise HTTPException(503, "Saved scans cannot be reached right now.") from None
+    if not ok:
+        raise HTTPException(404, "No saved scan matches that link and token.")
+    return Response(status_code=204)
+
+
+# --------------------------------------------------------------------------- #
+# The game's crowd numbers: anonymous, one row per answer, truth from the bank
+# --------------------------------------------------------------------------- #
+CONTROL_IDS = frozenset(c["id"] for c in BANK["controls"])
+GAME_ITEMS = {x["id"]: x for x in BANK["attacks"] + BANK["controls"]
+              if x["lang"] != "en" and (x["id"] in CONTROL_IDS or x.get("category") in GAME_CATEGORIES)}
+MIN_ANSWERS_SHOWN = 10
+
+
+class AnswerRequest(BaseModel):
+    item_id: str = Field(min_length=1, max_length=80)
+    answered_attack: bool
+
+
+@app.post("/api/game/answer", status_code=204)
+def game_answer(req: AnswerRequest, request: Request):
+    item = GAME_ITEMS.get(req.item_id)
+    if item is None:
+        raise HTTPException(422, "Unknown game item.")
+    store = get_store()
+    if store is None:
+        return Response(status_code=204)
+    guard.limit(store, guard.visitor(request.headers, request.client.host if request.client else None), "answer")
+    is_attack = item["id"] not in CONTROL_IDS
+    try:
+        store.add_answer({"item_id": item["id"], "lang": item["lang"], "is_attack": is_attack,
+                          "answered_attack": req.answered_attack})
+    except StoreError:
+        pass        # a lost answer is a lost data point, not an error worth showing a player
+    return Response(status_code=204)
+
+
+@app.get("/api/game/stats")
+def game_stats(response: Response):
+    store = get_store()
+    try:
+        rows = store.game_stats() if store is not None else []
+    except StoreError:
+        rows = []
+    response.headers["Cache-Control"] = "public, max-age=60"
+    langs = {c: m for c, m in BANK["languages"].items()}
+    out = [{"lang": r["lang"], "name": langs.get(r["lang"], {}).get("name", r["lang"]),
+            "answers": int(r["answers"]), "accuracy": int(r["correct"]) / int(r["answers"]),
+            "attacks_caught": (int(r["attacks_caught"]) / int(r["attacks_seen"])) if int(r["attacks_seen"]) else None}
+           for r in rows if int(r["answers"]) >= MIN_ANSWERS_SHOWN]
+    out.sort(key=lambda x: -x["answers"])
+    return {"min_answers": MIN_ANSWERS_SHOWN, "languages": out}
+
+
 # The built web app, when present, is served from the same origin, so one
 # deployment is enough. During development Vite serves it instead.
 _dist = ROOT / "web" / "dist"
@@ -304,6 +510,6 @@ if _dist.is_dir():
     from fastapi.staticfiles import StaticFiles
 
     # The site's own addresses all load the same page; the page picks the screen.
-    for _path in ("/how", "/scan", "/scan/live", "/scan/results"):
+    for _path in ("/how", "/scan", "/scan/live", "/scan/results", "/s/{scan_id}"):
         app.add_api_route(_path, lambda: FileResponse(_dist / "index.html"), include_in_schema=False)
     app.mount("/", StaticFiles(directory=str(_dist), html=True), name="web")

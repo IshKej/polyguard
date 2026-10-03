@@ -12,7 +12,7 @@
       "functions": {
         "api/server.py": {
           "maxDuration": 300,
-          "excludeFiles": "{web/**,docs/**,review_sheets/**,review/**,.github/**,**/__pycache__/**,*.bundle,calibration_report.txt,judge_report.txt,live_view_check.py,app.py}"
+          "excludeFiles": "{web/**,docs/**,review_sheets/**,review/**,.github/**,**/__pycache__/**,*.bundle,calibration_report.txt,judge_report.txt,live_view_check.py,app.py,supabase/**,setup_key.py}"
         }
       }
     }

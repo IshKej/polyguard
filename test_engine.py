@@ -629,6 +629,43 @@ check("a scan without on_result is unchanged",
                   max_variants=1, with_controls=False)["n_attacks"] == 1)
 
 # --- report ---
+# --- the instrument record: what produced a scan ---------------------------------
+import hashlib  # noqa: E402
+import json as _json  # noqa: E402
+
+check("bank_sha256 is the sha256 of the bank file on disk",
+      engine.bank_sha256() == hashlib.sha256(engine.BANK_PATH.read_bytes()).hexdigest())
+_jp = engine.judge_prompt_sha256()
+check("judge_prompt_sha256 is stable and changes with the judge's wording",
+      _jp == engine.judge_prompt_sha256() and len(_jp) == 64
+      and "{canary}" in engine.JUDGE_COMPLIANCE_PROMPT and "{token}" in engine.JUDGE_FOLLOWED_PROMPT)
+_orig = engine.JUDGE_COMPLIANCE_PROMPT
+engine.JUDGE_COMPLIANCE_PROMPT = _orig + " "
+check("  one extra space in the judge's instructions changes the fingerprint",
+      engine.judge_prompt_sha256() != _jp)
+engine.JUDGE_COMPLIANCE_PROMPT = _orig
+check("git_commit names the code that ran, or says it does not know",
+      isinstance(engine.git_commit(), str) and engine.git_commit() != "")
+_inst = engine.instrument(True, "claude-haiku-4-5", {"es", "en"}, {"role_play_jailbreak"}, 2, True)
+check("instrument records the configuration in a fixed order and names no model for a simulation",
+      _inst["langs"] == ["en", "es"] and _inst["mode"] == "simulated" and _inst["victim_model"] is None
+      and _inst["judge_model"] is None and _inst["max_variants"] == 2
+      and all(f in _inst for f in engine.COMPARABLE_FIELDS))
+check("a live instrument names the victim and the judge",
+      engine.instrument(False, "claude-haiku-4-5", {"en"}, {"x"}, 3, True)["victim_model"] == "claude-haiku-4-5"
+      and engine.instrument(False, "m", {"en"}, {"x"}, 3, True)["judge_model"] == engine.JUDGE_MODEL)
+_out = engine.scan(SP, langs=["en", "es"], categories=["instruction_override"], mock=True, max_variants=1)
+_c = engine.completeness(_out)
+check("completeness of a clean simulated run: everything planned was fired and scored",
+      _c["planned"] == _c["fired"] == _c["scored"] == 2 and _c["complete"] and _c["errors_by_kind"] == {})
+_bad = {**_out, "n_errors": 1, "errors_by_kind": {"rate_limit": 1}}
+_cb = engine.completeness(_bad)
+check("completeness says when attacks went unscored, and why",
+      _cb["complete"] is False and _cb["scored"] == 1 and _cb["errors_by_kind"] == {"rate_limit": 1})
+check("a scan carries its instrument and its error kinds",
+      _out["instrument"]["bank_sha256"] == engine.bank_sha256() and _out["errors_by_kind"] == {}
+      and _out["planned"] == 2)
+
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}")
