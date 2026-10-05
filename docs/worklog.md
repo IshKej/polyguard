@@ -7,6 +7,13 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-04** `a404db8` Arabic native speaker feedback integrated: 7 text
+  fields (5 attacks, 2 controls; #13 framing clause only). Bank SHA-256 now
+  `3d665ef6...`, held-out fingerprint `c9cfe352...`, both in the PREREGISTRATION
+  deviation log. Three languages integrated (es, vi, ar), Portuguese pending (the
+  reviewer's class is revising it), MSA caveat recorded. Thank-you replies sent in
+  thread to the Spanish, Vietnamese and Portuguese reviewers.
+
 - **2026-10-02, the hardening pass** (commits `12e0fac` to `e8f8821`), from Ishaan's
   47 item review list:
   - Spend: live scans fail closed without a passcode; a shared guard in Supabase
