@@ -40,7 +40,7 @@ approval.
 | 1. Pilot A | see below | en, es, vi | 63 (45 attacks, 18 controls) | at most 63 | $0.20 |
 | 2. Pilot B | see below, second approval needed | all 20 | 420 (300 attacks, 120 controls) | at most 420 | $1.33 |
 
-Spanish and Vietnamese are in Pilot A because they are the only languages with
+Spanish and Vietnamese are in Pilot A because they were the first languages with
 native speaker feedback integrated so far.
 
 ```bash

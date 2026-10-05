@@ -1,8 +1,8 @@
 # Native speaker review
 
-**Status as of 2026-10-02: native speaker feedback has been received and
-integrated for 2 of the 20 hand-authored languages, Spanish and Vietnamese.
-Portuguese feedback is pending. The other 17 have had no native review.** Feedback
+**Status as of 2026-10-04: native speaker feedback has been received and
+integrated for 3 of the 20 hand-authored languages, Spanish, Vietnamese and
+Arabic. Portuguese feedback is pending. The other 16 have had no native review.** Feedback
 received and integrated is not a validation: it means a speaker read the lines and
 their corrections are now in the bank, not that the language is certified correct.
 The bank's `native_reviewed` flag is still false for every language.
@@ -107,10 +107,15 @@ credited.
 | Language | Reviewer | Date | Verdict | Changes applied |
 |---|---|---|---|---|
 | Spanish | Native speaker (name withheld) | 2026-10-01 | Suggestions on 10 of 21 lines, to read more naturally or closer to the English | All 10 applied 2026-10-02 in `generate_attack_bank.py`: 6 attacks (`es_instruction_override_1`, `es_system_prompt_extraction_2`, `es_obfuscated_payload_1`, `es_obfuscated_payload_2`, `es_indirect_injection_1`, `es_indirect_injection_2`) and 4 controls (`es_control_1`, `es_control_2`, `es_control_4`, `es_control_5`) |
+| Arabic | Native speaker (name withheld) | 2026-10-04 | 18 ok, 2 awkward, 1 wrong; seven wording suggestions | All 7 integrated 2026-10-04 in `generate_attack_bank.py`: 5 attacks (`ar_instruction_override_1`, `ar_instruction_override_2`, `ar_role_play_jailbreak_2`, `ar_system_prompt_extraction_1`, `ar_indirect_injection_0`) and 2 controls (`ar_control_0`, `ar_control_3`). In `ar_indirect_injection_0`, the line marked wrong, only the framing clause was replaced; the quoted customer review carrying the injection is unchanged. Where a suggestion left out the code word, it was kept. |
 | Vietnamese | Native speaker (name withheld) | 2026-10-01 | Tone marks correct; understandable, though unnatural in places; one line needed rewording | `vi_role_play_jailbreak_2` reworded as suggested ("tuân theo tất cả" to "tuân theo mọi mệnh lệnh", final period after the canary), 2026-10-02 |
 
-Both changes are logged, with the new bank fingerprint, in the deviation log of
+All three are logged, with the new bank fingerprints, in the deviation log of
 `PREREGISTRATION.md`.
+
+## Arabic scope
+
+The Arabic corpus uses Modern Standard Arabic (MSA). The reviewer noted that MSA is more common for formal, educational, and informational questions, while dialects are also very common in casual chatting. This review does not establish coverage of Arabic dialects.
 
 ## Honest statement for the writeup
 
@@ -118,12 +123,14 @@ The correct phrasing anywhere this project is described is:
 
 > Attack strings for 20 languages were written by the author and validated
 > automatically for script, encoding, length and uniqueness. Native speaker
-> feedback has been received and integrated for two of them, Spanish and
-> Vietnamese; the other 18 have had no native review. Languages added later are
+> feedback has been received and integrated for three of them, Spanish,
+> Vietnamese and Arabic, and Portuguese feedback is pending; the other 16 have
+> had no native review. The Arabic is Modern Standard Arabic, and its review
+> does not establish coverage of Arabic dialects. Languages added later are
 > machine-translated and checked by reverse translation. Translation quality is
 > a known limitation and a possible confound.
 
 Do not write "verified", "validated", "professionally translated", or
-"human-checked" about any language in this project, including Spanish and
-Vietnamese. Feedback received and integrated is what happened, so that is what
+"human-checked" about any language in this project, including Spanish,
+Vietnamese and Arabic. Feedback received and integrated is what happened, so that is what
 to say.
