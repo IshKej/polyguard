@@ -980,6 +980,31 @@ from their own evidence, and by driving the site in a real browser.
     any live data exists. Lesson: a value that is cited should be checked against
     its source by code, not by eye.
 
+74. **The permutation test dropped exact ties, which made p too small.** It
+    compared gaps as floating point numbers, and equal gaps reached through
+    different counts are not equal in floating point (3/15 - 1/15 is
+    0.13333333333333336, 4/15 - 2/15 is 0.13333333333333333). A shuffle that
+    exactly tied the observed gap could therefore be left out of the count.
+    On one test dataset p came out 0.4753 against the exact 0.4778. The error
+    ran toward overclaiming. FIX: ties are counted with a
+    tolerance far below the smallest possible spacing between distinct gaps; a
+    property test checks the p-value against the same test computed in exact
+    fractions, and a new mutant (13 of 13 caught) puts the old comparison back to
+    prove the test notices. Found by an outside read of the statistics, not by
+    the 23 properties already in place, because none of them used data with
+    unequal counts that tie.
+
+75. **The project claimed to know which way translation error pushes the result.**
+    The preregistration said machine translation tends to understate the gap, so
+    a found gap would be "a floor rather than a ceiling". That reads as caution,
+    but it is a claim in H1's favour, and the literature does not settle it:
+    MultiJail (arXiv:2310.06474) reports machine translated prompts at 11.15%
+    unsafe against 10.19% for human translated ones. FIX: a dated amendment, made
+    before any live data, treats the direction as unknown; a found gap is no
+    longer called a floor, nulls keep every caveat, and per language translation
+    quality is to be reported next to each result. RELATED_WORK.md, STATE.md and
+    the backcheck docstring now say the same.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.
@@ -1004,8 +1029,11 @@ from their own evidence, and by driving the site in a real browser.
 - Native speaker feedback has been integrated for Spanish and Vietnamese only;
   that is feedback, not validation. Provenance is stated as author or machine;
   neither means reviewed. See NATIVE_REVIEW.md.
-- Machine translation biases toward UNDERSTATING the low-resource gap, because a
-  garbled attack fails for reasons unrelated to the defence being measured.
+- Machine translation is expected to UNDERSTATE the low-resource gap, because a
+  garbled attack fails for reasons unrelated to the defence being measured, but
+  the evidence is mixed (MultiJail found machine translated prompts slightly more
+  effective than human translated ones), so the direction is treated as unknown
+  and no found gap is called a floor (finding 75).
 - The judge gold set is author-labelled, not native-speaker verified, and covers
   structural cases rather than fluency. The LLM judge itself is still unmeasured
   pending an API key; only the heuristic it replaced has been scored.

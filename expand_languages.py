@@ -251,9 +251,11 @@ def backcheck(client, translated: dict, backs_out: dict | None = None) -> list[s
     for reasons that have nothing to do with the bot's defences, and that failure
     is then read as safety.
 
-    The direction of the bias is known and worth stating: bad translation makes a
-    language look SAFER than it is, so it understates the very gap the project is
-    testing for.
+    The expected direction is worth stating: bad translation makes a language look
+    SAFER than it is, so it understates the very gap the project is testing for.
+    It is not settled, though: MultiJail (arXiv:2310.06474) found machine
+    translated prompts slightly MORE effective than human translated ones (11.15%
+    against 10.19% unsafe), so PREREGISTRATION.md treats the direction as unknown.
 
     It used to reverse-translate one attack out of fifteen. It now samples one
     variant from each checkable category, because a single sample cannot detect

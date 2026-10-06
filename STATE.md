@@ -31,8 +31,8 @@ python test_engine.py            # unit, <1s           -> 168/168
 python verify_all.py             # full battery        -> 221/221
 python api/test_api.py           # web API             -> 90/90
 python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 21/21
-python test_stats_properties.py  # 23 properties of the statistics on random inputs -> 23/23
-python mutation_check.py         # 12 planted bugs in the statistics, all must be caught -> 12/12
+python test_stats_properties.py  # 24 properties of the statistics on random inputs -> 24/24
+python mutation_check.py         # 13 planted bugs in the statistics, all must be caught -> 13/13
 python api/test_cancellation.py  # OPEN: 2/6 until server-side cancellation lands
 python cli.py replay scan.json   # recompute a saved scan from its evidence
 python judge_eval.py             # judge gold set       -> heuristic bias measured
@@ -159,12 +159,11 @@ and vanilla LLM translation of a safety benchmark had error rates of 71% in Beng
 and 36% in Malay before human review (LinguaSafe, arXiv:2508.12733; see
 `RELATED_WORK.md`).
 
-The direction matters. Bad translation makes low-resource languages look **safer
-than they are**, so PolyGuard's machine-translated languages will tend to
-**understate** the very gap H1 predicts. That is the conservative direction for
-the headline claim, but it is a real limit on what a null result can mean, and it
-is why the reverse-translation gate is on by default and native review is
-tracked rather than waved off.
+The direction is not settled. Bad translation can make low-resource languages
+look **safer than they are** and **understate** the gap H1 predicts, but MultiJail (Deng et al., ICLR 2024, arXiv:2310.06474) found machine translated prompts produced slightly MORE unsafe output than human translated ones, 11.15% against 10.19% on average.
+So a found gap is not called a floor and a null keeps its caveats
+(PREREGISTRATION.md, amendment of 2026-10-05). That is why the reverse-translation
+gate is on by default and native review is tracked rather than waved off.
 
 ## Where things live
 

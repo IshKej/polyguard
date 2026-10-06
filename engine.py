@@ -559,7 +559,11 @@ def max_gap_permutation_test(results: list[dict], ref_lang: str = "en",
             i += n
         g = max(rates[k] for k in order) - rates[ref_lang]
         null_sum += g
-        if g >= observed:
+        # Ties must count. Equal gaps reached through different counts are not
+        # equal in floating point (3/15 - 1/15 != 4/15 - 2/15), so a plain >=
+        # dropped exact ties and made p too small. Distinct gaps differ by at
+        # least 1/(n_a * n_b), far above this tolerance.
+        if g >= observed - 1e-9:
             ge += 1
     # Add-one so a p-value is never reported as exactly zero, which no finite
     # permutation test can actually justify.

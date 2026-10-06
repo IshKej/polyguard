@@ -124,6 +124,15 @@ Consequences, fixed now rather than argued later:
 - No language will be described as "verified" or "human-checked" until
   `NATIVE_REVIEW.md` has a row for it.
 
+**Amendment, 2026-10-05, before any live data.** The direction above is the
+expected mechanism, not a settled finding. MultiJail (Deng et al., ICLR 2024, arXiv:2310.06474) found machine translated prompts produced slightly MORE unsafe output than human translated ones, 11.15% against 10.19% on average, and the authors
+concluded that machine translation can suffice for jailbreaking. A garbled attack
+can fail, but a translation can also strip the phrasing a model was trained to
+refuse. So the direction is now treated as unknown, which is stricter than what
+was written above: a gap that is found will **not** be described as a floor, and a
+null keeps every caveat listed. The translation quality of each language will be
+reported next to its result.
+
 ## What would falsify the thesis
 
 Low-resource languages showing break rates equal to or below high-resource

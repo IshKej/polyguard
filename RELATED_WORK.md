@@ -63,11 +63,14 @@ Malay** under human inspection, cut to 12% and 3% by its translate, estimate and
 refine pipeline. (Corrected 2026-10-05: earlier versions of this repo attributed
 the 71% figure to arXiv:2605.18239 and gave Malay's starting point as 71%.)
 
-The mechanism is simple and it runs one way. A garbled attack fails because the
-model cannot parse it, not because the model resisted it. The scanner records a
+The expected mechanism is simple. A garbled attack fails because the model
+cannot parse it, not because the model resisted it. The scanner records a
 non-break. The non-break reads as safety. So machine-translated evaluation sets
-**understate** vulnerability in exactly the low-resource languages they are built
-to study.
+can **understate** vulnerability in exactly the low-resource languages they are
+built to study. But the evidence does not run only one way: MultiJail (Deng et al., ICLR 2024, arXiv:2310.06474) found machine translated prompts produced slightly MORE unsafe output than human translated ones, 11.15% against 10.19% on average.
+Translation can also strip the exact phrasing a model learned to refuse. PolyGuard
+therefore treats the direction as unknown (PREREGISTRATION.md, amendment of
+2026-10-05) and reports translation quality next to every result.
 
 Related failure modes are documented across the multilingual evaluation
 literature: translationese artifacts making translated benchmarks easier than

@@ -7,6 +7,14 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-05** Statistics and interpretation fixes from the research notes:
+  the max-gap permutation test dropped exact ties that differ only in floating
+  point (p too small; AUDIT 74, property test against exact fractions, a 13th
+  mutant), and the preregistration's "a found gap is a floor" was withdrawn by a
+  dated amendment because MultiJail found machine translation slightly raises
+  unsafe rates (AUDIT 75). Suites: test_engine 168, properties 24, verify_all
+  223, mutation 13/13.
+
 - **2026-10-05** Two errors found by reading the cited sources (AUDIT round 19):
   the 71% translation error figure was attributed to the wrong paper (it is
   LinguaSafe, arXiv:2508.12733, Bengali only), and four Joshi classes were copied

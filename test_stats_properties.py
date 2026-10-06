@@ -151,6 +151,37 @@ _ties = [{"id": f"{l}_{i}", "lang": l, "category": "c", "variant": 0, "broke": F
 prop("when nothing broke anywhere, p is 1: ties count as at least as extreme",
      close(engine.max_gap_permutation_test(_ties, n_iter=300)["p"], 1.0, 1e-12))
 
+
+def _exact_max_gap_p(rows, ref="en", n_iter=2000, seed=12345):
+    """The same test in exact fractions: the reference the float version must match."""
+    from fractions import Fraction
+    rows = sorted((r for r in rows if r.get("error") is None),
+                  key=lambda r: (r["lang"], r.get("category", ""), r.get("variant", 0), r.get("id", "")))
+    by = {}
+    for r in rows:
+        by.setdefault(r["lang"], []).append(bool(r["broke"]))
+    sizes = {k: len(v) for k, v in by.items()}
+    order = [k for k in sizes if k != ref]
+    obs = max(Fraction(sum(by[k]), sizes[k]) for k in order) - Fraction(sum(by[ref]), sizes[ref])
+    pool = [o for v in by.values() for o in v]
+    rng, ge = random.Random(seed), 0
+    for _ in range(n_iter):
+        rng.shuffle(pool)
+        i, rates = 0, {}
+        for k in [ref] + order:
+            rates[k] = Fraction(sum(pool[i:i + sizes[k]]), sizes[k])
+            i += sizes[k]
+        ge += max(rates[k] for k in order) - rates[ref] >= obs
+    return (ge + 1) / (n_iter + 1)
+
+
+# Gaps that are equal as fractions but reached through different counts
+# (3/15 - 1/15 against 4/15 - 2/15) are unequal in floating point. The float
+# test once dropped those exact ties and reported p too small.
+_tie_rows = fake_rows({"en": 0.1, "a": 0.25, "b": 0.3, "c": 0.15, "d": 0.2}, 15, random.Random(2))
+prop("tied gaps reached through different counts are counted (p matches exact fractions)",
+     close(engine.max_gap_permutation_test(_tie_rows, n_iter=2000)["p"], _exact_max_gap_p(_tie_rows), 1e-12))
+
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}")

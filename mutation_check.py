@@ -28,8 +28,10 @@ HERE = Path(__file__).resolve().parent
 MUTANTS = [
     ("engine.py", "p = (ge + 1) / (n_iter + 1)", "p = ge / n_iter",
      "permutation p without the add-one, so it can be exactly zero"),
-    ("engine.py", "        if g >= observed:", "        if g > observed:",
+    ("engine.py", "        if g >= observed - 1e-9:", "        if g > observed + 1e-9:",
      "permutation test counting only strictly larger gaps"),
+    ("engine.py", "        if g >= observed - 1e-9:", "        if g >= observed:",
+     "permutation test dropping ties that differ only in floating point"),
     ("engine.py", '"n_langs": len(by), "n_iter": n_iter, "significant": p < 0.05,',
      '"n_langs": len(by), "n_iter": n_iter, "significant": p < 0.5,',
      "worst-language test at the wrong alpha"),
