@@ -2,7 +2,7 @@
 Dress rehearsal for the first live scan.
 
 The problem this solves: PolyGuard's headline output has never actually run. The
-bank holds 20 languages, 16 high and 4 mid and **zero low**, so every code path
+bank holds 20 languages, 15 high, 4 mid and only **one low** (Gujarati), so every code path
 that compares tiers, tests categories, or reports a capability gap has been
 exercised only by unit tests on synthetic inputs. The first time they run for
 real will be the first live scan, which is also the first time real money is

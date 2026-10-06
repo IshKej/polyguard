@@ -466,7 +466,9 @@ by the failure of the alternative, not yet a measurement of the judge itself.
     languages**: human red-teaming raised jailbreak rates from 59.8% to 75.8%,
     with gains of +20.0% in Afrikaans and +12.7% in isiZulu, and machine
     translation error rates in some languages ran as high as **71%** before human
-    review (arXiv:2605.18239).
+    review (arXiv:2605.18239). [Correction 2026-10-05: the 71% figure is from
+    LinguaSafe, arXiv:2508.12733, and is Bengali only (Malay 36%); the 59.8% to
+    75.8% figure is from arXiv:2605.18239.]
 
     Against a possible 71% error rate, reverse-translating a single attack cannot
     detect anything. FIX: `backcheck` now samples one variant from each checkable
@@ -951,6 +953,32 @@ from their own evidence, and by driving the site in a real browser.
     it (HMAC-SHA256 over canonical JSON, keyed by a secret all serverless copies
     share), and only a result whose signature still matches can be saved. A
     changed, unsigned or padded result is refused; API tests cover all three.
+
+## Round 19 — reading the sources the project cites
+
+72. **A headline number was attributed to the wrong paper.** The repo said
+    "machine translation error rates as high as 71% before human review
+    (arXiv:2605.18239)" in six places. That paper does not contain the 71%. It
+    comes from LinguaSafe (arXiv:2508.12733): vanilla LLM translation error rates
+    of 71% for Bengali and 36% for Malay under human inspection, cut to 12% and 3%
+    by its full pipeline. RELATED_WORK.md also gave Malay's starting point as 71%.
+    FIX: every citation corrected, both papers opened and quoted, a correction
+    note appended to PREREGISTRATION.md (the 2026-09-17 row left as written so the
+    log stays append only), and the strong wording "is what drives" softened to
+    "can drive", which is what the evidence supports.
+
+73. **Four values of the independent variable were copied wrong.** The Joshi
+    classes had been typed in by hand. Against the published `lang2tax.txt`,
+    Gujarati, Norwegian and Kyrgyz are class 1 (entered as 4) and Pashto is class
+    1 (entered as 2). The "Kyrgyz = 4 anomaly" that round 11 deliberately left in
+    place was one of these copying errors, not a quirk of Joshi's data. The tiers
+    move from 28 / 24 / 35 to 25 / 24 / 38, and Gujarati, an author written
+    language, becomes the bank's first low resource language. FIX: the file is
+    kept in the repo (`data/joshi_lang2tax.txt`, hash pinned), verify_all.py
+    checks every class against it (97d, 97f) and checks the file's class counts
+    against Joshi's Table 1 (97g), and the change is logged as a deviation before
+    any live data exists. Lesson: a value that is cited should be checked against
+    its source by code, not by eye.
 
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.

@@ -846,8 +846,8 @@ ck("79c. control verifier rejects every way a control can go wrong",
 _exsrc = (HERE / "expand_languages.py").read_text(encoding="utf-8")
 ck("79d. a language with unusable controls is rejected, not added without them",
    "problems = verify_controls(controls)" in _exsrc
-   and "build_controls(code, controls)" in _exsrc
-   and "have no capability controls" in _exsrc)
+   and "write_record(code, translated, controls" in _exsrc
+   and "verify(translated) + verify_controls(controls)" in _exsrc)
 
 # ---------------------------------------------------------------------------
 # 80-83. audit round 8: honest provenance, and offline linguistic validation
@@ -1184,8 +1184,18 @@ ck("97b. tier follows the stated rule with NO exceptions",
 ck("97c. the rule and its source are documented in the catalog",
    "lang2tax" in cat.__doc__ and "Joshi" in cat.__doc__
    and "DERIVED, never hand-assigned" in cat.__doc__)
-ck("97d. the known anomaly is named rather than silently overridden",
-   "Kyrgyz" in cat.__doc__ and cat.CATALOG["ky"]["joshi"] == 4)
+import hashlib as _hashlib
+_jf = Path(cat.__file__).parent / cat.JOSHI_FILE
+ck("97d. the published Joshi file is in the repo, unmodified",
+   _jf.exists() and _hashlib.sha256(_jf.read_bytes()).hexdigest() == cat.JOSHI_FILE_SHA256)
+_jc = cat.joshi_file_classes()
+ck("97f. every catalog class equals the published file's class (no hand-copying errors)",
+   all(len(set(v)) == 1 and v[0] == cat.CATALOG[c]["joshi"] for c, v in _jc.items()))
+_counts = [0] * 6
+for _line in _jf.read_text(encoding="utf-8").splitlines():
+    _counts[int(_line.rpartition(",")[2])] += 1
+ck("97g. the file's class counts match Joshi et al. Table 1",
+   _counts == [2191, 222, 19, 28, 18, 7])
 _dist = {t: sum(1 for m in cat.CATALOG.values() if m["tier"] == t)
          for t in ("high", "mid", "low")}
 ck("97e. all three tiers are large enough to compare",

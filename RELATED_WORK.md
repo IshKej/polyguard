@@ -57,8 +57,11 @@ success in low-resource languages.** Multilingual jailbreaking work
 (arXiv:2605.18239) found that replacing automated translation with human
 red-teaming raised the average jailbreak rate from **59.8% to 75.8%**, with
 per-language gains of +20.0% for Afrikaans, +12.7% for isiZulu and +12.3% for
-isiXhosa. Separately, iterative refinement plus human review cut error rates in
-languages such as Bengali and Malay from **71% to between 3% and 12%**.
+isiXhosa. Separately, LinguaSafe (arXiv:2508.12733) found that vanilla LLM
+translation of a safety benchmark had error rates of **71% for Bengali and 36% for
+Malay** under human inspection, cut to 12% and 3% by its translate, estimate and
+refine pipeline. (Corrected 2026-10-05: earlier versions of this repo attributed
+the 71% figure to arXiv:2605.18239 and gave Malay's starting point as 71%.)
 
 The mechanism is simple and it runs one way. A garbled attack fails because the
 model cannot parse it, not because the model resisted it. The scanner records a
@@ -78,7 +81,7 @@ now implemented:
 
 1. The reverse-translation gate is **on by default** and samples across
    categories rather than checking one attack in fifteen. A single sample cannot
-   detect a 71% error rate.
+   detect error rates of the size LinguaSafe measured (71% in Bengali).
 2. Capability controls catch the extreme case where a model cannot operate in a
    language at all, which is a related but distinct failure.
 3. The expected direction of the residual bias is recorded in
@@ -164,6 +167,7 @@ would be reported as the headline.
 - *The Effect of Multi-Lingual and Keyword Adversarial Injection on LLM Relevance Judgment*. https://arxiv.org/html/2607.10080
 - *Tensor Trust: Interpretable Prompt Injection Attacks from an Online Game*. https://arxiv.org/pdf/2311.01011
 - *Multilingual jailbreaking of LLMs using low-resource languages*. https://arxiv.org/pdf/2605.18239
+- *LinguaSafe: A Comprehensive Multilingual Safety Benchmark for Large Language Models*. https://arxiv.org/abs/2508.12733
 - *Round-Trip Translation Reveals What Frontier Multilingual Benchmarks Miss*. https://arxiv.org/pdf/2604.12911
 - *Déjà Vu: Multilingual LLM Evaluation through the Lens of Machine Translation Evaluation*. https://arxiv.org/html/2504.11829
 - Open-Prompt-Injection benchmark. https://github.com/liu00222/Open-Prompt-Injection

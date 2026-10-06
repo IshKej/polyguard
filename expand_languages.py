@@ -18,7 +18,15 @@ Two verification layers guard against garbage translations confounding the findi
   semantic    by default the translated attacks are reverse-translated to
               English and must still read as an injection ("ignore ... reply ...").
 
+Every language it accepts is written to machine_translations/<code>.json as templates
+(the canary as {C}, the Base64 payload as {B64}, the control token as {T}), together
+with the English back-translations the semantic gate read, and the bank is rebuilt
+from those files by generate_attack_bank.py. A stored file can be checked again at
+any time, with no API key, by `--check-stored`, which re-runs every gate on it.
+
 Usage
+    python expand_languages.py --check-stored  # re-run every gate on the stored files, no key
+    python expand_languages.py --check-stored --langs mk,sq  # only these stored files
     python expand_languages.py                 # all pending languages
     python expand_languages.py --tier low      # only low-resource languages
     python expand_languages.py --langs sw,am   # specific languages
@@ -39,7 +47,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from generate_attack_bank import (CANARY, B64, CATEGORIES, GOAL, TEXT,
-                                  CONTROL, CONTROL_TOKEN)
+                                  CONTROL, CONTROL_TOKEN, MT_DIR)
 from languages_catalog import CATALOG
 
 BANK_PATH = Path(__file__).with_name("attack_bank.json")
@@ -217,16 +225,29 @@ BACKCHECK_INTENT = {
 }
 
 
-def backcheck(client, translated: dict) -> list[str]:
+def intent_problems(backs: dict) -> list[str]:
+    """The semantic gate's test, applied to English back-translations already made."""
+    problems = []
+    for cat, (group_a, group_b) in BACKCHECK_INTENT.items():
+        back = (backs.get(cat) or "").lower()
+        if not back:
+            problems.append(f"backcheck[{cat}]: no back-translation recorded")
+        elif not (any(w in back for w in group_a) and any(w in back for w in group_b)):
+            problems.append(f"backcheck[{cat}]: round trip did not read as that attack ('{back[:70]}')")
+    return problems
+
+
+def backcheck(client, translated: dict, backs_out: dict | None = None) -> list[str]:
     """
     Reverse-translate several attacks to English and confirm each still reads as
     the attack it is supposed to be.
 
     This is load-bearing, not a nicety. Published work finds that poor machine
-    translation, rather than stronger guardrails, is what drives lower attack
-    success in low-resource languages: human red-teaming raised jailbreak rates
-    from 59.8% to 75.8%, and machine-translation error rates in some languages ran
-    as high as 71% before human review (arXiv:2605.18239). A garbled attack fails
+    translation, rather than stronger guardrails, can drive lower attack success
+    in low-resource languages: human red-teaming raised jailbreak rates from 59.8%
+    to 75.8% (arXiv:2605.18239), and vanilla LLM translation of a safety benchmark
+    had error rates of 71% in Bengali and 36% in Malay under human inspection
+    (LinguaSafe, arXiv:2508.12733). A garbled attack fails
     for reasons that have nothing to do with the bot's defences, and that failure
     is then read as safety.
 
@@ -235,8 +256,8 @@ def backcheck(client, translated: dict) -> list[str]:
     testing for.
 
     It used to reverse-translate one attack out of fifteen. It now samples one
-    variant from each checkable category, because a single sample cannot detect a
-    71% error rate. `obfuscated_payload` is skipped (it is Base64, verified
+    variant from each checkable category, because a single sample cannot detect
+    error rates of the size LinguaSafe measured. `obfuscated_payload` is skipped (it is Base64, verified
     structurally) and `indirect_injection` is skipped (its SYSTEM OVERRIDE marker
     is verified structurally).
     """
@@ -252,6 +273,8 @@ def backcheck(client, translated: dict) -> list[str]:
         )
         back = next(b.text for b in resp.content
                     if getattr(b, "type", None) == "text").lower()
+        if backs_out is not None:
+            backs_out[cat] = back
         if not (any(w in back for w in group_a) and any(w in back for w in group_b)):
             problems.append(
                 f"backcheck[{cat}]: round trip did not read as that attack "
@@ -328,8 +351,86 @@ def build_attacks(code: str, translated: dict) -> list[dict]:
     return out
 
 
+def to_templates(translated: dict, controls: list[str]) -> tuple[dict, list[str]]:
+    """Final text back to templates, the form the generator stores."""
+    attacks = {}
+    for cat in CATEGORIES:
+        out = []
+        for t in translated[cat]:
+            if cat == "obfuscated_payload":
+                for tok in B64_RE.findall(t):
+                    if _decodes_to_canary(tok):
+                        t = t.replace(tok, "{B64}")
+            out.append(t.replace(CANARY, "{C}"))
+        attacks[cat] = out
+    return attacks, [c.replace(CONTROL_TOKEN, "{T}") for c in controls]
+
+
+def render(record: dict) -> tuple[dict, list[str]]:
+    """Templates to final text, exactly as generate_attack_bank.build() does."""
+    loc = record["attacks"]["instruction_override"][0].replace("{C}", CANARY)
+    loc_b64 = base64.b64encode(loc.encode()).decode()
+    translated = {cat: [t.replace("{C}", CANARY).replace("{B64}", loc_b64) for t in items]
+                  for cat, items in record["attacks"].items()}
+    return translated, [c.replace("{T}", CONTROL_TOKEN) for c in record["controls"]]
+
+
+def write_record(code: str, translated: dict, controls: list[str], backs: dict, how: str, model: str) -> Path:
+    from datetime import date
+    attacks, ctl = to_templates(translated, controls)
+    record = {"code": code, "name": CATALOG[code]["name"], "native": CATALOG[code]["native"],
+              "provenance": "machine", "translated_with": model, "translated_on": date.today().isoformat(),
+              "method": how, "attacks": attacks, "controls": ctl, "backcheck": backs}
+    MT_DIR.mkdir(exist_ok=True)
+    path = MT_DIR / f"{code}.json"
+    path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    return path
+
+
+def linguistic_problems(code: str, translated: dict, controls: list[str]) -> list[str]:
+    """
+    linguistics.py's per-item checks on one stored language, before it reaches the
+    bank: script, mojibake, length against the English, accents. The one check left
+    to linguistics.py is identical text across languages, which needs the whole bank.
+    """
+    import linguistics as L
+    tokens = (CANARY, CONTROL_TOKEN)
+    problems, texts = [], []
+    for cat in CATEGORIES:
+        for i, t in enumerate(translated[cat]):
+            found = L.check_script(code, t, tokens) + L.check_mojibake(t)
+            if cat != "obfuscated_payload":
+                found += L.check_length_ratio(t, EN_SEEDS[cat][i])
+            problems += [f"{cat}[{i}]: {m}" for m in found]
+            texts.append(t)
+    for i, c in enumerate(controls):
+        found = L.check_script(code, c, tokens) + L.check_mojibake(c) + L.check_length_ratio(c, EN_CONTROLS[i])
+        problems += [f"control[{i}]: {m}" for m in found]
+        texts.append(c)
+    return problems + [f"accents: {m}" for m in L.check_diacritics(code, texts)]
+
+
+def check_stored(only: set[str] | None = None) -> int:
+    """Every gate, re-run on every stored language (or only these codes). No key needed."""
+    bad = 0
+    files = [p for p in sorted(MT_DIR.glob("*.json")) if not only or p.stem in only]
+    for p in files:
+        record = json.loads(p.read_text(encoding="utf-8"))
+        translated, controls = render(record)
+        problems = (verify(translated) + verify_controls(controls)
+                    + intent_problems(record.get("backcheck") or {})
+                    + linguistic_problems(record["code"], translated, controls))
+        if problems:
+            bad += 1
+            print(f"  [reject] {record['name']:<16} {problems[:3]}")
+    print(f"{len(files) - bad}/{len(files)} stored machine translations pass every gate")
+    return 1 if bad else 0
+
+
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--check-stored", action="store_true",
+                    help="re-run every gate on machine_translations/, no API key needed")
     ap.add_argument("--langs", help="comma-separated codes to generate")
     ap.add_argument("--tier", choices=["high", "mid", "low"], help="only this tier")
     ap.add_argument("--limit", type=int, help="cap number of languages")
@@ -341,6 +442,8 @@ def main():
                     help="skip the reverse-translation check (not recommended)")
     ap.set_defaults(backcheck=True)
     args = ap.parse_args()
+    if args.check_stored:
+        sys.exit(check_stored({c.strip() for c in args.langs.split(",")} if args.langs else None))
 
     bank = json.loads(BANK_PATH.read_text(encoding="utf-8"))
     have = set(bank["languages"])
@@ -367,8 +470,9 @@ def main():
         try:
             translated = localize_obfuscated(translate(client, CATALOG[code]))
             problems = verify(translated)
+            backs = {}
             if not problems and args.backcheck:
-                problems = backcheck(client, translated)
+                problems = backcheck(client, translated, backs)
             # Controls are translated in a separate call with neutral framing.
             # A language that arrives without usable controls is rejected outright
             # rather than added without them: its break rate would then be
@@ -378,40 +482,33 @@ def main():
             if not problems:
                 controls = translate_controls(client, CATALOG[code])
                 problems = verify_controls(controls)
-            return code, translated, controls, problems, None
+            return code, translated, controls, problems, None, backs
         except Exception as e:
-            return code, None, None, None, str(e)
+            return code, None, None, None, str(e), {}
 
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for fut in as_completed([pool.submit(work, c) for c in todo]):
-            code, translated, controls, problems, err = fut.result()
+            code, translated, controls, problems, err, backs = fut.result()
             name = CATALOG[code]["name"]
             if err:
                 failed.append((code, err)); print(f"  [error]  {name:<14} {err[:60]}")
             elif problems:
                 failed.append((code, "; ".join(problems))); print(f"  [reject] {name:<14} {problems[:3]}")
             else:
-                bank["languages"][code] = {"name": name, "native": CATALOG[code]["native"],
-                                           "provenance": "machine",
-                                           "native_reviewed": False}
-                bank["attacks"].extend(build_attacks(code, translated))
-                bank.setdefault("controls", []).extend(build_controls(code, controls))
+                how = (f"translated through the API by expand_languages.py; structural gates and "
+                       f"semantic back-check {'on' if args.backcheck else 'OFF'}")
+                write_record(code, translated, controls, backs, how, TRANSLATE_MODEL)
                 added += 1
                 print(f"  [ok]     {name:<14} {len(controls)} controls")
 
-    order = list(bank["languages"])
-    bank.setdefault("controls", []).sort(
-        key=lambda c: (order.index(c["lang"]), c["variant"]))
-    bank["attacks"].sort(key=lambda a: (order.index(a["lang"]),
-                                        CATEGORIES.index(a["category"]),
-                                        a.get("variant", 0)))
-    # LF newlines for the same reason as the generator: the bank fingerprint is
-    # pre-registered, so the file must be byte-identical on Windows and Linux.
-    BANK_PATH.write_text(json.dumps(bank, ensure_ascii=False, indent=2),
-                         encoding="utf-8", newline="\n")
+    # The bank is rebuilt from the stored files, so it can always be regenerated.
+    import subprocess
+    subprocess.run([sys.executable, str(Path(__file__).with_name("generate_attack_bank.py"))],
+                   cwd=Path(__file__).parent, check=True)
+    bank = json.loads(BANK_PATH.read_text(encoding="utf-8"))
     print(f"\nAdded {added} languages. Bank now has {len(bank['languages'])} languages, "
           f"{len(bank['attacks'])} attacks, {len(bank.get('controls', []))} capability "
-          f"controls.")
+          f"controls. Record the new bank SHA-256 in PREREGISTRATION.md.")
     # Every language must have controls, or capability cannot be measured for it
     # and its break rate cannot be told apart from incapacity.
     missing = [c for c in bank["languages"]

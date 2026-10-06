@@ -26,10 +26,11 @@ language at all, but they cannot catch an attack that is merely awkward or
 subtly wrong.
 
 This is not a hypothetical worry. Published work finds that poor machine
-translation, rather than stronger guardrails, is what drives lower attack success
-in low-resource languages: human red-teaming raised jailbreak rates from 59.8% to
-75.8%, and machine-translation error rates in some languages ran as high as 71%
-before human review (arXiv:2605.18239, see RELATED_WORK.md).
+translation, rather than stronger guardrails, can drive lower attack success in
+low-resource languages: human red-teaming raised jailbreak rates from 59.8% to
+75.8% (arXiv:2605.18239), and vanilla LLM translation of a safety benchmark had
+error rates of 71% in Bengali and 36% in Malay before human review (LinguaSafe,
+arXiv:2508.12733). See RELATED_WORK.md.
 
 Machine-translated languages at least pass an automated gate
 (`expand_languages.verify`, plus reverse translation, which is on by default).

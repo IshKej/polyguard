@@ -7,6 +7,16 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-05** Two errors found by reading the cited sources (AUDIT round 19):
+  the 71% translation error figure was attributed to the wrong paper (it is
+  LinguaSafe, arXiv:2508.12733, Bengali only), and four Joshi classes were copied
+  wrong (Gujarati, Norwegian, Kyrgyz are 1, not 4; Pashto 1, not 2). Tiers now 25
+  high / 24 mid / 38 low; the bank's 20 languages are 15 / 4 / 1 (Gujarati is the
+  first low resource language). The Joshi file is pinned in `data/` and checked
+  by `verify_all.py` (97d, 97f, 97g). Bank SHA unchanged (tiers are not stored in
+  it). The machine translation pipeline code (`MACHINE`, `--check-stored` with
+  linguistic checks) ships with no stored files yet; CI now runs `--check-stored`.
+
 - **2026-10-04** `a404db8` Arabic native speaker feedback integrated: 7 text
   fields (5 attacks, 2 controls; #13 framing clause only). Bank SHA-256 now
   `3d665ef6...`, held-out fingerprint `c9cfe352...`, both in the PREREGISTRATION
@@ -86,6 +96,61 @@ the web app and hosting.
   First version kept as the tag `design/test-sheet-v1`.
 
 ## In progress
+
+- **2026-10-04, expanding the bank from 20 to all 87 catalog languages** (Ishaan:
+  "get that number as high as possible"). Not committed yet. How it works:
+  - The 67 new languages are machine translated and stored as source files,
+    `machine_translations/<code>.json` (attacks and controls as templates with
+    `{C}`, `{B64}`, `{T}`, plus English back-translations of three categories).
+    `generate_attack_bank.py` merges them (`MACHINE`, `ALL_LANGUAGES`,
+    `provenance` "author" or "machine" on every row), so regeneration and the CI
+    byte for byte check keep them.
+  - Gate for every stored file: `python expand_languages.py --check-stored`
+    (structural `verify`, `verify_controls`, and the back-translation intent test).
+    Then `python generate_attack_bank.py` and `python linguistics.py`.
+  - Done so far: high tier (nl sv no fi cs hu hr sr eu ca fa ky) and mid tier (da
+    sk ro bg sl lt lv et gl he kk uz ka bn ur ta th ms ceb af): 32 files, all gates
+    pass, bank at 780 attacks over 52 languages.
+  - `--check-stored` now also runs linguistics.py's per item checks (script,
+    mojibake, length, accents) and takes `--langs` to check a subset.
+  - Low tier (35) split across five parallel agents, each writing only its own
+    `machine_translations/<code>.json` files and never the bank:
+    (1) mk sq is ga cy az ht, (2) ps tg mn hy ne si km, (3) pa te mr kn ml or lo,
+    (4) my jv su sw am so rw, (5) ha yo ig zu xh sn ny. To see what landed:
+    `ls machine_translations | wc -l` (87 minus 20 = 67 when complete) and
+    `python expand_languages.py --check-stored`.
+  - **State 2026-10-05:** groups 1, 3 and 5 landed (53 stored files, all gates
+    pass, 73 languages total). Groups 2 (ps tg mn hy ne si km) and 4 (my jv su sw
+    am so rw) were NOT written: the in-session translation work was stopped by a
+    safety filter and will not be resumed that way. Those 14 go through the
+    project's own pipeline once the API key exists
+    (`python expand_languages.py --langs ps,tg,mn,hy,ne,si,km,my,jv,su,sw,am,so,rw`)
+    or through native speakers. Ishaan decides whether to ship at 73 now.
+    Bank not yet regenerated or committed for this step.
+  - After all 67: append a PREREGISTRATION deviation row (old bank SHA `3d665ef6...`
+    and held-out `c9cfe352...` to the new ones; method changed from the API script
+    to in-session translation with the same gates, same model back-translation is a
+    weak check); update every "20 languages" in README, STATE, NATIVE_REVIEW,
+    Method.jsx, DEMO_VIDEO, AUDIT; add `--check-stored` to CI; review sheets for the
+    new languages; run every suite; commit (no co-author trailer) and push.
+  - Expected totals: 1305 attacks, 522 controls, 87 languages (28 high, 24 mid,
+    35 low), held-out membership 435.
+
+- **2026-10-04, research push** (Ishaan: "push this project to the extreme
+  limits", "do deep research on things you don't know", "run subagents"). Seven
+  parallel research briefs, each writing one file under `docs/research/`
+  (uncommitted until reviewed; every number must come from an opened primary
+  source):
+  `multilingual-attacks.md` (literature on low resource and cross lingual attacks),
+  `defenses.md` (prompt injection defences and how to judge them fairly),
+  `zero-cost-live-data.md` (real scans with no API spend: local open weight models,
+  free tiers and their age rules, a local judge),
+  `statistics.md` (sequential stopping, partial pooling, trend against a continuous
+  resource measure, power), `translation-quality.md` (offline quality estimation as a
+  covariate), `obfuscation-and-mixed-language.md` (Unicode smuggling, homoglyphs,
+  transliteration, code switching), `landscape.md` (existing scanners and what
+  PolyGuard adds). Next: read all seven, pick the innovations, log each here as it
+  is built.
 
 - **Server-side cancellation: Ishaan's own piece** (for the CAC "not entirely AI"
   rule and to be able to defend it). Brief `docs/design/cancellation.md`, tests

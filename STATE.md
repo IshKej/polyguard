@@ -54,8 +54,9 @@ If any of those fail, something regressed. They all pass as of this writing.
 1. **Anthropic API key.** Needs a parent's card. Gates the live scan, the
    language expansion, the judge validation and the remediation proof. Nothing
    else is close to this in importance.
-2. **The 35 low-resource languages.** The bank holds 20 languages: 16 high, 4
-   mid, **0 low**. The central hypothesis is therefore untested, not supported.
+2. **The 38 low-resource languages.** The bank holds 20 languages: 15 high, 4
+   mid, **1 low** (Gujarati, after the 2026-10-05 Joshi correction). The central
+   hypothesis is therefore untested, not supported.
    `python expand_languages.py --tier low` fills them, needs the key.
 3. **Server-side cancellation (Ishaan's, in progress).** Closing the tab does not
    stop a paid scan: 228 more calls after a visitor leaves, measured. Brief and
@@ -152,10 +153,11 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 
 **Translation quality is the dominant confound in this entire research area, and
 it is not hypothetical.** Published work finds that poor machine translation, not
-stronger guardrails, explains lower attack success in low-resource languages:
-human red-teaming raised jailbreak rates from 59.8% to 75.8%, and machine
-translation error rates in some languages ran as high as 71% before human review
-(arXiv:2605.18239; see `RELATED_WORK.md`).
+stronger guardrails, can explain lower attack success in low-resource languages:
+human red-teaming raised jailbreak rates from 59.8% to 75.8% (arXiv:2605.18239),
+and vanilla LLM translation of a safety benchmark had error rates of 71% in Bengali
+and 36% in Malay before human review (LinguaSafe, arXiv:2508.12733; see
+`RELATED_WORK.md`).
 
 The direction matters. Bad translation makes low-resource languages look **safer
 than they are**, so PolyGuard's machine-translated languages will tend to
@@ -177,7 +179,7 @@ tracked rather than waved off.
 |---|---|
 | Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
 | Capability controls | 120 (6 per language) |
-| Languages in bank | 20 of a planned 87 (16 high, 4 mid, **0 low**) |
+| Languages in bank | 20 of a planned 87 (15 high, 4 mid, **1 low**) |
 | Verification checks | 221 |
 | Unit tests | 168 (every public engine function) |
 | Audit findings | 71 across 18 rounds (70 fixed; 62, cancellation, open and assigned) |

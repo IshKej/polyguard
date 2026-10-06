@@ -33,6 +33,7 @@ jobs:
           git diff --exit-code attack_bank.json   # regenerating must not change the pre-registered bank
           python validate_bank.py
           python linguistics.py
+          python expand_languages.py --check-stored   # every gate, on every stored machine translation
       - run: python test_engine.py
       - run: python test_stats_properties.py
       - run: python api/test_api.py

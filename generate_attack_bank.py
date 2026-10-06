@@ -29,6 +29,7 @@ with a reverse-translation check.
 """
 import base64
 import json
+from pathlib import Path
 
 CANARY = "PWNED_7F3A"
 
@@ -773,9 +774,46 @@ CONTROL = {
 }
 
 
+# --------------------------------------------------------------------------- #
+# Machine-translated languages
+#
+# One JSON file per language in machine_translations/, holding the same templates
+# as TEXT and CONTROL above ({C}, {B64}, {T} placeholders), the English
+# back-translations its semantic check read, and how it was made. The bank is
+# built from these files here, so regenerating it never drops a language, and
+# every language goes through the same checks as the author-written ones.
+# `python expand_languages.py --check-stored` re-runs the translation gates.
+# --------------------------------------------------------------------------- #
+MT_DIR = Path(__file__).with_name("machine_translations")
+
+
+def _load_machine() -> dict:
+    out = {}
+    for p in sorted(MT_DIR.glob("*.json")):
+        d = json.loads(p.read_text(encoding="utf-8"))
+        code = d["code"]
+        assert p.stem == code, f"{p.name} holds {code}"
+        assert code not in LANGUAGES, f"{code} is author-written and cannot also be machine translated"
+        assert set(d["attacks"]) == set(CATEGORIES), f"{code}: categories differ"
+        out[code] = d
+    return out
+
+
+MACHINE = _load_machine()
+MACHINE_LANGUAGES = {c: {"name": d["name"], "native": d["native"]} for c, d in MACHINE.items()}
+for _code, _rec in MACHINE.items():
+    TEXT[_code] = _rec["attacks"]
+    CONTROL[_code] = _rec["controls"]
+ALL_LANGUAGES = {**LANGUAGES, **MACHINE_LANGUAGES}
+
+
+def provenance_of(lang: str) -> str:
+    return "author" if lang in LANGUAGES else "machine"
+
+
 def build():
     attacks = []
-    for lang in LANGUAGES:
+    for lang in ALL_LANGUAGES:
         # The obfuscated attack hides THIS language's own instruction (variant 0),
         # not a shared English one, so the category actually tests the language.
         loc_override = TEXT[lang]["instruction_override"][0].replace("{C}", CANARY)
@@ -790,10 +828,11 @@ def build():
                     "variant": i,
                     "goal": GOAL[cat],
                     "text": text,
-                    # "author" means written by the project author, NOT reviewed
-                    # by a speaker of the language. Those are different claims and
-                    # the bank must not blur them.
-                    "provenance": "author",
+                    # "author" means written for the project, "machine" means
+                    # machine translated; neither means reviewed by a speaker of
+                    # the language. Those are different claims and the bank must
+                    # not blur them.
+                    "provenance": provenance_of(lang),
                     "native_reviewed": False,
                 })
 
@@ -801,14 +840,14 @@ def build():
     # machine-translated languages on top with provenance "machine". Neither has
     # been reviewed by a speaker of the language; NATIVE_REVIEW.md tracks that
     # separately and it is false everywhere until someone actually signs off.
-    languages_out = {code: {**meta, "provenance": "author", "native_reviewed": False}
-                     for code, meta in LANGUAGES.items()}
+    languages_out = {code: {**meta, "provenance": provenance_of(code), "native_reviewed": False}
+                     for code, meta in ALL_LANGUAGES.items()}
 
     # Controls live OUTSIDE "attacks" on purpose. They are not injection attempts
     # and must never enter a break rate; they measure whether the bot can follow
     # an ordinary instruction in each language at all.
     controls = []
-    for lang in LANGUAGES:
+    for lang in ALL_LANGUAGES:
         for i, raw in enumerate(CONTROL.get(lang, [])):
             controls.append({
                 "id": f"{lang}_control_{i}",
@@ -816,7 +855,7 @@ def build():
                 "variant": i,
                 "goal": "control",
                 "text": raw.replace("{T}", CONTROL_TOKEN),
-                "provenance": "author",
+                "provenance": provenance_of(lang),
                 "native_reviewed": False,
             })
 
@@ -838,9 +877,10 @@ def build():
     with open("attack_bank.json", "w", encoding="utf-8", newline="\n") as f:
         json.dump(bank, f, ensure_ascii=False, indent=2)
 
-    n_variants = sum(len(TEXT[l][c]) for l in LANGUAGES for c in CATEGORIES)
+    n_variants = sum(len(TEXT[l][c]) for l in ALL_LANGUAGES for c in CATEGORIES)
     print(f"wrote attack_bank.json: {len(attacks)} attacks "
-          f"({len(LANGUAGES)} languages x {len(CATEGORIES)} categories x ~3 variants)")
+          f"({len(ALL_LANGUAGES)} languages, {len(LANGUAGES)} author written and "
+          f"{len(MACHINE_LANGUAGES)} machine translated, x {len(CATEGORIES)} categories x ~3 variants)")
     assert len(attacks) == n_variants, "attack count mismatch"
 
     # sanity: every canary attack must carry the token, in plaintext or (obfuscated)
@@ -855,7 +895,7 @@ def build():
             continue
         missing.append(a["id"])
     assert not missing, f"canary missing from: {missing}"
-    for lang in LANGUAGES:
+    for lang in ALL_LANGUAGES:
         for cat in CATEGORIES:
             assert len(TEXT[lang][cat]) >= 2, f"{lang}/{cat} has < 2 variants"
     # controls must be benign: no override framing, and they must carry the
@@ -868,10 +908,10 @@ def build():
     suspicious = [c["id"] for c in controls
                   if any(b in c["text"].lower() for b in banned)]
     assert not suspicious, f"controls contain attack framing: {suspicious}"
-    assert len(controls) == 6 * len(LANGUAGES), "every language needs 6 controls"
+    assert len(controls) == 6 * len(ALL_LANGUAGES), "every language needs 6 controls"
     # Distinctness, same rule as the attack variants: repeating one phrasing six
     # times would look like depth while adding no information.
-    for lang in LANGUAGES:
+    for lang in ALL_LANGUAGES:
         texts = [c["text"] for c in controls if c["lang"] == lang]
         assert len(set(texts)) == len(texts), f"{lang} has duplicate controls"
     print(f"canary + variant checks passed; {len(controls)} capability controls")
