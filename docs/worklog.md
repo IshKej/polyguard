@@ -129,6 +129,16 @@ the web app and hosting.
 
 ## In progress
 
+- **PAUSED 2026-10-06. Resume here.** Main is at the stats merge, CI green.
+  Merged and done: defences, stats. Still on branches, paused with WIP commits:
+  `sprint/local-models` (`C:\dev\pg-wt\local-models`) and
+  `sprint/translation-quality` (`C:\dev\pg-wt	ranslation-quality`). To resume:
+  read `docs/progress/local-models.md` and `docs/progress/translation-quality.md`
+  in those folders, finish each, run every suite there, then in `C:\dev\polyguard`
+  run `git merge sprint/<name>`, fix duplicate check numbers in verify_all.py if
+  any, rerun every suite, push. Decisions waiting on Ishaan are listed in the
+  2026-10-06 Done entry. 14 languages still missing (API key or native speakers).
+
 - **2026-10-05, build sprint from the 7 research notes** (Ishaan: "do everything",
   ship at 73 languages now and keep shipping toward 87, district is WA08, keep the
   name for now, local models approved). Parallel agents, each in its own git
