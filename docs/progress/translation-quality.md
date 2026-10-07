@@ -121,3 +121,39 @@ They cannot see register, fluency, a subtly wrong verb, or whether an attack sti
 reads as an instruction. The bottom of the LaBSE ranking (yo, sn, ny, xh, zu, th) is
 also where LaBSE itself has the least training data, so a low score there is
 ambiguous by construction.
+
+## Paused (2026-10-06), state for whoever resumes
+
+No model job is running. All suites were green at the baseline (step 0b); nothing
+outside `tq_report.py`, `translation_quality.json` and this log has been changed yet,
+so they have not been rerun.
+
+**Done**
+- Step 1, language ID (GlotLID v3) on all 1,533 strings, and step 2, LaBSE similarity
+  with the wrong pair threshold: scored, reproducible, committed in
+  `translation_quality.json` with model revisions, file SHA-256, licenses and versions.
+- Step 3, `tq_report.py`: standard library reader (`python tq_report.py`,
+  `--flagged`, `--check` for missing or stale languages) plus `--build` (heavy, lazy
+  imports). Result: Yoruba is the only flagged language.
+
+**Left**
+- Step 4: show `tq_report.lang_quality(code)` next to per-language rates, labelled
+  "automated proxy, not a validation": `report_html.py` by-language table, the CLI
+  JSON export (`cli.py` `by_lang`), the app summary export (`app.py` `by_language`),
+  and `api/server.py` `web_result` language rows. Add a `verify_all.py` check that
+  `translation_quality.json` covers every machine translated bank language (use
+  `tq_report.coverage(...)["machine_missing"] == []`), and update the check count in the
+  `verify_all.py` docstring if `consistency.py` reads it.
+- Step 5: `NATIVE_REVIEW.md` section on what the scores do and do not show, and a
+  reviewer priority list from the flags (Yoruba first, then the bottom of the LaBSE
+  ranking: sn, ny, xh, zu, th; then gl and sq for their one off label each).
+- Step 6: rerun every suite and record counts here.
+- The note on Arabic dialect labels belongs in the step 5 text, not as a flag.
+
+**Next command**
+```bash
+cd C:/dev/pg-wt/translation-quality && export PYTHONIOENCODING=utf-8 && python tq_report.py --check && python tq_report.py --flagged
+```
+then edit `report_html.py` (by-language table) as the first step 4 change. To rebuild
+the scores: `C:/dev/llm/tq-venv/Scripts/python.exe tq_report.py --build --glotlid
+C:/dev/llm/models/glotlid/model_v3.bin --labse C:/dev/llm/models/labse` (about 5 min, CPU).
