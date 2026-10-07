@@ -175,7 +175,8 @@ def check_boots_without_key() -> None:
     """
     saved = {k: os.environ.pop(k, None) for k in
              ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY",
-              "GROQ_API_KEY", "POLYGUARD_PASSCODE")}
+              "GROQ_API_KEY", "POLYGUARD_PASSCODE", "POLYGUARD_JUDGE_BACKEND",
+              "POLYGUARD_LOCAL_URL", "POLYGUARD_JUDGE_URL")}
     try:
         import importlib
         for name in ("providers", "engine", "defenses", "languages_catalog",

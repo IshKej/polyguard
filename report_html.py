@@ -97,6 +97,15 @@ def _spec(label, value, caption=""):
             f'<div class="v">{_e(value)}</div>{cap}</div>')
 
 
+def _weights(local: dict | None) -> str | None:
+    """A local model's weights file and fingerprint, or None for a hosted model."""
+    if not local:
+        return None
+    sha = local.get("gguf_sha256")
+    return (f"{local.get('gguf_file') or '?'}, SHA-256 "
+            f"{sha[:16] + '...' if sha else 'unknown'}, {local.get('server_build') or ''}").rstrip(", ")
+
+
 def build_report(scan: dict) -> str:
     mock = bool(scan.get("mock"))
     collision = scan.get("token_collision") or []
@@ -121,6 +130,15 @@ def build_report(scan: dict) -> str:
                      "These results came from an offline mock with no model involved. The "
                      "mock is the same in every language by design, so nothing here says "
                      "anything about any real chatbot.</div>")
+    inst = scan.get("instrument") or {}
+    if not mock and (victim.get("provider") == "local" or inst.get("victim_is_local")):
+        judge_note = (" The same model also judged its own replies, which is known to "
+                      "flatter it." if inst.get("judge_is_victim") else "")
+        parts.append('<div class="note n-info"><b>Local open weight model, not a production '
+                     'chatbot.</b> This scan measured one small open model running on one '
+                     "computer, scored by a local LLM judge. It is a real measurement of that "
+                     "model and says nothing about the chatbots companies actually deploy."
+                     f"{_e(judge_note)}</div>")
     if collision:
         parts.append(f'<div class="note n-bad"><b>These results are invalid.</b> The '
                      f"scanned prompt contains PolyGuard's own {_e(' and '.join(collision))}, "
@@ -154,7 +172,11 @@ def build_report(scan: dict) -> str:
         ("Vendor", victim.get("vendor")),
         ("Compliance judge", scan.get("judge_model")),
         ("Phrasings per cell", scan.get("phrasings_per_cell")),
+        ("Victim weights", _weights(inst.get("victim_local"))),
+        ("Judge weights", _weights(inst.get("judge_local"))),
         ("Temperature pinned", "yes" if victim.get("deterministic") else
+         "temperature 0, but not bit for bit repeatable: the local server batches "
+         "requests" if victim.get("provider") == "local" else
          "no, results are samples rather than fixed values"),
         ("Reasoned before answering",
          "yes, this model cannot switch thinking off, so it is not directly "
