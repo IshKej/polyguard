@@ -284,6 +284,25 @@ check("a hand written result, unsigned, cannot be shared",
       client.post("/api/scans", json={"result": {k: v for k, v in saved_res.items() if k != "signature"}}).status_code == 422)
 check("adding a field also breaks the signature",
       client.post("/api/scans", json={"result": {**saved_res, "x": 1}}).status_code == 422)
+
+
+def _as_browser_sends(v):
+    """JavaScript has one number type, so 1.0 goes back to the server as 1."""
+    if isinstance(v, float) and v.is_integer():
+        return int(v)
+    if isinstance(v, dict):
+        return {k: _as_browser_sends(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_as_browser_sends(x) for x in v]
+    return v
+
+
+_whole = {**saved_res, "probe": {"share": 1.0, "rate": 0.5}}
+_whole["signature"] = server.sign_result(_whole)
+check("a genuine result still verifies after the browser turns 1.0 into 1",
+      client.post("/api/scans", json={"result": _as_browser_sends(_whole)}).status_code == 200)
+check("but a real change to a number is still refused",
+      client.post("/api/scans", json={"result": {**_as_browser_sends(_whole), "probe": {"share": 0.9, "rate": 0.5}}}).status_code == 422)
 check("something that is not a scan is refused",
       client.post("/api/scans", json={"result": {"hello": "world"}}).status_code == 422)
 check("an oversized scan is refused before anything else is checked",

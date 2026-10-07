@@ -1005,6 +1005,16 @@ from their own evidence, and by driving the site in a real browser.
     quality is to be reported next to each result. RELATED_WORK.md, STATE.md and
     the backcheck docstring now say the same.
 
+76. **Genuine results were refused as forged once a score of exactly 1.0 appeared.**
+    A result is signed on the server, sent to the browser, and sent back to be
+    saved. JavaScript has one number type, so 1.0 returns as 1, Python reads it as
+    an int, and the signed text "1.0" no longer matched. The translation quality
+    scores added whole-number floats to every result, so every share link failed
+    (422) on the live site until this fix. Caught by the browser test in CI, not by
+    the API tests, which never sent a result through a real browser. FIX: the signed
+    form writes whole-number floats as ints; two API tests send a result the way a
+    browser does and check that a genuine one verifies and a changed number does not.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.

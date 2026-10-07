@@ -314,8 +314,24 @@ def _signing_key() -> bytes:
     return _LOCAL_SIGNING_KEY
 
 
+def _plain_numbers(v):
+    """
+    Whole-number floats as ints. A result makes a round trip through the browser
+    before it is saved, and JavaScript has one number type: 1.0 comes back as 1,
+    which Python then reads as an int. Without this the signature over "1.0" and
+    the signature over "1" differ and a genuine result is refused as forged.
+    """
+    if isinstance(v, float) and v.is_integer():
+        return int(v)
+    if isinstance(v, dict):
+        return {k: _plain_numbers(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_plain_numbers(x) for x in v]
+    return v
+
+
 def _canonical(result: dict) -> bytes:
-    body = {k: v for k, v in result.items() if k not in ("signature", "report")}
+    body = {k: _plain_numbers(v) for k, v in result.items() if k not in ("signature", "report")}
     return json.dumps(body, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
 
