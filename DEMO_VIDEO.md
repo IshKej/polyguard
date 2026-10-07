@@ -95,9 +95,10 @@ bot does not understand, and those are opposite conclusions.
 
 > **Screen: click Fix it, show the hardened prompt, click Scan the hardened prompt.**
 
-Then it fixes it. PolyGuard writes targeted security rules for exactly the attack
-types that worked, and re-runs the whole scan against the hardened prompt to prove
-the holes actually closed."
+Then it hardens it. PolyGuard writes targeted security rules for exactly the attack
+types that worked, and re-runs the scan against the hardened prompt to check how
+many attacks still get through. Fewer getting through is progress on this test,
+not proof the bot is secure."
 
 ### 1:55 to 2:20, why it is not just a wrapper
 

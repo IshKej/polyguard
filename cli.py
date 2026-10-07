@@ -12,6 +12,7 @@ between a project and a tool, and it is the whole reason this file exists.
     polyguard scan --prompt bot.txt --baseline last-week.json --fail-on-regression
     polyguard scan --prompt bot.txt --bundle runs/2026-10-03   # reproducible package
     polyguard compare last-week.json today.json
+    polyguard defend --prompt bot.txt --arms baseline,placebo,current,data_boundary
     polyguard replay today.json        # recompute every number from the evidence
     polyguard report today.json --html report.html
     polyguard languages
@@ -55,8 +56,9 @@ def instrument_differences(before: dict, after: dict) -> list[str]:
     if not bi or not ai:
         return ["one of the scans has no instrument record (it predates stamping), "
                 "so what produced it is unknown"]
-    return [f"{f}: {bi.get(f)!r} then {ai.get(f)!r}"
-            for f in engine.COMPARABLE_FIELDS if bi.get(f) != ai.get(f)]
+    d = engine.INSTRUMENT_DEFAULTS
+    return [f"{f}: {bi.get(f, d.get(f))!r} then {ai.get(f, d.get(f))!r}"
+            for f in engine.COMPARABLE_FIELDS if bi.get(f, d.get(f)) != ai.get(f, d.get(f))]
 
 
 # --------------------------------------------------------------------------- #
@@ -385,6 +387,133 @@ def cmd_scan(args) -> int:
     return exit_code
 
 
+def _parse_arms(text: str | None) -> list[str]:
+    """The arms to run, in canonical order. The baseline always runs, because it
+    is the scan the rules are chosen from."""
+    asked = ([a.strip() for a in text.split(",") if a.strip()]
+             if text and text != "all" else list(defenses.ARMS))
+    unknown = [a for a in asked if a not in defenses.ARMS]
+    if unknown:
+        raise SystemExit(f"unknown arm(s): {', '.join(unknown)}; "
+                         f"choose from {', '.join(defenses.ARMS)}")
+    return [a for a in defenses.ARMS if a == "baseline" or a in asked]
+
+
+def print_arm_table(table: list[dict], words: dict) -> None:
+    pct = lambda v: "n/a" if v is None else f"{v:.0%}"
+    ci = lambda c: "" if not c else f"({c[0]:.0%} to {c[1]:.0%})"
+    print(f"  {'arm':<15}{'words':>6}  {'held-out break rate':<30}"
+          f"{'benign follow rate':<30}vs placebo")
+    for r in table:
+        brk = f"{pct(r['heldout_rate'])} {ci(r['heldout_ci'])} {r['heldout_broke']}/{r['heldout_scored']}"
+        ben = f"{pct(r['benign_rate'])} {ci(r['benign_ci'])} {r['benign_followed']}/{r['benign_scored']}"
+        vp = r.get("vs_placebo")
+        if vp:
+            st = vp["sign_test"]
+            bd = "n/a" if vp["benign_diff"] is None else f"{vp['benign_diff'] * 100:+.0f}"
+            cmp = (f"break {vp['heldout_diff'] * 100:+.0f} pts, benign {bd} pts, "
+                   f"{st['better']} languages better, {st['worse']} worse, sign p={st['p']:.3g}")
+        else:
+            cmp = "reference" if r["arm"] == "placebo" else "no placebo run"
+        print(f"  {r['arm']:<15}{words.get(r['arm'], 0):>6}  {brk:<30}{ben:<30}{cmp}")
+
+
+def cmd_defend(args) -> int:
+    """Judge the defence blocks fairly: every arm against the same held-out
+    attacks and benign controls, next to a placebo of the same length."""
+    prompt = read_prompt(args)
+    if not prompt.strip():
+        raise SystemExit("the prompt is empty")
+    arms = _parse_arms(args.arms)
+    bank = engine.load_bank()
+    leaks = defenses.lint_all(bank)
+    if leaks:
+        for name, probs in leaks.items():
+            print(f"  LINT  {name}: {'; '.join(probs)}", file=sys.stderr)
+        print("A defence text quotes the test, so it cannot be judged on it.", file=sys.stderr)
+        return 2
+
+    victim, client = None, None
+    if not args.mock:
+        client = providers.judge_client()
+        if client is None:
+            print("No ANTHROPIC_API_KEY found. Re-run with --mock to try the "
+                  "pipeline offline, or set the key for a real run.", file=sys.stderr)
+            return 2
+        try:
+            victim = providers.build_victim(args.model)
+        except Exception as e:
+            print(f"Could not reach {args.model}: {e}", file=sys.stderr)
+            return 2
+
+    langs = [c.strip() for c in args.langs.split(",")] if args.langs else None
+    # Every arm starts from the prompt with any earlier PolyGuard block removed,
+    # and extraction is always scored against that same original text.
+    base = defenses.strip_defences(defenses.strip_defences(prompt), defenses.PLACEBO_HEADER)
+    common = dict(langs=langs, client=client, victim=victim, mock=args.mock,
+                  model=args.model, extraction_reference=base)
+
+    say = (lambda m: None) if args.quiet else (lambda m: print(m, file=sys.stderr))
+    say("  baseline: every phrasing, so the rules come from the development ones")
+    runs = {"baseline": engine.scan(base, **common)}
+    broken = (list(defenses.DEFENCES) if args.rules == "all"
+              else defenses.broken_categories_from(runs["baseline"]["results"]))
+    blocks = defenses.arm_blocks(broken)
+    if not broken:
+        arms = ["baseline"]
+        print("\n  Nothing broke on the development phrasings, so there is no block to "
+              "evaluate. Use --rules all to test the fixed blocks anyway.")
+    for arm in arms[1:]:
+        say(f"  {arm}: held-out phrasing only")
+        runs[arm] = engine.scan(defenses.arm_prompt(base, arm, broken),
+                                heldout_only=True, **common)
+
+    cap = runs["baseline"].get("capability") or {}
+    excluded = cap.get("capability_limited") or []
+    table = engine.arm_table({a: {"results": runs[a]["results"],
+                                  "controls": runs[a].get("controls", [])} for a in arms},
+                             exclude_langs=excluded)
+    words = {a: defenses.word_count(blocks[a]) for a in arms}
+
+    who = "none (simulated run)" if args.mock else args.model
+    print(f"\nPolyGuard {VERSION} defence arms  victim: {who}")
+    if args.mock:
+        print("  MODE: MOCK-SIMULATED. The simulated victim ignores the system prompt, "
+              "so every arm\n  must come out the same. These numbers are not a measurement.")
+    source = ("every category (--rules all)" if args.rules == "all"
+              else "the development phrasings")
+    print(f"  rules chosen from {source}: {', '.join(broken) or 'none'}")
+    if excluded:
+        print(f"  excluded as capability-limited in the baseline: {', '.join(excluded)}")
+    print_arm_table(table, words)
+    print("\n  A lower held-out break rate means fewer of this fixed bank's attacks worked.\n"
+          "  It is not evidence that the bot is secure: no adaptive attacker was tested.")
+
+    if args.out:
+        payload = {
+            "schema": "polyguard.defence-arms/1",
+            "polyguard_version": VERSION,
+            "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "mode": "MOCK-SIMULATED" if args.mock else "live",
+            "mock": bool(args.mock),
+            "model": None if args.mock else args.model,
+            "prompt_sha256": hashlib.sha256(base.encode("utf-8")).hexdigest(),
+            "rules_source": "all" if args.rules == "all" else "development phrasings",
+            "broken_categories": broken,
+            "excluded_capability_limited": excluded,
+            "claim": "reduced the break rate on this fixed bank; never evidence of security",
+            "arms": {a: {"words": words[a], "block": blocks[a],
+                         "instrument": runs[a].get("instrument")} for a in arms},
+            "table": table,
+            "results": {a: evidence_rows(runs[a]["results"], args.redact_replies)
+                        for a in arms},
+        }
+        Path(args.out).write_text(json.dumps(payload, indent=2, ensure_ascii=False),
+                                  encoding="utf-8", newline="\n")
+        print(f"\n  wrote {args.out}")
+    return 0
+
+
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -586,6 +715,28 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("scan")
     r.add_argument("--html", required=True)
     r.set_defaults(func=cmd_report)
+
+    d = sub.add_parser("defend", help="judge the defence blocks against a placebo, "
+                                      "held-out phrasing only")
+    dsrc = d.add_mutually_exclusive_group(required=True)
+    dsrc.add_argument("--prompt", help="file containing the system prompt, or - for stdin")
+    dsrc.add_argument("--prompt-text", help="the system prompt inline")
+    d.add_argument("--arms", default="all",
+                   help=f"comma-separated arms from {', '.join(defenses.ARMS)} "
+                        f"(default all; the baseline always runs)")
+    d.add_argument("--rules", choices=("scan", "all"), default="scan",
+                   help="choose rules from what broke on the development phrasings "
+                        "(scan), or apply every category's rule (all)")
+    d.add_argument("--model", default=providers.DEFAULT_MODEL,
+                   help=f"victim model (default {providers.DEFAULT_MODEL})")
+    d.add_argument("--langs", help="comma-separated language codes")
+    d.add_argument("--out", help="write the arm table and evidence JSON here")
+    d.add_argument("--mock", action="store_true",
+                   help="run offline with simulated results, no API key needed")
+    d.add_argument("--quiet", action="store_true", help="no progress output")
+    d.add_argument("--redact-replies", action="store_true",
+                   help="leave the bot's replies out of the JSON")
+    d.set_defaults(func=cmd_defend)
 
     lg = sub.add_parser("languages", help="list the catalog and what is generated")
     lg.set_defaults(func=cmd_languages)

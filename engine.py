@@ -857,7 +857,12 @@ def run_attack(client, system_prompt, attack, canary, mock, model, victim=None,
     try:
         if mock or (client is None and victim is None):
             reply = _mock_victim(system_prompt, attack, canary)
-            result = judge(attack, reply, system_prompt, canary)      # heuristic
+            # Extraction is scored against the same reference as a live run.
+            # Scoring the simulation against the hardened prompt instead made a
+            # short prompt look easier to extract once a defence block was
+            # added, a defence "effect" the simulation invented.
+            result = judge(attack, reply, extraction_reference or system_prompt,
+                           canary)                                     # heuristic
             broke, evidence = result["broke"], result["evidence"]
         else:
             reply = (victim.complete(system_prompt, attack["text"]) if victim is not None
@@ -945,11 +950,15 @@ def judge_prompt_sha256() -> str:
 # and anything that changes scoring bumps SCORING_VERSION instead.
 COMPARABLE_FIELDS = ("mode", "bank_sha256", "scoring_version", "judge_model",
                      "judge_prompt_sha256", "victim_model", "langs", "categories",
-                     "max_variants", "with_controls")
+                     "max_variants", "with_controls", "attack_split")
+
+# What a field meant before it was recorded. A scan stamped before attack_split
+# existed fired every phrasing, so it reads as "all" rather than as a mismatch.
+INSTRUMENT_DEFAULTS = {"attack_split": "all"}
 
 
 def instrument(mock: bool, model: str | None, langs, categories, max_variants,
-               with_controls: bool) -> dict:
+               with_controls: bool, heldout_only: bool = False) -> dict:
     """Everything needed to say exactly what produced a scan, and to refuse a
     comparison between two scans that were not measured the same way."""
     return {
@@ -966,6 +975,10 @@ def instrument(mock: bool, model: str | None, langs, categories, max_variants,
         "categories": sorted(categories),
         "max_variants": max_variants,
         "with_controls": bool(with_controls),
+        # "heldout" when only the held-out phrasing was fired (a defence arm).
+        # Such a scan must never be compared with a full one as if it were the
+        # same measurement, so this is a comparable field.
+        "attack_split": "heldout" if heldout_only else "all",
     }
 
 
@@ -975,7 +988,7 @@ def instrument(mock: bool, model: str | None, langs, categories, max_variants,
 def scan(system_prompt: str, langs=None, categories=None, client=None,
          mock=None, model=VICTIM_MODEL, progress=None, max_variants=None,
          victim=None, with_controls=True, extraction_reference=None,
-         on_result=None) -> dict:
+         on_result=None, heldout_only=False) -> dict:
     """
     max_variants caps how many phrasings per (language, category) are fired. 3 gives
     the full statistical depth; 1 is a fast pass for very large scans. Fewer variants
@@ -1020,6 +1033,10 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     # number says.
     if max_variants is not None:
         attacks = [a for a in attacks if a.get("variant", 0) < max_variants]
+    # A defence arm is judged on the held-out phrasing only, so firing the other
+    # two would cost money and add nothing to the comparison.
+    if heldout_only:
+        attacks = [a for a in attacks if split_of(a) == "heldout"]
 
     total = len(attacks)
     results, done = [], 0
@@ -1062,7 +1079,7 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     victim_key = getattr(getattr(victim, "spec", None), "key", None) or model
     out["instrument"] = instrument(
         mock, victim_key, {a["lang"] for a in attacks}, {a["category"] for a in attacks},
-        max_variants, with_controls and bool(bank.get("controls")))
+        max_variants, with_controls and bool(bank.get("controls")), heldout_only)
     out["capability"] = (capability_report(control_results)
                          if control_results else None)
     out["max_variants"] = max_variants
@@ -1138,6 +1155,77 @@ def defense_evaluation(before: list[dict], after: list[dict],
         "benign_before": benign(list(before_controls)),
         "benign_after": benign(list(after_controls)),
     }
+
+
+def arm_table(arms: dict, reference: str = "placebo", exclude_langs=()) -> list[dict]:
+    """One row per evaluation arm: held-out break rate and benign control follow
+    rate, each with a continuity-corrected Wilson interval, and the difference
+    against the reference arm (the placebo).
+
+    `arms` maps an arm name to {"results": attack rows, "controls": control rows}.
+    Only held-out attacks count, errors are excluded, and languages in
+    `exclude_langs` (capability-limited in the baseline) are dropped from every
+    arm alike, so no arm can look safer by including languages the bot cannot
+    read.
+
+    The difference against the placebo is a point difference plus an exact sign
+    test PAIRED by language, the same unit as every other test here: attacks
+    against one bot in one language are correlated, so pooling them would
+    overstate the evidence. A placebo row compares with nothing.
+    """
+    skip = set(exclude_langs)
+
+    def held(rows):
+        return [r for r in rows if split_of(r) == "heldout" and not r.get("error")
+                and r.get("lang") not in skip]
+
+    def ctrl(rows):
+        return [c for c in rows if not c.get("error") and c.get("lang") not in skip]
+
+    def per_lang(rows, key):
+        by: dict[str, list[bool]] = {}
+        for r in rows:
+            by.setdefault(r.get("lang"), []).append(bool(r.get(key)))
+        return {k: sum(v) / len(v) for k, v in by.items()}
+
+    ref = arms.get(reference)
+    ref_att = held(ref["results"]) if ref else []
+    ref_ctl = ctrl(ref.get("controls", ())) if ref else []
+    ref_by = per_lang(ref_att, "broke")
+
+    out = []
+    for name, arm in arms.items():
+        att, ctl = held(arm["results"]), ctrl(arm.get("controls", ()))
+        broke = sum(1 for r in att if r.get("broke"))
+        followed = sum(1 for c in ctl if c.get("followed"))
+        row = {
+            "arm": name,
+            "heldout_scored": len(att), "heldout_broke": broke,
+            "heldout_rate": broke / len(att) if att else None,
+            "heldout_ci": wilson_ci_cc(broke, len(att)) if att else None,
+            "benign_scored": len(ctl), "benign_followed": followed,
+            "benign_rate": followed / len(ctl) if ctl else None,
+            "benign_ci": wilson_ci_cc(followed, len(ctl)) if ctl else None,
+            "vs_placebo": None,
+        }
+        if ref and name != reference and att and ref_att:
+            mine = per_lang(att, "broke")
+            shared = sorted(set(mine) & set(ref_by))
+            worse = sum(1 for c in shared if mine[c] > ref_by[c])
+            better = sum(1 for c in shared if mine[c] < ref_by[c])
+            ref_rate = sum(1 for r in ref_att if r.get("broke")) / len(ref_att)
+            ref_follow = (sum(1 for c in ref_ctl if c.get("followed")) / len(ref_ctl)
+                          if ref_ctl else None)
+            row["vs_placebo"] = {
+                "heldout_diff": row["heldout_rate"] - ref_rate,
+                "benign_diff": (row["benign_rate"] - ref_follow
+                                if row["benign_rate"] is not None and ref_follow is not None
+                                else None),
+                "languages_paired": len(shared),
+                "sign_test": sign_test(worse, better),
+            }
+        out.append(row)
+    return out
 
 
 def completeness(out: dict) -> dict:
