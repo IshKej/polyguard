@@ -180,6 +180,17 @@ The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML rep
   in either direction. Native speaker feedback has been integrated for Spanish,
   Vietnamese and Arabic only.
 - **Arabic means Modern Standard Arabic.** The Arabic corpus uses Modern Standard Arabic (MSA). The reviewer noted that MSA is more common for formal, educational, and informational questions, while dialects are also very common in casual chatting. This review does not establish coverage of Arabic dialects.
+- **The capability controls only catch total collapse.** With 6 controls per
+  language, a language is confirmed capability limited only when English follows
+  all 6 and the language follows none. If English misses even one control, no
+  language can be flagged at all, and a language the bot follows at 30% to 40% of
+  its English rate is flagged only 3% to 12% of the time (exact binomial,
+  `docs/progress/stats.md`). So a quiet language that was not flagged may still be
+  one the bot partly fails to understand, and the primary test can still be
+  dragged toward no gap by it.
+- **The web share trend is exploratory.** Scans also report a rank trend of break
+  rate against Common Crawl web share (crawl CC-MAIN-2026-39). It was added before
+  any live data as a secondary analysis and never replaces the tier test.
 - **The judge can be wrong differently in different languages.** It is a model
   reading replies in every language. Its false positive and false negative rates
   per language are not measured yet; that needs independent bilingual labels.
@@ -211,13 +222,15 @@ The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML rep
 | `cli.py` | Headless scanning, regression detection, defence arms, CI exit codes |
 | `report_html.py` | One self-contained HTML report, caveats included |
 | `selection_bias_demo.py` | Reproduces why "worst language" needs correction |
-| `test_engine.py` | Unit tests: all 29 engine functions, runs in under a second |
+| `test_engine.py` | Unit tests: every public engine function, runs in a few seconds |
 | `verify_all.py` | Full verification battery |
 | `AUDIT.md` | Every flaw found in audit and how it was fixed |
 | `PREREGISTRATION.md` | Hypotheses and analysis plan, fixed before any live data |
 | `RELATED_WORK.md` | Prior art, and what this project does and does not claim |
 | `calibrate_stats.py` | Simulates thousands of scans to prove each test controls its error rate |
 | `calibration_report.txt` | The output of that run, committed as evidence |
+| `power_check.py` | Checks the power simulation against a model where languages in a tier differ |
+| `data/resource_measures.csv` | Common Crawl web share per catalog language, for the exploratory trend test |
 | `judge_eval.py` | Scores the compliance judge against a hand-labelled gold set |
 | `judge_report.txt` | The measured judge result, committed as evidence |
 | `requirements.txt` | Dependencies |

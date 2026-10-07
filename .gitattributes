@@ -17,3 +17,6 @@ attack_bank.json text eol=lf
 # Committed evidence, compared against the numbers quoted in AUDIT.md.
 calibration_report.txt text eol=lf
 judge_report.txt       text eol=lf
+
+# The web share table is pinned by SHA-256 too (engine.RESOURCE_SHA256).
+data/resource_measures.csv text eol=lf

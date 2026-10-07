@@ -219,6 +219,9 @@ def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> 
         "overall_break_rate": out["overall_rate"],
         "english_break_rate": out["en_rate"],
         "worst_language_test": out.get("max_gap_test"),
+        # EXPLORATORY secondary analysis (PREREGISTRATION.md, 2026-10-06), never
+        # the headline: rank trend of break rate against Common Crawl web share.
+        "resource_trend_test": out.get("resource_trend_test"),
         "capability": out.get("capability"),
         "by_lang": {c: {**d, "tier": tier_of(c)} for c, d in out["by_lang"].items()},
         "by_category": out["by_cat"],
@@ -257,6 +260,13 @@ def print_summary(out: dict) -> None:
     else:
         print("  tier gap  cannot be computed: the scan needs both low-resource "
               "and high-resource languages")
+
+    rt = out.get("resource_trend_test") or {}
+    if rt.get("p") is not None:
+        rho = "n/a" if rt.get("rho") is None else f"{rt['rho']:+.2f}"
+        print(f"  trend     EXPLORATORY, not the pre-registered test: rho {rho} "
+              f"against web share ({rt.get('crawl_id')}), p={rt['p']:.3g}, "
+              f"{rt['n_langs']} languages")
 
     cap = out.get("capability") or {}
     if cap.get("capability_limited"):
@@ -590,6 +600,11 @@ def cmd_replay(args) -> int:
         checks.append((f"{code} break rate", d.get("rate"), (redo["by_lang"].get(code) or {}).get("rate")))
     stored_p = (payload.get("worst_language_test") or {}).get("p")
     checks.append(("worst language test p", stored_p, (redo.get("max_gap_test") or {}).get("p")))
+    if payload.get("resource_trend_test") is not None:
+        trend = engine.resource_trend({"by_lang": redo["by_lang"],
+                                       "capability": payload.get("capability")})
+        checks.append(("exploratory trend test p", payload["resource_trend_test"].get("p"),
+                       trend.get("p")))
     for name, stored, recomputed in checks:
         same = stored == recomputed or (isinstance(stored, float) and isinstance(recomputed, float)
                                         and abs(stored - recomputed) < 1e-12)

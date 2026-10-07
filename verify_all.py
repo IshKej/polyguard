@@ -1507,6 +1507,23 @@ _api = _sp.run([sys.executable, str(HERE / "api" / "test_api.py")], cwd=str(HERE
                capture_output=True, text=True, encoding="utf-8", timeout=600)
 ck("114. the web API suite passes", _api.returncode == 0 and "API tests passed" in _api.stdout)
 
+# 115. The exploratory trend test reads a frozen resource table, like the bank's
+# fingerprint: a changed measure would be a changed analysis.
+_rm = engine.load_resource_measures()
+ck("121. the web share table is the pinned file, from one crawl, covering the catalog",
+   _rm["sha256"] == engine.RESOURCE_SHA256 and _rm["crawl_id"] == "CC-MAIN-2026-39"
+   and set(_rm["share"]) == set(cat.CATALOG) and all(v > 0 for v in _rm["share"].values())
+   and engine.RESOURCE_SHA256 in (HERE / "PREREGISTRATION.md").read_text(encoding="utf-8"))
+
+# 116. Wherever the trend test appears it is labelled exploratory, never a finding.
+_trend_html = report_html.build_report(
+    {"mock": False, "by_lang": {}, "resource_trend_test":
+     {"p": 0.01, "rho": -0.5, "n_langs": 30, "n_iter": 10000, "crawl_id": "CC-MAIN-2026-39"}})
+ck("122. the exploratory trend test is labelled exploratory in the report, CLI and app",
+   "Exploratory, not the pre-registered test" in _trend_html
+   and "EXPLORATORY" in (HERE / "cli.py").read_text(encoding="utf-8")
+   and "Exploratory, not the pre-registered test" in app_src)
+
 # report
 passed = sum(1 for _, ok in checks if ok)
 print("\n===== VERIFICATION BATTERY =====")

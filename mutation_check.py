@@ -51,6 +51,17 @@ MUTANTS = [
      "capability limit read from the wrong end of the interval"),
     ("engine.py", "            if x > y:", "            if x >= y:",
      "Cliff's delta counting ties as wins"),
+    ("engine.py", "        if abs(sum(x * y for x, y in zip(a, perm))) >= observed:",
+     "        if abs(sum(x * y for x, y in zip(a, perm))) > observed:",
+     "trend test dropping shuffles that tie the observed statistic"),
+    ("engine.py", "    usable = sorted((share[c], r, c) for c, r in rates.items()",
+     "    usable = list((share[c], r, c) for c, r in rates.items()",
+     "trend test shuffling rows in arrival order, so the p depends on it"),
+    ("engine.py", "    p_trend = (ge + 1) / (n_iter + 1)", "    p_trend = ge / n_iter",
+     "trend test p without the add-one, so it can be exactly zero"),
+    ("engine.py", "        return lambda: 1 / (1 + math.exp(-(loc + lang_sd * rng.gauss(0, 1))))",
+     "        return lambda: 1 / (1 + math.exp(-loc))",
+     "power simulation ignoring the spread between languages (optimistic power)"),
     ("defenses.py", 'if r.get("broke") and r.get("variant", 0) != HELDOUT_VARIANT}',
      'if r.get("broke")}', "defences chosen using the held-out phrasing (AUDIT.md 65)"),
 ]
@@ -64,6 +75,8 @@ def run_mutant(src: Path, file: str, old: str, new: str) -> tuple[bool, str]:
         for p in src.iterdir():
             if p.suffix in (".py", ".json") and p.is_file():
                 shutil.copy2(p, tmp / p.name)
+        # Reference data the statistics read (the Joshi file, the resource table).
+        shutil.copytree(src / "data", tmp / "data")
         target = tmp / file
         text = target.read_text(encoding="utf-8")
         if text.count(old) != 1:

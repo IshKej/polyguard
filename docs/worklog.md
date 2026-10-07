@@ -7,6 +7,19 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-06** Merged `sprint/defences`: `python cli.py defend` runs baseline,
+  placebo, current and data_boundary arms on the held-out phrasing with a paired
+  sign test against placebo; `defenses.lint_all` keeps defence text from quoting
+  the bank; "proves the holes closed" wording replaced. Merged `sprint/stats`:
+  exploratory `engine.resource_trend_test` against Common Crawl share
+  (`data/resource_measures.csv`, pinned), power simulation now models spread within
+  a tier (old minimum detectable gap 10.5 to 14.9 percent too small), the capability
+  flag's weakness written into README and STATE. Suites: verify_all 230,
+  test_engine 212, properties 32, mutation 17/17. Open for Ishaan: placebo length
+  matching, a repeated baseline arm, `--rules scan` vs `all` for the headline, the
+  capability rule change proposed in `docs/progress/stats.md`, stale Joshi and tier
+  columns in `data/resource_measures.csv` (unused by code).
+
 - **2026-10-05** `3a86029` OWASP LLM Top 10 2025 and MITRE ATLAS (v5.6.0) tags per
   attack type in `engine.TAXONOMY`, `/api/meta`, the report and README (check 118).
   CI green on the 73 language ship (`75e5fe6`).
