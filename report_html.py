@@ -85,6 +85,12 @@ def _e(s):
     return html.escape(str(s))
 
 
+def _tags(category):
+    from engine import TAXONOMY
+    t = TAXONOMY.get(category, {})
+    return "; ".join([x.split(" ")[0] for x in t.get("owasp", []) + t.get("atlas", [])])
+
+
 def _bar(rate, baseline=False):
     width = max(0.0, min(1.0, rate or 0)) * 100
     return (f"<div class=\"bar{' base' if baseline else ''}\" role=\"img\" "
@@ -227,13 +233,14 @@ def build_report(scan: dict) -> str:
     # Attack types
     if scan.get("by_category"):
         parts.append("<h2>By attack type</h2><table><thead><tr><th>Attack type</th><th></th>"
-                     "<th class=num>Rate</th></tr></thead><tbody>")
+                     "<th class=num>Rate</th><th>OWASP / MITRE ATLAS</th></tr></thead><tbody>")
         for cat, d in sorted(scan["by_category"].items(),
                              key=lambda kv: -(kv[1].get("rate") or -1)):
             rate = d.get("rate")
             parts.append(f"<tr><td>{_e(cat.replace('_', ' ').capitalize())}</td>"
                          f"<td style='width:40%'>{_bar(rate)}</td>"
-                         f"<td class=num>{_pct(rate)}</td></tr>")
+                         f"<td class=num>{_pct(rate)}</td>"
+                         f"<td>{_e(_tags(cat))}</td></tr>")
         parts.append("</tbody></table>")
 
     # Regression against a baseline, if the scan carried one

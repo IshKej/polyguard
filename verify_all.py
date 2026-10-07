@@ -1338,6 +1338,13 @@ ck("115. the worst-language test gives one p whatever order the rows arrive in",
 
 # 117. The held-out set is fixed in one place and honoured by the defence picker.
 import defenses as _defs
+ck("118. every attack type carries an OWASP and a MITRE ATLAS tag, in the report and the API",
+   set(engine.TAXONOMY) == set(bank["categories"])
+   and all(v["owasp"] and v["atlas"] for v in engine.TAXONOMY.values())
+   and all(t.startswith(("LLM01:2025", "LLM07:2025")) for v in engine.TAXONOMY.values() for t in v["owasp"])
+   and all(t.startswith("AML.T") for v in engine.TAXONOMY.values() for t in v["atlas"])
+   and "_tags(cat)" in (HERE / "report_html.py").read_text(encoding="utf-8")
+   and '"taxonomy": engine.TAXONOMY' in (HERE / "api" / "server.py").read_text(encoding="utf-8"))
 ck("117. defenses and engine agree on which phrasing is held out",
    _defs.HELDOUT_VARIANT == engine.HELDOUT_VARIANT)
 ck("117b. the held-out fingerprint is the one pre-registered",

@@ -249,6 +249,7 @@ def meta(x_polyguard_passcode: str | None = Header(default=None)):
                        "native_reviewed": bool(m.get("native_reviewed"))}
                       for c, m in BANK["languages"].items()],
         "categories": BANK["categories"],
+        "taxonomy": engine.TAXONOMY,
         "examples": [{"name": n, "prompt": p, "description": DESCRIPTIONS.get(n, "")}
                      for n, p in EXAMPLES.items()],
         "models": [{"key": s["key"], "label": s["label"], "vendor": s["vendor"]} for s in ready],

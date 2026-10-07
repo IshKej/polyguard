@@ -142,6 +142,18 @@ a fix is judged on the held-out phrasing together with whether the bot still
 follows ordinary requests, because a bot that refuses everything also stops every
 attack.
 
+## Where the attack types sit in public taxonomies
+
+| Attack type | OWASP Top 10 for LLM Apps 2025 | MITRE ATLAS (data v5.6.0) |
+|---|---|---|
+| Instruction override | LLM01:2025 Prompt Injection | AML.T0051.000 LLM Prompt Injection: Direct |
+| Role play jailbreak | LLM01:2025 Prompt Injection | AML.T0054 LLM Jailbreak |
+| System prompt extraction | LLM07:2025 System Prompt Leakage | AML.T0056 Extract LLM System Prompt |
+| Obfuscated payload | LLM01:2025 Prompt Injection | AML.T0068 LLM Prompt Obfuscation |
+| Indirect injection | LLM01:2025 Prompt Injection | AML.T0051.001 LLM Prompt Injection: Indirect |
+
+The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML report.
+
 ## Limits of what a result can show
 
 - **23 of the 24 low resource languages are machine translated** (Gujarati is the
