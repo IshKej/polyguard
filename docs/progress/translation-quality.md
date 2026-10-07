@@ -24,7 +24,7 @@ similarity). Stage B (NLLB round trip) and stage D (MetricX QE) are not in this 
 | Model | Revision | File | Size | SHA-256 (matches the Hub LFS hash) | License |
 |---|---|---|---|---|---|
 | GlotLID v3 `cis-lmu/glotlid` | `85cd6716494360367b75f642b5bc78667605d0b4` | `model_v3.bin` | 1,687,094,687 bytes | `a818b6bd...c4cafc9e` | Card: `license: other`, `license_name: apache-2.0-plus-notices`. LICENSE file read: Apache 2.0 plus a notice on training data and a good faith contact notice. Not gated |
-| LaBSE `sentence-transformers/LaBSE` | `836121a0533e5664b21c7aacc5d22951f2b8b25b` | `model.safetensors` | 1,883,734,344 bytes | `77d8e1f2...a0967c4fe77`... see JSON | Card: `apache-2.0`. Not gated |
+| LaBSE `sentence-transformers/LaBSE` | `836121a0533e5664b21c7aacc5d22951f2b8b25b` | `model.safetensors` | 1,883,734,344 bytes | `77d8e1f2...22dfa31f` (the Dense layer file `f866c945...a0967c4fe77` is hashed too, both in the JSON) | Card: `apache-2.0`. Not gated |
 
   GlotLID v3: fastText, softmax loss, 2,102 labels, dim 256, character n-grams 2 to 5.
   Full hashes are in `translation_quality.json`.
@@ -75,3 +75,49 @@ NoLimit) stay, because they are part of the sentence.
 A flag means "look here first", nothing more. No flag means the two tools found no
 gross failure, not that the translation is good. The 20 author written languages get
 the same scores, so they act as a reference scale, but they are not ground truth either.
+
+## Step 1 and 2. Scores (2026-10-06)
+
+`tq_report.py --build` ran both models on CPU over all 1,533 strings (73 languages,
+15 attacks and 6 controls each) in about 5 minutes. A second build into a scratch
+file gave identical per-language scores and an identical threshold, so the JSON is
+reproducible on this machine. One known side effect of `strip_fixed_tokens`: its
+Base64 pattern also removes 27 ordinary words of 16 or more plain ASCII letters
+(Dutch, Danish, Norwegian, Icelandic, Finnish, Hungarian and a few others, for example
+`ontwikkelaarsmodus`). The task said to use that function, so it was kept, and the
+side effect is recorded here.
+
+**Threshold from data.** 25,920 wrong pairs: median 0.313, maximum 0.648, 99th
+percentile T = 0.549. 1,512 correct pairs: median 0.897, 1st percentile 0.681. The
+two distributions barely overlap.
+
+**Language ID.** 66 of 73 languages had every string identified as intended. The rest:
+
+| Code | Strict | With close relatives | What GlotLID said instead |
+|---|---|---|---|
+| ar (author) | 86% | 86% | 3 strings labelled as Arabic dialects (Egyptian `arz`, Najdi `ars`); dialects were not declared as close relatives, so this stays as measured. Two of the three are controls the native reviewer reworded |
+| ms | 86% | 100% | 3 strings labelled Indonesian, a declared close relative. Strict share is still above 0.80, so not even the near neighbour note applies |
+| hr | 90% | 100% | 1 Bosnian, 1 Serbian Latin |
+| gl | 95% | 95% | 1 control labelled Spanish |
+| sq | 95% | 95% | 1 control labelled Gheg Albanian (`aln`, not declared) |
+
+No language fell below the 0.80 line, so no `lid` flag.
+
+**LaBSE.** Margin over wrong pairs ranges from +0.46 (Yoruba) to +0.61 (Italian);
+group retrieval accuracy is 100% in all 72 non-English languages. Lowest means:
+Yoruba 0.74, Shona 0.79, Chichewa 0.81, then Thai, Xhosa, Zulu 0.84. The author
+written languages sit between 0.86 (Gujarati) and 0.93 (Italian).
+
+**Flags (pre-declared rules): Yoruba only (`sim`).** `yo_control_1` (0.489) and
+`yo_control_4` (0.526) are at or below T. A diagnostic run, not part of the rule:
+removing the Yoruba tone marks raises those two to 0.648 and 0.767 but lowers the
+language mean slightly (0.735 to 0.722). So the flag cannot tell a weak translation
+from LaBSE handling tone marked Yoruba badly. Either way it is the first language a
+native speaker should read.
+
+What the near-zero flag count does and does not mean: these tools only catch wrong
+language and gross meaning drift, and every machine translation here passed that bar.
+They cannot see register, fluency, a subtly wrong verb, or whether an attack still
+reads as an instruction. The bottom of the LaBSE ranking (yo, sn, ny, xh, zu, th) is
+also where LaBSE itself has the least training data, so a low score there is
+ambiguous by construction.

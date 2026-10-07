@@ -1,0 +1,2179 @@
+{
+ "schema": 1,
+ "what": "Automated translation quality proxy per bank language. Two offline signals that catch gross failures (wrong language, meaning drift). Not a validation: neither tool measures fluency, register, or whether a native speaker would read an attack as an instruction.",
+ "generated_on": "2026-10-06",
+ "bank_sha256": "4e2ba320c932823e046d2113af44ee2ca5e4042cf3d75f1ea8abd15117cdf1f8",
+ "n_languages": 73,
+ "n_machine": 53,
+ "preparation": "linguistics.strip_fixed_tokens with the canary and control token (removes both, Base64 blobs and SYSTEM OVERRIDE), then whitespace collapsed. Applied to translations and English seeds.",
+ "models": {
+  "glotlid": {
+   "repo": "cis-lmu/glotlid",
+   "revision": "85cd6716494360367b75f642b5bc78667605d0b4",
+   "file": "model_v3.bin",
+   "version": "v3",
+   "bytes": 1687094687,
+   "sha256": "a818b6bd42a628ab47d3dfc1578c7ea615c45381f3494c42535e31e8c4cafc9e",
+   "license": "Apache-2.0 plus notices (model card: license other, apache-2.0-plus-notices; LICENSE file read)",
+   "n_labels": 2102
+  },
+  "labse": {
+   "repo": "sentence-transformers/LaBSE",
+   "revision": "836121a0533e5664b21c7aacc5d22951f2b8b25b",
+   "files": {
+    "model.safetensors": {
+     "bytes": 1883734344,
+     "sha256": "77d8e1f2dbab6eb5d3c261ce9d3dbf1e3c69e02938c95f934f94f42c22dfa31f"
+    },
+    "2_Dense/model.safetensors": {
+     "bytes": 2362528,
+     "sha256": "f866c945fa2147ce4940c8ead0b4b20af4217e0f4664bd35f41c2a0967c4fe77"
+    }
+   },
+   "license": "Apache-2.0 (model card)"
+  }
+ },
+ "software": {
+  "python": "3.14.3",
+  "fasttext": "0.9.2",
+  "torch": "2.14.1+cpu",
+  "transformers": "5.19.0",
+  "sentence_transformers": "6.1.0",
+  "numpy": "2.5.3",
+  "device": "cpu"
+ },
+ "rules": {
+  "lid_min_share_close": 0.8,
+  "sim_threshold_percentile": 99,
+  "sim_flag_if_more_than_n_at_or_below_T": 1,
+  "sim_retrieval_min": 0.9,
+  "groups": [
+   "instruction_override",
+   "role_play_jailbreak",
+   "system_prompt_extraction",
+   "obfuscated_payload",
+   "indirect_injection",
+   "control"
+  ],
+  "wrong_pairs": "same translated string against every English seed of a different group",
+  "declared_before_scoring": "docs/progress/translation-quality.md"
+ },
+ "threshold": {
+  "sim_T": 0.5486,
+  "wrong_pairs_n": 25920,
+  "wrong_pairs_max": 0.6484,
+  "wrong_pairs_p50": 0.313,
+  "correct_pairs_n": 1512,
+  "correct_pairs_p01": 0.6806,
+  "correct_pairs_p50": 0.897
+ },
+ "lid_labels": {
+  "en": [
+   "eng_Latn"
+  ],
+  "es": [
+   "spa_Latn"
+  ],
+  "hi": [
+   "hin_Deva"
+  ],
+  "gu": [
+   "guj_Gujr"
+  ],
+  "zh": [
+   "cmn_Hani"
+  ],
+  "tl": [
+   "fil_Latn"
+  ],
+  "vi": [
+   "vie_Latn"
+  ],
+  "ar": [
+   "arb_Arab"
+  ],
+  "ko": [
+   "kor_Hang"
+  ],
+  "fr": [
+   "fra_Latn"
+  ],
+  "ru": [
+   "rus_Cyrl"
+  ],
+  "pt": [
+   "por_Latn"
+  ],
+  "de": [
+   "deu_Latn"
+  ],
+  "it": [
+   "ita_Latn"
+  ],
+  "ja": [
+   "jpn_Jpan"
+  ],
+  "pl": [
+   "pol_Latn"
+  ],
+  "tr": [
+   "tur_Latn"
+  ],
+  "id": [
+   "ind_Latn"
+  ],
+  "uk": [
+   "ukr_Cyrl"
+  ],
+  "el": [
+   "ell_Grek"
+  ],
+  "af": [
+   "afr_Latn"
+  ],
+  "az": [
+   "azj_Latn"
+  ],
+  "bg": [
+   "bul_Cyrl"
+  ],
+  "bn": [
+   "ben_Beng"
+  ],
+  "ca": [
+   "cat_Latn"
+  ],
+  "ceb": [
+   "ceb_Latn"
+  ],
+  "cs": [
+   "ces_Latn"
+  ],
+  "cy": [
+   "cym_Latn"
+  ],
+  "da": [
+   "dan_Latn"
+  ],
+  "et": [
+   "ekk_Latn"
+  ],
+  "eu": [
+   "eus_Latn"
+  ],
+  "fa": [
+   "fas_Arab"
+  ],
+  "fi": [
+   "fin_Latn"
+  ],
+  "ga": [
+   "gle_Latn"
+  ],
+  "gl": [
+   "glg_Latn"
+  ],
+  "ha": [
+   "hau_Latn"
+  ],
+  "he": [
+   "heb_Hebr"
+  ],
+  "hr": [
+   "hrv_Latn"
+  ],
+  "ht": [
+   "hat_Latn"
+  ],
+  "hu": [
+   "hun_Latn"
+  ],
+  "ig": [
+   "ibo_Latn"
+  ],
+  "is": [
+   "isl_Latn"
+  ],
+  "ka": [
+   "kat_Geor"
+  ],
+  "kk": [
+   "kaz_Cyrl"
+  ],
+  "kn": [
+   "kan_Knda"
+  ],
+  "ky": [
+   "kir_Cyrl"
+  ],
+  "lo": [
+   "lao_Laoo"
+  ],
+  "lt": [
+   "lit_Latn"
+  ],
+  "lv": [
+   "lvs_Latn"
+  ],
+  "mk": [
+   "mkd_Cyrl"
+  ],
+  "ml": [
+   "mal_Mlym"
+  ],
+  "mr": [
+   "mar_Deva"
+  ],
+  "ms": [
+   "zsm_Latn"
+  ],
+  "nl": [
+   "nld_Latn"
+  ],
+  "no": [
+   "nob_Latn",
+   "nno_Latn"
+  ],
+  "ny": [
+   "nya_Latn"
+  ],
+  "or": [
+   "ory_Orya"
+  ],
+  "pa": [
+   "pan_Guru"
+  ],
+  "ro": [
+   "ron_Latn"
+  ],
+  "sk": [
+   "slk_Latn"
+  ],
+  "sl": [
+   "slv_Latn"
+  ],
+  "sn": [
+   "sna_Latn"
+  ],
+  "sq": [
+   "als_Latn"
+  ],
+  "sr": [
+   "srp_Cyrl",
+   "srp_Latn"
+  ],
+  "sv": [
+   "swe_Latn"
+  ],
+  "ta": [
+   "tam_Taml"
+  ],
+  "te": [
+   "tel_Telu"
+  ],
+  "th": [
+   "tha_Thai"
+  ],
+  "ur": [
+   "urd_Arab"
+  ],
+  "uz": [
+   "uzn_Latn"
+  ],
+  "xh": [
+   "xho_Latn"
+  ],
+  "yo": [
+   "yor_Latn"
+  ],
+  "zu": [
+   "zul_Latn"
+  ]
+ },
+ "lid_close": {
+  "zh": [
+   "yue_Hani",
+   "lzh_Hani"
+  ],
+  "pt": [
+   "glg_Latn"
+  ],
+  "id": [
+   "zsm_Latn"
+  ],
+  "af": [
+   "nld_Latn"
+  ],
+  "bg": [
+   "mkd_Cyrl"
+  ],
+  "cs": [
+   "slk_Latn"
+  ],
+  "da": [
+   "nob_Latn",
+   "nno_Latn"
+  ],
+  "gl": [
+   "por_Latn"
+  ],
+  "hr": [
+   "bos_Latn",
+   "srp_Latn",
+   "cnr_Latn"
+  ],
+  "mk": [
+   "bul_Cyrl"
+  ],
+  "ms": [
+   "ind_Latn"
+  ],
+  "nl": [
+   "afr_Latn"
+  ],
+  "no": [
+   "dan_Latn",
+   "swe_Latn"
+  ],
+  "sk": [
+   "ces_Latn"
+  ],
+  "sr": [
+   "hrv_Latn",
+   "bos_Latn",
+   "cnr_Latn"
+  ],
+  "sv": [
+   "nob_Latn",
+   "nno_Latn",
+   "dan_Latn"
+  ],
+  "xh": [
+   "zul_Latn"
+  ],
+  "zu": [
+   "xho_Latn"
+  ]
+ },
+ "languages": {
+  "en": {
+   "name": "English",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "b04fbb7d9c9d400112ece52722822bc836ede5f285c0c94c318eb32eeb9b4164",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9979,
+    "misses": []
+   },
+   "sim": null,
+   "flags": [],
+   "notes": []
+  },
+  "es": {
+   "name": "Spanish",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "9bfe85a11ca5580ec2c12828054379880446c955aa434584dd1d71fb3f0016a3",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.98,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9228,
+    "min": 0.8542,
+    "mean_wrong": 0.3288,
+    "margin": 0.594,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "hi": {
+   "name": "Hindi",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "47c3c5117af260b0aebb56d83be03db89ba8478138514dfb928d692956d82c09",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9883,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.866,
+    "min": 0.6657,
+    "mean_wrong": 0.3211,
+    "margin": 0.5449,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "gu": {
+   "name": "Gujarati",
+   "provenance": "author",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "52e0424ecd616335bc62621dfc68bda7b33bc29d6f63fc7294fe4c3dca1dbf05",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8614,
+    "min": 0.6662,
+    "mean_wrong": 0.3184,
+    "margin": 0.543,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "zh": {
+   "name": "Chinese",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "9f079b747053940961ed9a6963d428aabf69126eb50db3b1d76418fe5f3ae61c",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9882,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8949,
+    "min": 0.8202,
+    "mean_wrong": 0.2993,
+    "margin": 0.5956,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "tl": {
+   "name": "Tagalog",
+   "provenance": "author",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "75f39d26226e5ef4e2b5d6cbd53dff4bd817d957a82d6c16cc7c48b0953222d9",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9983,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9022,
+    "min": 0.8102,
+    "mean_wrong": 0.3235,
+    "margin": 0.5787,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "vi": {
+   "name": "Vietnamese",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "ccc196655744c22d4228580699a57af7eb81924ff903827fb0e96492212d7e06",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8825,
+    "min": 0.7773,
+    "mean_wrong": 0.3155,
+    "margin": 0.567,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ar": {
+   "name": "Arabic",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "6018f3fa5281d641d6f750c2c29dd58950785cff480fc01bf014407376a7fe8c",
+   "lid": {
+    "share": 0.8571,
+    "share_close": 0.8571,
+    "mean_p_top": 0.8576,
+    "misses": [
+     {
+      "id": "ar_obfuscated_payload_2",
+      "label": "arz_Arab",
+      "p": 0.782
+     },
+     {
+      "id": "ar_control_0",
+      "label": "ars_Arab",
+      "p": 0.867
+     },
+     {
+      "id": "ar_control_1",
+      "label": "ars_Arab",
+      "p": 0.826
+     }
+    ]
+   },
+   "sim": {
+    "mean": 0.8948,
+    "min": 0.6617,
+    "mean_wrong": 0.3124,
+    "margin": 0.5824,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ko": {
+   "name": "Korean",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "c83e947ce4cbb81198fde5af7d7fb5acd9f541e6a7cf66f585f567f34b0c4226",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8984,
+    "min": 0.8221,
+    "mean_wrong": 0.3155,
+    "margin": 0.5829,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "fr": {
+   "name": "French",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "de37000a1dcee90a3ef259931fd25cb393d7cbc85552176d2dcdf3ffbde68131",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9991,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9191,
+    "min": 0.8228,
+    "mean_wrong": 0.3211,
+    "margin": 0.598,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ru": {
+   "name": "Russian",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "e9b65ed610f78f841175d677e3c10831659e8bc7c2afe5300384b6a60ad76588",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9995,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8907,
+    "min": 0.6764,
+    "mean_wrong": 0.3208,
+    "margin": 0.5699,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "pt": {
+   "name": "Portuguese",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "43c28de2ff602792859d6dc70c23cb835184fdb2d835048ca03f4b4994e745ad",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9733,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9072,
+    "min": 0.8263,
+    "mean_wrong": 0.3239,
+    "margin": 0.5832,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "de": {
+   "name": "German",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "1ba7c609f0a5ed414fc2818a4ed7ca8ccf07a5198396879cfeddd6a94a9356ab",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.991,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9016,
+    "min": 0.7679,
+    "mean_wrong": 0.3329,
+    "margin": 0.5687,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "it": {
+   "name": "Italian",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "cabba8e47bcfe08329939acf9c661423f09e4359330639153a7beba742390e70",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.998,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9315,
+    "min": 0.8773,
+    "mean_wrong": 0.3258,
+    "margin": 0.6057,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ja": {
+   "name": "Japanese",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "0a6dfdbe3c41d280e648a547ee55b148635fc9d4c64d76c0a6bd8bfd9b9d2544",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8758,
+    "min": 0.7785,
+    "mean_wrong": 0.3324,
+    "margin": 0.5434,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "pl": {
+   "name": "Polish",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "b873b5d4877ddc820ba9fdf7ab4cb7fb7942b00d7ae7e4e21146656ba2680bc1",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8893,
+    "min": 0.7885,
+    "mean_wrong": 0.3241,
+    "margin": 0.5652,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "tr": {
+   "name": "Turkish",
+   "provenance": "author",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "59eb341bb7d753cefea599673fca471ea81f8f34ac7b4aaeafcfa91fbf05c440",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9996,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8707,
+    "min": 0.751,
+    "mean_wrong": 0.3082,
+    "margin": 0.5624,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "id": {
+   "name": "Indonesian",
+   "provenance": "author",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "3e6c2311be8f9c149e5537edbf5bbae741995679fe9b136023af4de15193b6f8",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9852,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9105,
+    "min": 0.8157,
+    "mean_wrong": 0.3207,
+    "margin": 0.5898,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "uk": {
+   "name": "Ukrainian",
+   "provenance": "author",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "8feaf00ed1a369a474998337b56650c81c3ce950261bf9d7edab0d0fb77106dd",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8932,
+    "min": 0.6818,
+    "mean_wrong": 0.3146,
+    "margin": 0.5786,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "el": {
+   "name": "Greek",
+   "provenance": "author",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "17a7f15dd1346381bd2873644e5bd01dc892866cb009c254f014cea20d83d7cb",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9985,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8949,
+    "min": 0.67,
+    "mean_wrong": 0.3185,
+    "margin": 0.5764,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "af": {
+   "name": "Afrikaans",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "b9d5f249a56dc055bc3d51ad7a597e7589f7b28b57127dedce873f48f9d7e2f3",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9993,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9035,
+    "min": 0.7271,
+    "mean_wrong": 0.3329,
+    "margin": 0.5706,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "az": {
+   "name": "Azerbaijani",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "a288084225ea8725c0821a5866701ea7546f463a6cac4f2f9241b48d5a6c5725",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8761,
+    "min": 0.7794,
+    "mean_wrong": 0.3159,
+    "margin": 0.5602,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "bg": {
+   "name": "Bulgarian",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "e1c2b15434d05ba7be2c90c95995103eb870d0faf257708a61a2fb1657f90e70",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9171,
+    "min": 0.8225,
+    "mean_wrong": 0.3173,
+    "margin": 0.5998,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "bn": {
+   "name": "Bengali",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "ee7608e03e29d460d63e24c4d0a4ca1a34207c365957a9e3c56afff8215e4118",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9995,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8999,
+    "min": 0.818,
+    "mean_wrong": 0.3142,
+    "margin": 0.5857,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ca": {
+   "name": "Catalan",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "d6ff7bdc29acacced112c7de15cc2321f8e5c0f8d748908ffbd713c74378d146",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9997,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9189,
+    "min": 0.8409,
+    "mean_wrong": 0.3323,
+    "margin": 0.5866,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ceb": {
+   "name": "Cebuano",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "7e04ed9f47e8d999998ce9ef4ee92c65bb78e7567210ee0c2ff07cf56ad8717a",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9988,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8915,
+    "min": 0.8173,
+    "mean_wrong": 0.3252,
+    "margin": 0.5663,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "cs": {
+   "name": "Czech",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "e320246e6b295cbb3df2fa18150bc6312be4f0711f0a476f169378a7da7162db",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9981,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9152,
+    "min": 0.7837,
+    "mean_wrong": 0.3253,
+    "margin": 0.5899,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "cy": {
+   "name": "Welsh",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "b9080a06cb35a93327a841bc152b608de236745b0ecfef3ef813766f914479ac",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8692,
+    "min": 0.7703,
+    "mean_wrong": 0.3251,
+    "margin": 0.5441,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "da": {
+   "name": "Danish",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "76d00b88890dc95e03695bfd78548bba6a707aab01e476527bd670d86e1c46f4",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9978,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8961,
+    "min": 0.6372,
+    "mean_wrong": 0.3336,
+    "margin": 0.5626,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "et": {
+   "name": "Estonian",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "5875e3bb94700c01a959432525b7fca71c2fda2d5a8ecd99a3bde2145d197a45",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9894,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8995,
+    "min": 0.7518,
+    "mean_wrong": 0.3152,
+    "margin": 0.5844,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "eu": {
+   "name": "Basque",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "251932ab477caa995e2b5cc685f007d7dcd12359fdc57939f9a9ad61e0b2e1f1",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8867,
+    "min": 0.7824,
+    "mean_wrong": 0.3091,
+    "margin": 0.5777,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "fa": {
+   "name": "Persian",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "45cf36bcf359ccd2c9124765bafa818c8d0bcff5b7c1e04ddfb38ea8eeb0ddf6",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9995,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8937,
+    "min": 0.7969,
+    "mean_wrong": 0.3296,
+    "margin": 0.5641,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "fi": {
+   "name": "Finnish",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "1fce15b8660e41ad45211476d9aef57ee565a8a1d60cf15b4fa92be98060f706",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9998,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8912,
+    "min": 0.7687,
+    "mean_wrong": 0.3067,
+    "margin": 0.5845,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ga": {
+   "name": "Irish",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "35987445e41680b1126f52e6bc4e9f0467980bc72d1aa495069297bc962ecdb6",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9985,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8637,
+    "min": 0.7538,
+    "mean_wrong": 0.3233,
+    "margin": 0.5404,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "gl": {
+   "name": "Galician",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "6e1a21fb27ab6014c83ef2ffe70f82cf7da671771fa01f5176bf5752745ea569",
+   "lid": {
+    "share": 0.9524,
+    "share_close": 0.9524,
+    "mean_p_top": 0.9408,
+    "misses": [
+     {
+      "id": "gl_control_5",
+      "label": "spa_Latn",
+      "p": 0.568
+     }
+    ]
+   },
+   "sim": {
+    "mean": 0.9056,
+    "min": 0.815,
+    "mean_wrong": 0.3284,
+    "margin": 0.5771,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ha": {
+   "name": "Hausa",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "dbf23b42b462e1b561b8f56e31d427cfa69aa5a9de3a9ee421fbc14226ae8068",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8642,
+    "min": 0.7348,
+    "mean_wrong": 0.319,
+    "margin": 0.5452,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "he": {
+   "name": "Hebrew",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "21fc82608989b071da9e73e8ae6057cdc309d30a2fc8b5ea05a4cb4485cc6a90",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9999,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8897,
+    "min": 0.8096,
+    "mean_wrong": 0.3067,
+    "margin": 0.5829,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "hr": {
+   "name": "Croatian",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "f248b6e550a09bc3bc9bda04ca72e1829e2f123349cb3952b70a08d993c104b9",
+   "lid": {
+    "share": 0.9048,
+    "share_close": 1.0,
+    "mean_p_top": 0.8565,
+    "misses": [
+     {
+      "id": "hr_instruction_override_2",
+      "label": "bos_Latn",
+      "p": 0.67
+     },
+     {
+      "id": "hr_control_4",
+      "label": "srp_Latn",
+      "p": 0.557
+     }
+    ]
+   },
+   "sim": {
+    "mean": 0.9156,
+    "min": 0.8071,
+    "mean_wrong": 0.3124,
+    "margin": 0.6032,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ht": {
+   "name": "Haitian Creole",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "7c936d85f27de1bac7ae109fde77d0022c17f8db39c8e14dcb49dd0a98f7c997",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9995,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8832,
+    "min": 0.8194,
+    "mean_wrong": 0.3238,
+    "margin": 0.5594,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "hu": {
+   "name": "Hungarian",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "10bb9d6859f80f93b7842dc43a48100b17ff15136035d7c61d15d6399ad18555",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8909,
+    "min": 0.7658,
+    "mean_wrong": 0.3251,
+    "margin": 0.5659,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ig": {
+   "name": "Igbo",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "50ba9ab4a2ab79b9d4f71879f66fdc0270b31f4170f4f629108e71d8dfd82935",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9859,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8664,
+    "min": 0.7826,
+    "mean_wrong": 0.3136,
+    "margin": 0.5528,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "is": {
+   "name": "Icelandic",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "1154a479ff5715bbc11ff51221d001cd59c9f0c095857ad4b6794497e7172922",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.861,
+    "min": 0.7468,
+    "mean_wrong": 0.3287,
+    "margin": 0.5323,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ka": {
+   "name": "Georgian",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "df4f1438ab49cb5b90247eb8a1ba60e56b4d0ece4a98a94c2331b9cdb2f16796",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9799,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8998,
+    "min": 0.8004,
+    "mean_wrong": 0.3212,
+    "margin": 0.5786,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "kk": {
+   "name": "Kazakh",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "231f2fd296bdb9fb449c39e9548d08e430c751213a51f12b80fb983aa3f0f630",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8765,
+    "min": 0.7233,
+    "mean_wrong": 0.3007,
+    "margin": 0.5758,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "kn": {
+   "name": "Kannada",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "83f0611072367f385bdd37ae3a439541b29bd97972f1182f68305c36adacc98c",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9999,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8826,
+    "min": 0.7631,
+    "mean_wrong": 0.3171,
+    "margin": 0.5655,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ky": {
+   "name": "Kyrgyz",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "ddc456c3bd95ca955ea74428613895b7bb0ccc6650eef4f340ee3de792072c2d",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9999,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8714,
+    "min": 0.7851,
+    "mean_wrong": 0.3054,
+    "margin": 0.5659,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "lo": {
+   "name": "Lao",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "6becfc4eae51f0448a31b512806b2c7a0058efe337943604abe607eaead47c43",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9995,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8463,
+    "min": 0.7163,
+    "mean_wrong": 0.3092,
+    "margin": 0.5371,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "lt": {
+   "name": "Lithuanian",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "0fa067af799158f69902553e6fd8045069ea526cc1362c1a60b111e0ca5740d0",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.898,
+    "min": 0.8324,
+    "mean_wrong": 0.3079,
+    "margin": 0.5902,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "lv": {
+   "name": "Latvian",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "227d51c12a6a464349b2aa1c38d75d62cca23e082804b67d5251842ff59ba6bf",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9999,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8984,
+    "min": 0.8144,
+    "mean_wrong": 0.3088,
+    "margin": 0.5896,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "mk": {
+   "name": "Macedonian",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "2cd9ee667b82d8ce7019e879e08b5c7a6a0688b78846f45984087e4af1985d16",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.999,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8941,
+    "min": 0.7951,
+    "mean_wrong": 0.3251,
+    "margin": 0.5691,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ml": {
+   "name": "Malayalam",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "362cb034a29906bf3c61c3b161a4864d7d13710fe0a1d56ab6911d1561e18b52",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8855,
+    "min": 0.8097,
+    "mean_wrong": 0.3056,
+    "margin": 0.5799,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "mr": {
+   "name": "Marathi",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "e2eeae6cd1064da80d53e5dc6f675077a3241aaebf5f69f4d1ee21269c9a8a4f",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9994,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8888,
+    "min": 0.7851,
+    "mean_wrong": 0.3093,
+    "margin": 0.5795,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ms": {
+   "name": "Malay",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "913fffddbf1861020d20363e3119ec30785dd7f88de148ce1417416b8e7fb6e6",
+   "lid": {
+    "share": 0.8571,
+    "share_close": 1.0,
+    "mean_p_top": 0.9361,
+    "misses": [
+     {
+      "id": "ms_system_prompt_extraction_1",
+      "label": "ind_Latn",
+      "p": 0.763
+     },
+     {
+      "id": "ms_obfuscated_payload_0",
+      "label": "ind_Latn",
+      "p": 0.848
+     },
+     {
+      "id": "ms_obfuscated_payload_2",
+      "label": "ind_Latn",
+      "p": 0.9
+     }
+    ]
+   },
+   "sim": {
+    "mean": 0.9133,
+    "min": 0.8038,
+    "mean_wrong": 0.3162,
+    "margin": 0.5971,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "nl": {
+   "name": "Dutch",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "d8adcf91290bf491dbaef2916e393aa1ba27740348450731e79b53af30deae59",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9992,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8898,
+    "min": 0.6606,
+    "mean_wrong": 0.326,
+    "margin": 0.5638,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "no": {
+   "name": "Norwegian",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "27a62658906c01b03ee51f484aa30343c15597be8c6b21e6ef05f5be4529c6e0",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9139,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8861,
+    "min": 0.7303,
+    "mean_wrong": 0.3259,
+    "margin": 0.5602,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ny": {
+   "name": "Chichewa",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "5132ba27773d3e30975811cb41ff230bb6028a54aadfd41cc2f41f11cf7afc9e",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9991,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8106,
+    "min": 0.683,
+    "mean_wrong": 0.2999,
+    "margin": 0.5107,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "or": {
+   "name": "Odia",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "bede1333ed66e34453ae6bbf1825ce85a8185804378fdb29a8e0f4d84983b1bf",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.878,
+    "min": 0.7721,
+    "mean_wrong": 0.32,
+    "margin": 0.558,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "pa": {
+   "name": "Punjabi",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "edba53a7eca42dc8ab2eb9a4e1aa29bc6893002882f86765cd4c71b026362b77",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8848,
+    "min": 0.8164,
+    "mean_wrong": 0.311,
+    "margin": 0.5738,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ro": {
+   "name": "Romanian",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "f5f15b21a277b6883085aafdffb8f951bb0e3a1d15f5a20c59eee04528395f5f",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9962,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8853,
+    "min": 0.8034,
+    "mean_wrong": 0.3175,
+    "margin": 0.5678,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "sk": {
+   "name": "Slovak",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "1afdd20b43cfcb81fcb9b700e179a78b6db49038bb0734c69140083c94857c87",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9999,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8998,
+    "min": 0.7249,
+    "mean_wrong": 0.3255,
+    "margin": 0.5743,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "sl": {
+   "name": "Slovenian",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "f74c65df4207b336675bd39abf2ce801632435b9270a7ef46c66db2d6823068b",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9998,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9183,
+    "min": 0.7752,
+    "mean_wrong": 0.3181,
+    "margin": 0.6002,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "sn": {
+   "name": "Shona",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "31b1dd75de6d8c2a8f3df6cca166cc1231475ede9df30304a34b74f2747ade4a",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9871,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.7863,
+    "min": 0.6469,
+    "mean_wrong": 0.2817,
+    "margin": 0.5045,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "sq": {
+   "name": "Albanian",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "13c135e06a3ffb25ccaf078f3f85611da7210ebd6bc697eb27d3f490b461abe6",
+   "lid": {
+    "share": 0.9524,
+    "share_close": 0.9524,
+    "mean_p_top": 0.9963,
+    "misses": [
+     {
+      "id": "sq_control_5",
+      "label": "aln_Latn",
+      "p": 0.97
+     }
+    ]
+   },
+   "sim": {
+    "mean": 0.9048,
+    "min": 0.8112,
+    "mean_wrong": 0.3259,
+    "margin": 0.5789,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "sr": {
+   "name": "Serbian",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "79bb7b8ad8dfa50e90ab345f07b51faa17d1ccbedb279d9db34cf3848721ae0e",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9995,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.9062,
+    "min": 0.8121,
+    "mean_wrong": 0.315,
+    "margin": 0.5912,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "sv": {
+   "name": "Swedish",
+   "provenance": "machine",
+   "tier": "high",
+   "n_strings": 21,
+   "text_sha256": "1bf3212c430f7fbb049d533536cb0c010a7faafc7d1c1b308ab19a9ee21d1131",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8993,
+    "min": 0.8114,
+    "mean_wrong": 0.3304,
+    "margin": 0.5688,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ta": {
+   "name": "Tamil",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "adf88928f854e5a430cda2071dfeb4d7f9810bb1c3a7a80cc364563df0942c26",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8786,
+    "min": 0.7714,
+    "mean_wrong": 0.3146,
+    "margin": 0.564,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "te": {
+   "name": "Telugu",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "bee97ed54124e3d248e2dd960a1b3edd6922ef8e6f31ffc238de9d0da005bdef",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8828,
+    "min": 0.8074,
+    "mean_wrong": 0.3009,
+    "margin": 0.5819,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "th": {
+   "name": "Thai",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "8f9714dfcf4c0c5ebe79f44eb9ad653b131f841edc3f66e40a38301d045cb323",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8382,
+    "min": 0.7327,
+    "mean_wrong": 0.3251,
+    "margin": 0.5131,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ur": {
+   "name": "Urdu",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "8bf0f08bb8fde3e0acfb03337e859fae866357c4157fc1110891c2ad69354ee2",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9777,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8787,
+    "min": 0.7988,
+    "mean_wrong": 0.3234,
+    "margin": 0.5553,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "uz": {
+   "name": "Uzbek",
+   "provenance": "machine",
+   "tier": "mid",
+   "n_strings": 21,
+   "text_sha256": "9bf2869194dbb2752d011998e5447f65fe056348323751fa3c9f97e3299ceb42",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8766,
+    "min": 0.805,
+    "mean_wrong": 0.2871,
+    "margin": 0.5895,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "xh": {
+   "name": "Xhosa",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "fa1085db3bee14153bf1cb03a9d7877d8227dbbb3c32955f6127afb8da35664e",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9927,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8393,
+    "min": 0.7513,
+    "mean_wrong": 0.3176,
+    "margin": 0.5217,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "yo": {
+   "name": "Yoruba",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "bc3d49450b9a9171f583f12e3444b1757b5e7821768900154d2df9ed0a0ef595",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.7351,
+    "min": 0.4891,
+    "mean_wrong": 0.2744,
+    "margin": 0.4608,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 2,
+    "at_or_below_T": [
+     {
+      "id": "yo_control_1",
+      "sim": 0.4891
+     },
+     {
+      "id": "yo_control_4",
+      "sim": 0.5261
+     }
+    ]
+   },
+   "flags": [
+    "sim"
+   ],
+   "notes": []
+  },
+  "zu": {
+   "name": "Zulu",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "4a6aaf394f6124fae50943c776e8d22c598a369a7cee23231f3a40d687793686",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9668,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8413,
+    "min": 0.7035,
+    "mean_wrong": 0.314,
+    "margin": 0.5273,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  }
+ },
+ "summary": {
+  "flagged": [
+   "yo"
+  ],
+  "flagged_machine": [
+   "yo"
+  ],
+  "near_neighbour_notes": []
+ }
+}
