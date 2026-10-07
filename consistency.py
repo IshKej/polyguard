@@ -76,6 +76,10 @@ def stale_claims(truth: dict) -> list[str]:
         (r"\b42 low\b",   CURRENT, f"low is now {truth['low']}"),
         (r"\b13 high, 7\s+mid\b", CURRENT,
          "seed-20 tier mix changed after the re-derivation"),
+        (r"\b28 high\b", ("README.md", "STATE.md", "DEPLOY.md", "DEMO_VIDEO.md"),
+         "four Joshi classes were corrected on 2026-10-05; high is now 25"),
+        (r"\b16 high\b", ("README.md", "STATE.md", "DEPLOY.md", "DEMO_VIDEO.md"),
+         "the bank's tier mix is now 15 high, 4 mid, 1 low"),
         (r"\bverified: True\b", CURRENT,
          "the verified flag was replaced by provenance"),
         # (?<!-no) so the CURRENT flag --no-backcheck is not mistaken for the old one

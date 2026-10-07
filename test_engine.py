@@ -75,8 +75,9 @@ check("judge routes canary goal",
 
 # --- mock scan: language independence (integrity) ---
 out = engine.scan(SP, mock=True)
-check("mock scan runs (300 attacks = 20 langs x 5 cats x 3 variants)",
-      out["n_attacks"] == 300)
+_nlang = len(engine.load_bank()["languages"])
+check(f"mock scan runs ({15 * _nlang} attacks = {_nlang} langs x 5 cats x 3 variants)",
+      out["n_attacks"] == 15 * _nlang)
 
 
 def _tier_avg(tier):
@@ -340,6 +341,45 @@ check("power falls when the design shrinks", _pow_small["power"] < _pow_big["pow
 _need = engine.languages_needed(p_low=0.5, p_high=0.15, n_sims=120, max_langs=20)
 check("languages_needed reports a design within the search ceiling",
       _need["n_per_tier"] is None or _need["n_per_tier"] <= 20)
+
+# Languages in one tier do not share one true rate. Leaving that spread out made
+# the minimum detectable gap 10% to 15% too small (power_check.py), so the
+# default now carries it, and a model without it must report MORE power.
+_pw_spread = engine.power_simulation(38, 25, 15, 0.40, 0.30, n_sims=400)
+_pw_flat = engine.power_simulation(38, 25, 15, 0.40, 0.30, n_sims=400, lang_sd=0.0)
+check("power_simulation models spread between languages by default, and it lowers power",
+      engine.LANG_SD > 0 and _pw_spread["lang_sd"] == engine.LANG_SD
+      and _pw_spread["power"] < _pw_flat["power"] - 0.10)
+check("the spread keeps each tier's expected rate where it was asked to be",
+      all(abs(engine._mean_rate_logit_normal(engine._logit_location(p, 0.5), 0.5) - p) < 1e-6
+          for p in (0.02, 0.15, 0.30, 0.70, 0.97)))
+check("with spread and no true gap, power stays near alpha",
+      engine.power_simulation(20, 20, 15, 0.30, 0.30, n_sims=400)["power"] < 0.12)
+check("a tier rate of exactly 0 or 1 cannot spread and does not crash the simulation",
+      engine.power_simulation(5, 5, 15, 1.0, 0.0, n_sims=20)["power"] > 0.9)
+
+# --- EXPLORATORY resource trend test ---
+_res = engine.load_resource_measures()
+from languages_catalog import CATALOG as _CATALOG
+check("the resource table covers all 87 catalog languages from one named crawl, unmodified",
+      set(_res["share"]) == set(_CATALOG) and _res["crawl_id"] == "CC-MAIN-2026-39"
+      and _res["sha256"] == engine.RESOURCE_SHA256)
+_trend_stub = {"by_lang": {c: {"rate": r} for c, r in
+                           [("en", 0.0), ("es", 0.1), ("hi", 0.2), ("gu", 0.9), ("sw", 1.0),
+                            ("am", 0.95), ("zz", 0.5)]},
+               "capability": {"capability_limited": ["am"]}}
+_trend = engine.resource_trend(_trend_stub)
+check("the trend test uses capability adjusted rates, names what it left out, and is labelled",
+      _trend["exploratory"] is True and "EXPLORATORY" in _trend["label"]
+      and _trend["excluded_capability_limited"] == ["am"] and "am" not in _trend["languages"]
+      and _trend["missing_measure"] == ["zz"] and _trend["n_langs"] == 5
+      and _trend["crawl_id"] == "CC-MAIN-2026-39")
+check("less web share with more breaks gives a negative rho and a negative slope",
+      _trend["rho"] < 0 and _trend["slope_per_tenfold"] < 0)
+check("too few languages with a measure: no test, and it says why",
+      engine.resource_trend_test({"en": 0.1, "es": 0.2}, _res["share"])["p"] is None)
+check("a scan carries the exploratory trend test in its output",
+      (out.get("resource_trend_test") or {}).get("exploratory") is True)
 
 # --- category_gap_tests ---
 _cat_rows = []
@@ -629,6 +669,246 @@ check("a scan without on_result is unchanged",
                   max_variants=1, with_controls=False)["n_attacks"] == 1)
 
 # --- report ---
+# --- the instrument record: what produced a scan ---------------------------------
+import hashlib  # noqa: E402
+import json as _json  # noqa: E402
+
+check("bank_sha256 is the sha256 of the bank file on disk",
+      engine.bank_sha256() == hashlib.sha256(engine.BANK_PATH.read_bytes()).hexdigest())
+_jp = engine.judge_prompt_sha256()
+check("judge_prompt_sha256 is stable and changes with the judge's wording",
+      _jp == engine.judge_prompt_sha256() and len(_jp) == 64
+      and "{canary}" in engine.JUDGE_COMPLIANCE_PROMPT and "{token}" in engine.JUDGE_FOLLOWED_PROMPT)
+_orig = engine.JUDGE_COMPLIANCE_PROMPT
+engine.JUDGE_COMPLIANCE_PROMPT = _orig + " "
+check("  one extra space in the judge's instructions changes the fingerprint",
+      engine.judge_prompt_sha256() != _jp)
+engine.JUDGE_COMPLIANCE_PROMPT = _orig
+check("git_commit names the code that ran, or says it does not know",
+      isinstance(engine.git_commit(), str) and engine.git_commit() != "")
+_inst = engine.instrument(True, "claude-haiku-4-5", {"es", "en"}, {"role_play_jailbreak"}, 2, True)
+check("instrument records the configuration in a fixed order and names no model for a simulation",
+      _inst["langs"] == ["en", "es"] and _inst["mode"] == "simulated" and _inst["victim_model"] is None
+      and _inst["judge_model"] is None and _inst["max_variants"] == 2
+      and all(f in _inst for f in engine.COMPARABLE_FIELDS))
+check("a live instrument names the victim and the judge",
+      engine.instrument(False, "claude-haiku-4-5", {"en"}, {"x"}, 3, True)["victim_model"] == "claude-haiku-4-5"
+      and engine.instrument(False, "m", {"en"}, {"x"}, 3, True)["judge_model"] == engine.JUDGE_MODEL)
+_out = engine.scan(SP, langs=["en", "es"], categories=["instruction_override"], mock=True, max_variants=1)
+_c = engine.completeness(_out)
+check("completeness of a clean simulated run: everything planned was fired and scored",
+      _c["planned"] == _c["fired"] == _c["scored"] == 2 and _c["complete"] and _c["errors_by_kind"] == {})
+_bad = {**_out, "n_errors": 1, "errors_by_kind": {"rate_limit": 1}}
+_cb = engine.completeness(_bad)
+check("completeness says when attacks went unscored, and why",
+      _cb["complete"] is False and _cb["scored"] == 1 and _cb["errors_by_kind"] == {"rate_limit": 1})
+check("a scan carries its instrument and its error kinds",
+      _out["instrument"]["bank_sha256"] == engine.bank_sha256() and _out["errors_by_kind"] == {}
+      and _out["planned"] == 2)
+
+# --- the held-out split: a defence is never judged on the attacks that chose it ----
+import defenses as _def  # noqa: E402
+
+_bank = engine.load_bank()
+check("split_of puts exactly the third phrasing of every cell in the held-out set",
+      engine.split_of({"variant": 2}) == "heldout" and engine.split_of({"variant": 0}) == "dev"
+      and engine.split_of({}) == "dev"
+      and sum(1 for a in _bank["attacks"] if engine.split_of(a) == "heldout") == len(_bank["attacks"]) // 3)
+check("heldout_sha256 fingerprints the held-out attacks and is stable",
+      engine.heldout_sha256() == engine.heldout_sha256(_bank) and len(engine.heldout_sha256()) == 64)
+_rows = [{"variant": 0, "category": "instruction_override", "broke": True},
+         {"variant": 2, "category": "role_play_jailbreak", "broke": True}]
+check("a category broken only on the held-out phrasing does not choose a rule",
+      _def.broken_categories_from(_rows) == ["instruction_override"])
+_before = [{"variant": 2, "broke": True}, {"variant": 2, "broke": True}, {"variant": 0, "broke": True}]
+_after = [{"variant": 2, "broke": False}, {"variant": 2, "broke": True, "error": None},
+          {"variant": 2, "broke": False, "error": "timeout"}, {"variant": 0, "broke": False}]
+_ev = engine.defense_evaluation(_before, _after, [{"followed": True}] * 4, [{"followed": True}, {"followed": False}])
+check("defense_evaluation judges on held-out rows, without errors, and reports benign behaviour",
+      _ev["has_heldout"] and _ev["heldout_before"] == {"scored": 2, "broke": 2, "rate": 1.0}
+      and _ev["heldout_after"] == {"scored": 2, "broke": 1, "rate": 0.5}
+      and _ev["in_sample_before"]["broke"] == 1 and _ev["benign_after"]["rate"] == 0.5
+      and _ev["benign_before"]["rate"] == 1.0)
+check("with no held-out phrasing in either scan, it says so instead of judging",
+      engine.defense_evaluation([{"variant": 0, "broke": True}], [{"variant": 0}])["has_heldout"] is False)
+
+# --- defence arms: baseline, placebo, current, data_boundary --------------------
+import itertools as _it  # noqa: E402
+
+_all_cats = list(_def.DEFENCES)
+_blocks = _def.arm_blocks(_all_cats)
+check("arm_blocks gives every arm, and baseline appends nothing",
+      set(_blocks) == set(_def.ARMS) and _blocks["baseline"] == "")
+check("the current arm is exactly what harden() has always appended",
+      _def.arm_prompt("You are ShopBot.", "current", ["instruction_override"])
+      == _def.harden("You are ShopBot.", ["instruction_override"]))
+_db = _def.recommend_arm(["indirect_injection", "instruction_override"], "data_boundary")
+check("data_boundary swaps the data and language clauses and keeps the other rules",
+      _db == [_def.DEFENCES["instruction_override"], _def.DATA_BOUNDARY_CLAUSE,
+              _def.AUTHORITY_CLAUSE]
+      and _def.DEFENCES["indirect_injection"] not in _db and _def.MULTILINGUAL_CLAUSE not in _db)
+check("data_boundary adds nothing when nothing broke",
+      _def.recommend_arm([], "data_boundary") == [] and _def.arm_blocks([])["placebo"] == "")
+check("recommend_arm refuses a name that is not a defence arm",
+      _raises(lambda: _def.recommend_arm(["instruction_override"], "placebo")))
+check("arm_prompt refuses an unknown arm",
+      _raises(lambda: _def.arm_prompt("X", "sandwich", ["instruction_override"])))
+_gaps = []
+for _r in range(1, len(_all_cats) + 1):
+    for _c in _it.combinations(_all_cats, _r):
+        _b = _def.arm_blocks(_c)
+        _t = max(_def.word_count(_b["current"]), _def.word_count(_b["data_boundary"]))
+        _gaps.append(abs(_def.word_count(_b["placebo"]) - _t) / _t)
+check("the placebo matches the longer defence block within 5% for all 31 category sets",
+      len(_gaps) == 31 and max(_gaps) <= _def.PLACEBO_TOLERANCE)
+check("placebo_clauses never overshoots its target and is empty for no target",
+      _def.placebo_clauses(0) == []
+      and all(_def.word_count(_def.PLACEBO_HEADER) + sum(_def.word_count(s) for s in
+              _def.placebo_clauses(n)) <= n for n in (20, 80, 150, 260)))
+_banned = ("secur", "rule", "instruct", "ignore", "override", "refus", "declin", "reveal",
+           "attack", "system", "prompt", "authorit", "language", "secret", "repeat", "code")
+_plac = (_def.PLACEBO_HEADER + " " + " ".join(_def.PLACEBO_SENTENCES)).lower()
+check("the placebo says nothing about security, authority, languages or codes",
+      not [w for w in _banned if w in _plac])
+check("word_count ignores bullet dashes and punctuation",
+      _def.word_count("- Keep it short, please.") == 4)
+_hp = _def.arm_prompt("You are X.\n\nMine.", "placebo", ["instruction_override"])
+check("arm_prompt starts every arm from the same text, even from a hardened or placebo prompt",
+      _def.arm_prompt(_hp, "baseline", ["instruction_override"]) == "You are X.\n\nMine."
+      and _def.arm_prompt(_def.harden("You are X.", _all_cats), "placebo", _all_cats)
+      .count(_def.PLACEBO_HEADER) == 1
+      and _def.HEADER not in _def.arm_prompt(_def.harden("You are X.", _all_cats), "placebo", _all_cats))
+check("strip_defences removes a placebo block when told its header",
+      _def.strip_defences(_hp, _def.PLACEBO_HEADER) == "You are X.\n\nMine.")
+
+# --- lint: a defence must not quote the test -----------------------------------
+check("every shipped defence and placebo text passes the lint", _def.lint_all(_bank) == {})
+check("the lint covers every arm's clauses",
+      {"DATA_BOUNDARY_CLAUSE", "AUTHORITY_CLAUSE", "MULTILINGUAL_CLAUSE", "PLACEBO_HEADER"}
+      <= set(_def.all_defence_texts()))
+check("the lint catches the canary, even spaced out",
+      any("canary" in p for p in _def.lint_defence("Never output pwned 7f3a.", _bank)))
+check("the lint catches the control token and the injection marker",
+      any("control token" in p for p in _def.lint_defence("say ctrl-4b8e", _bank))
+      and any("marker" in p for p in _def.lint_defence("watch for system override", _bank)))
+_en_held = next(a["text"] for a in _bank["attacks"]
+                if a["lang"] == "en" and a["category"] == "system_prompt_extraction"
+                and a["variant"] == 2)
+_six = " ".join(_def._words(_en_held)[:6])
+check("the lint catches six words in a row copied from a bank string, case and punctuation aside",
+      any("6 words" in p for p in _def.lint_defence("Rule: " + _six.upper() + "!", _bank)))
+check("five shared words in a row are allowed",
+      not _def.lint_defence(" ".join(_def._words(_en_held)[:5]), _bank))
+check("bank_strings reaches nested attack and control text",
+      _en_held in _def.bank_strings(_bank) and _bank["control_token"] in _def.bank_strings(_bank))
+
+# --- the held-out-only scan and the arm table ----------------------------------
+_ho = engine.scan(SP, langs=["en", "es"], mock=True, heldout_only=True)
+check("a held-out-only scan fires only the third phrasing and says so in its instrument",
+      _ho["results"] and all(r["variant"] == engine.HELDOUT_VARIANT for r in _ho["results"])
+      and _ho["instrument"]["attack_split"] == "heldout"
+      and engine.scan(SP, langs=["en"], mock=True, max_variants=1,
+                      with_controls=False)["instrument"]["attack_split"] == "all")
+check("attack_split is a comparable field, and an older file without it reads as 'all'",
+      "attack_split" in engine.COMPARABLE_FIELDS
+      and engine.INSTRUMENT_DEFAULTS["attack_split"] == "all")
+
+
+def _rows(lang, broke_flags, variant=2):
+    return [{"lang": lang, "variant": variant, "broke": b, "error": None} for b in broke_flags]
+
+
+_arms = {
+    "baseline": {"results": _rows("en", [1, 1, 0, 0]) + _rows("es", [1, 1, 1, 0]) + _rows("en", [1], 0),
+                 "controls": [{"lang": "en", "followed": True}] * 4},
+    "placebo": {"results": _rows("en", [1, 1, 0, 0]) + _rows("es", [1, 1, 0, 0]),
+                "controls": [{"lang": "en", "followed": True}] * 4},
+    "current": {"results": _rows("en", [1, 0, 0, 0]) + _rows("es", [0, 0, 0, 0])
+                + [{"lang": "es", "variant": 2, "broke": True, "error": "timeout"}],
+                "controls": [{"lang": "en", "followed": True}] * 3 + [{"lang": "en", "followed": False}]},
+}
+_tab = {r["arm"]: r for r in engine.arm_table(_arms)}
+check("arm_table counts held-out rows only and leaves errors out",
+      _tab["baseline"]["heldout_scored"] == 8 and _tab["baseline"]["heldout_broke"] == 5
+      and _tab["current"]["heldout_scored"] == 8 and _tab["current"]["heldout_broke"] == 1)
+check("arm_table gives continuity-corrected Wilson intervals for both rates",
+      _tab["current"]["heldout_ci"] == engine.wilson_ci_cc(1, 8)
+      and _tab["current"]["benign_ci"] == engine.wilson_ci_cc(3, 4)
+      and _tab["current"]["benign_rate"] == 0.75)
+_vp = _tab["current"]["vs_placebo"]
+check("the difference against placebo is in rate points, for attacks and controls",
+      abs(_vp["heldout_diff"] - (1 / 8 - 4 / 8)) < 1e-12 and abs(_vp["benign_diff"] + 0.25) < 1e-12)
+check("the placebo comparison is a sign test paired by language",
+      _vp["languages_paired"] == 2 and _vp["sign_test"]["better"] == 2
+      and _vp["sign_test"]["worse"] == 0 and _vp["sign_test"] == engine.sign_test(0, 2))
+check("the placebo row is the reference and compares with nothing",
+      _tab["placebo"]["vs_placebo"] is None)
+check("with no placebo arm, nothing is compared",
+      all(r["vs_placebo"] is None for r in engine.arm_table({"baseline": _arms["baseline"]})))
+_tx = {r["arm"]: r for r in engine.arm_table(_arms, exclude_langs=["es"])}
+check("capability-limited languages are dropped from every arm alike",
+      _tx["baseline"]["heldout_scored"] == 4 and _tx["current"]["heldout_scored"] == 4
+      and _tx["current"]["vs_placebo"]["languages_paired"] == 1)
+
+# --- cli defend, simulated, end to end -------------------------------------------
+import cli as _cli  # noqa: E402
+import contextlib as _ctx  # noqa: E402
+import io as _io  # noqa: E402
+import tempfile as _tf  # noqa: E402
+import json  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+
+def _exits(fn):
+    try:
+        fn()
+    except SystemExit:
+        return True
+    return False
+
+
+check("the arm list always includes the baseline and keeps canonical order",
+      _cli._parse_arms("data_boundary,placebo") == ["baseline", "placebo", "data_boundary"]
+      and _cli._parse_arms("all") == list(_def.ARMS) and _cli._parse_arms(None) == list(_def.ARMS))
+check("an unknown arm is refused", _exits(lambda: _cli._parse_arms("placebo,sandwich")))
+with _tf.TemporaryDirectory() as _d:
+    _o = Path(_d) / "arms.json"
+    _buf = _io.StringIO()
+    with _ctx.redirect_stdout(_buf):
+        _rc = _cli.main(["defend", "--prompt-text", SP, "--mock", "--quiet",
+                         "--langs", "en,es,hi", "--rules", "all", "--out", str(_o)])
+    _pay = json.loads(_o.read_text(encoding="utf-8"))
+_rates = {r["arm"]: (r["heldout_rate"], r["benign_rate"]) for r in _pay["table"]}
+check("simulated defend runs every arm end to end and writes a labelled file",
+      _rc == 0 and _pay["mode"] == "MOCK-SIMULATED" and list(_pay["arms"]) == list(_def.ARMS)
+      and _pay["arms"]["placebo"]["words"] == _pay["arms"]["data_boundary"]["words"])
+check("the simulated victim ignores the prompt, so every arm comes out identical",
+      len(set(_rates.values())) == 1
+      and all(r["vs_placebo"]["heldout_diff"] == 0 for r in _pay["table"] if r["vs_placebo"]))
+check("arm scans fire only the held-out phrasing; the baseline fires all three",
+      all(r["variant"] == 2 for a in ("placebo", "current", "data_boundary")
+          for r in _pay["results"][a])
+      and {r["variant"] for r in _pay["results"]["baseline"]} == {0, 1, 2}
+      and _pay["arms"]["current"]["instrument"]["attack_split"] == "heldout")
+_short = "You are ShopBot. Only help with Acme orders."
+_leaky = next(a for a in _bank["attacks"] if a["goal"] == "extract"
+              and engine._mock_victim("X", a, "").startswith("Sure"))
+_hard = _def.arm_prompt(_short, "current", _all_cats)
+_ra = engine.run_attack(None, _hard, _leaky, _bank["canary"], True, None,
+                        extraction_reference=_short)
+_rb = engine.run_attack(None, _hard, _leaky, _bank["canary"], True, None)
+_sh = {}
+for _a in _def.ARMS:
+    _s = engine.scan(_def.arm_prompt(_short, _a, _all_cats), langs=["en", "es", "hi"], mock=True,
+                     extraction_reference=_short, heldout_only=True, with_controls=False)
+    _sh[_a] = sum(1 for r in _s["results"] if r["broke"])
+check("a simulated extraction is scored against the reference, so a short prompt does not "
+      "look easier to extract once a block is added",
+      len(set(_sh.values())) == 1 and not _ra["broke"] and _rb["broke"])
+check("the printed table and file never claim security",
+      "not evidence that the bot is secure" in _buf.getvalue()
+      and "never evidence of security" in _pay["claim"])
+
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}")

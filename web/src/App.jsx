@@ -1,0 +1,219 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { getMeta, getSavedScan, runScan } from './api'
+import { Loader, Nav } from './components/Chrome'
+import { isMotionOff, useMotionOff } from './lib/motion'
+import { jumpToTop, startSmoothScroll, stopSmoothScroll } from './lib/smooth'
+import Landing from './components/Landing'
+import LiveScan from './components/LiveScan'
+import Results from './components/Results'
+import Method from './components/Method'
+import Setup from './components/Setup'
+
+// Every screen has an address, so the browser's back and forward buttons move
+// between screens, and /how can be shared. A scan's own screens only make sense
+// with that scan in memory, so opening them fresh lands on the setup screen.
+const PATHS = { landing: '/', setup: '/scan', live: '/scan/live', results: '/scan/results', method: '/how' }
+// A share link: /s/ and 22 characters of base64url, the saved scan's id.
+const SHARED = /^\/s\/([A-Za-z0-9_-]{22})\/?$/
+function viewFromPath(path) {
+  if (SHARED.test(path)) return 'shared'
+  if (path.startsWith('/how')) return 'method'
+  if (path.startsWith('/scan')) return 'setup'
+  return 'landing'
+}
+
+export default function App() {
+  const [meta, setMeta] = useState(null)
+  const [metaError, setMetaError] = useState('')
+  const [view, setView] = useState(() => viewFromPath(window.location.pathname))
+  const viewRef = useRef(view)
+  const [config, setConfig] = useState(null)
+  const [rows, setRows] = useState([])
+  const [total, setTotal] = useState(0)
+  const [scanLive, setScanLive] = useState(false)
+  const [scanError, setScanError] = useState('')
+  const [result, setResult] = useState(null)
+  const [baseline, setBaseline] = useState(null)
+  // Where a result came from when it was not just scanned: a share link or a file.
+  const [source, setSource] = useState(null)
+  const [sharedError, setSharedError] = useState('')
+  const stop = useRef(null)
+  const launching = useRef(false)
+
+  const loadMeta = useCallback(
+    () => getMeta().then((m) => { setMeta(m); setMetaError(''); return m }).catch((e) => { setMetaError(e.message); return null }),
+    [],
+  )
+  useEffect(() => {
+    let alive = true
+    getMeta().then((m) => alive && setMeta(m)).catch((e) => alive && setMetaError(e.message))
+    return () => { alive = false; stop.current?.() }
+  }, [])
+
+  // Opened from a share link: fetch the saved scan once.
+  useEffect(() => {
+    const m = window.location.pathname.match(SHARED)
+    if (!m) return undefined
+    let alive = true
+    getSavedScan(m[1])
+      .then((s) => { if (alive) { setResult(s.result); setConfig(null); setSource({ kind: 'link', id: m[1], ...s }) } })
+      .catch((e) => alive && setSharedError(e.message))
+    return () => { alive = false }
+  }, [])
+
+  // Moving between screens: a highlighter panel wipes up over the page, the
+  // screen changes underneath it, and it carries on up and away.
+  const [wipe, setWipe] = useState('idle')
+  const wipeTimers = useRef([])
+  const go = useCallback((v, { replace = false, fromHistory = false } = {}) => {
+    const instant = isMotionOff()
+    wipeTimers.current.forEach(clearTimeout)
+    viewRef.current = v
+    if (!fromHistory && window.location.pathname !== PATHS[v]) {
+      window.history[replace ? 'replaceState' : 'pushState']({ view: v }, '', PATHS[v])
+    }
+    if (instant) { setView(v); jumpToTop(); return }
+    setWipe('in')
+    wipeTimers.current = [
+      setTimeout(() => { setView(v); jumpToTop(); setWipe('out') }, 380),
+      setTimeout(() => setWipe('idle'), 820),
+    ]
+  }, [])
+  useEffect(() => () => wipeTimers.current.forEach(clearTimeout), [])
+
+  // Back and forward. Leaving a running scan stops it, so its results cannot
+  // pull the reader back to a screen they just left.
+  useEffect(() => {
+    const onPop = () => {
+      const target = window.history.state?.view || viewFromPath(window.location.pathname)
+      if (viewRef.current === 'live' && target !== 'live') stop.current?.()
+      const usable = (target === 'results' && !result) || target === 'live' ? 'setup' : target
+      go(usable, { fromHistory: target === usable, replace: target !== usable })
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [go, result])
+  // Weighted scrolling while motion is on; the Motion switch turns it off and on live.
+  const motionOff = useMotionOff()
+  useEffect(() => {
+    if (motionOff) return undefined
+    startSmoothScroll()
+    return stopSmoothScroll
+  }, [motionOff])
+
+  const launch = useCallback((cfg, { hardened, keepBaseline } = {}) => {
+    // One press, one scan: a second click during the screen change does nothing.
+    if (launching.current) return
+    launching.current = true
+    setTimeout(() => { launching.current = false }, 1500)
+    stop.current?.()
+    setSource(null)
+    setConfig(cfg); setRows([]); setTotal(cfg.langs.length * cfg.categories.length * cfg.phrasings)
+    setScanError(''); setResult(null); setScanLive(false)
+    if (!keepBaseline) setBaseline(null)
+    go('live')
+    stop.current = runScan({
+      prompt: hardened ?? cfg.prompt, langs: cfg.langs, categories: cfg.categories,
+      phrasings: cfg.phrasings, model: cfg.model,
+      ...(hardened ? { extraction_reference: cfg.prompt } : {}),
+    }, {
+      onStart: ({ live }) => setScanLive(live),
+      onResult: ({ row, total: t }) => { setRows((r) => [...r, row]); if (t) setTotal(t) },
+      onDone: ({ result: res, report }) => { setResult({ ...res, report }); go('results', { replace: true }) },
+      onError: (e) => setScanError(e.message),
+    })
+  }, [go])
+
+  // The live board's state, derived from the rows that have arrived so far.
+  const scanLanguages = useMemo(
+    () => (meta && config ? meta.languages.filter((l) => config.langs.includes(l.code)) : []),
+    [meta, config],
+  )
+  const outcomes = useMemo(() => {
+    const m = {}
+    for (const r of rows) (m[r.lang] ||= []).push(r.error ? 'error' : r.broke ? 'broke' : 'held')
+    return m
+  }, [rows])
+
+  if (metaError && !meta) {
+    return (
+      <>
+        <Nav loaded={false} onHome={() => {}} showScan={false} view="error" />
+        <main data-surface="paper" className="paper mx-auto min-h-screen max-w-2xl px-5 pb-24 pt-36">
+          <h1 className="display text-5xl">PolyGuard can’t reach <span className="serif">its server.</span></h1>
+          <p className="mt-4 max-w-lg text-(--mute)">
+            The scan server isn’t answering. If you are running PolyGuard yourself, start it with{' '}
+            <code className="rounded bg-paper-2 px-1.5 py-0.5 text-ink">python -m uvicorn api.server:app --port 8000</code>{' '}
+            and try again.
+          </p>
+          <button type="button" onClick={loadMeta} className="btn btn-solid mt-8">Try again</button>
+        </main>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Nav
+        live={meta?.live} loaded={!!meta}
+        onHome={() => { stop.current?.(); go('landing') }}
+        onScan={() => go('setup')}
+        onMethod={() => go('method')}
+        showScan={view === 'landing' && !!meta}
+        view={view}
+      />
+      <Loader />
+      <div
+        aria-hidden="true"
+        className={`on-hi pointer-events-none fixed inset-0 z-50 grid place-items-center ${
+          wipe === 'idle' ? 'translate-y-full' : wipe === 'in' ? 'translate-y-0 transition-transform duration-[380ms] ease-[cubic-bezier(.7,0,.3,1)]' : '-translate-y-full transition-transform duration-[440ms] ease-[cubic-bezier(.7,0,.3,1)]'
+        }`}
+      >
+        <span className="font-serif text-[clamp(3rem,8vw,6rem)] leading-none">Poly<span className="display">Guard</span></span>
+      </div>
+      {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} onMethod={() => go('method')} />}
+      {view === 'method' && meta && <Method meta={meta} onStart={() => go('setup')} onBack={() => go('landing')} />}
+      {view === 'setup' && meta && (
+        <Setup
+          meta={meta} initial={config}
+          onBack={() => go('landing')}
+          onLaunch={(cfg) => launch(cfg)}
+          onUnlock={async () => { const m = await loadMeta(); return !!m?.live }}
+          onOpenFile={(r) => { setResult(r); setConfig(null); setBaseline(null); setSource({ kind: 'file' }); go('results') }}
+        />
+      )}
+      {view === 'live' && config && (
+        <LiveScan
+          languages={scanLanguages} outcomes={outcomes}
+          expected={config.categories.length * config.phrasings}
+          done={rows.length} total={total} broke={rows.filter((r) => r.broke).length}
+          recent={rows.slice(-4)} live={scanLive}
+          title={config.exampleName ? `the ${config.exampleName.toLowerCase()}` : 'your chatbot'}
+          error={scanError} onCancel={() => { stop.current?.(); go('setup') }}
+        />
+      )}
+      {(view === 'results' || view === 'shared') && result && (
+        <Results
+          result={result} baseline={baseline} config={config} source={source}
+          canShare={!!meta?.saving}
+          onAgain={() => { setSource(null); go('setup') }}
+          onMethod={() => go('method')}
+          onRescan={(hardened) => { setBaseline(result); launch(config, { hardened, keepBaseline: true }) }}
+        />
+      )}
+      {view === 'shared' && !result && (
+        <main data-surface="ink" className="ink mx-auto min-h-screen px-5 pb-24 pt-36">
+          <div className="mx-auto max-w-2xl">
+            {sharedError ? (
+              <>
+                <h1 className="display text-5xl">That link <span className="serif">has nothing behind it.</span></h1>
+                <p className="mt-4 text-(--mute)">{sharedError} Saved scans are removed after 30 days, or sooner if whoever saved one deleted it.</p>
+                <button type="button" onClick={() => go('landing')} className="btn btn-solid mt-8">Go to PolyGuard</button>
+              </>
+            ) : <p className="caption text-(--mute)">Opening the saved scan…</p>}
+          </div>
+        </main>
+      )}
+    </>
+  )
+}

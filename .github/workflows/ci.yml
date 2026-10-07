@@ -1,0 +1,98 @@
+# PolyGuard's own checks, on every push and every pull request, whatever changed.
+#
+# The other workflow (polyguard.yml) is the example for USERS: it scans a bot's
+# prompt with a real key and costs money, so it is scoped to prompt changes. This
+# one costs nothing and needs no key. It used to be the case that engine and site
+# changes skipped every check; now nothing reaches main without passing these.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  engine:
+    name: Engine, statistics and API
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      # Exact versions, every file hash checked: what passed here is what runs.
+      - run: pip install --require-hashes -r requirements.lock
+      - name: Attack bank
+        run: |
+          python generate_attack_bank.py
+          git diff --exit-code attack_bank.json   # regenerating must not change the pre-registered bank
+          python validate_bank.py
+          python linguistics.py
+          python expand_languages.py --check-stored   # every gate, on every stored machine translation
+      - run: python test_engine.py
+      - run: python test_stats_properties.py
+      - run: python api/test_api.py
+      - run: python verify_all.py
+      - run: python consistency.py
+      - run: python review_ingest.py --self-test
+      - run: python rehearsal.py
+      - name: Known vulnerabilities in the locked dependencies
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.lock --require-hashes
+
+  mutation:
+    name: The tests catch planted bugs in the statistics
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install --require-hashes -r requirements.lock
+      - run: python mutation_check.py
+
+  site:
+    name: Web app, in a real browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - working-directory: web
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          npm audit --audit-level=high
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install --require-hashes -r requirements.lock
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: End to end, with accessibility checks
+        run: python web/e2e/test_site.py
+
+  secrets:
+    name: No secrets in the history
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

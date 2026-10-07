@@ -95,9 +95,10 @@ bot does not understand, and those are opposite conclusions.
 
 > **Screen: click Fix it, show the hardened prompt, click Scan the hardened prompt.**
 
-Then it fixes it. PolyGuard writes targeted security rules for exactly the attack
-types that worked, and re-runs the whole scan against the hardened prompt to prove
-the holes actually closed."
+Then it hardens it. PolyGuard writes targeted security rules for exactly the attack
+types that worked, and re-runs the scan against the hardened prompt to check how
+many attacks still get through. Fewer getting through is progress on this test,
+not proof the bot is secure."
 
 ### 1:55 to 2:20, why it is not just a wrapper
 
@@ -195,11 +196,11 @@ of every flaw I found, and the list is longer than I expected.
 
 **6. What would you change in a 2.0?**
 Native speaker review. Right now the attack text for twenty languages was written
-by me and the rest is machine translated, and no language has been checked by
-somebody who actually speaks it. Published research shows machine translation
+by me, 53 more are machine translated and 14 are still to come, and only three languages, Spanish,
+Vietnamese and Arabic, have had feedback from somebody who actually speaks them. Published research shows machine translation
 quality is the biggest confound in this whole area, and that bad translations make
 a language look safer than it is. I built the export tool for review sheets, but
-getting real reviewers is the single change that would most improve the results.
+getting reviewers for every language is the single change that would most improve the results.
 
 ---
 

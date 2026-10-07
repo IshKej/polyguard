@@ -24,11 +24,20 @@ Hand-assigned tiers were used until 2026-09-23 and were wrong in both directions
 class-3 languages sat in BOTH mid and low, Basque (class 4) sat in low, and Telugu
 (class 1) sat in mid. That contaminates the variable the whole finding rests on.
 
-Known anomaly, deliberately NOT overridden: Joshi puts Kyrgyz in class 4, which
-does not match its actual standing. Hand-adjusting the independent variable to
-match intuition is exactly the freedom that lets a result be steered, so the
-published class is kept and the anomaly is named here instead. The capability
-controls exist to catch a language the model cannot really operate in.
+Transcription errors corrected 2026-10-05: the classes were first copied by hand,
+and four were wrong against the published file. Gujarati, Norwegian and Kyrgyz are
+class 1 there (they had been entered as 4) and Pashto is class 1 (entered as 2).
+The "Kyrgyz = 4 anomaly" named here earlier was one of those copying errors, not
+something in Joshi's data. To stop it happening again the file itself is kept in
+the repo, data/joshi_lang2tax.txt (read 2026-10-05, SHA-256 in JOSHI_FILE_SHA256),
+and verify_all.py checks every class below against it. Its class counts match
+Joshi's Table 1 exactly (2191, 222, 19, 28, 18, 7).
+
+Three names appear twice in the file with different classes: Slovenian
+("slovene" 0, "slovenian" 3), Sinhala ("sinhala" 0, "sinhalese" 1) and Haitian
+Creole ("haitian creole" 0, "haitian" 2). The catalog uses the entry whose name
+matches (slovenian, sinhalese, haitian); JOSHI_FILE_NAMES records the choice so it
+is visible rather than silent.
 
 Languages already hand-authored and verified in generate_attack_bank.py are marked
 authored=True here. expand_languages.py translates the rest through the Anthropic API and appends
@@ -40,7 +49,7 @@ CATALOG = {
     "en": {"name": "English",     "native": "English",          "tier": "high", "authored": True, "joshi": 5},
     "es": {"name": "Spanish",     "native": "Español",          "tier": "high", "authored": True, "joshi": 5},
     "hi": {"name": "Hindi",       "native": "हिन्दी",             "tier": "high", "authored": True, "joshi": 4},
-    "gu": {"name": "Gujarati",    "native": "ગુજરાતી",           "tier": "high",  "authored": True, "joshi": 4},
+    "gu": {"name": "Gujarati",    "native": "ગુજરાતી",           "tier": "low",   "authored": True, "joshi": 1},
     "zh": {"name": "Chinese",     "native": "中文",              "tier": "high", "authored": True, "joshi": 5},
     "tl": {"name": "Tagalog",     "native": "Tagalog",          "tier": "mid",  "authored": True, "joshi": 3},
     "vi": {"name": "Vietnamese",  "native": "Tiếng Việt",       "tier": "high",  "authored": True, "joshi": 4},
@@ -61,7 +70,7 @@ CATALOG = {
     # ---- European ----
     "nl": {"name": "Dutch",       "native": "Nederlands",       "tier": "high", "joshi": 4},
     "sv": {"name": "Swedish",     "native": "Svenska",          "tier": "high", "joshi": 4},
-    "no": {"name": "Norwegian",   "native": "Norsk",            "tier": "high", "joshi": 4},
+    "no": {"name": "Norwegian",   "native": "Norsk",            "tier": "low",  "joshi": 1},
     "da": {"name": "Danish",      "native": "Dansk",            "tier": "mid", "joshi": 3},
     "fi": {"name": "Finnish",     "native": "Suomi",            "tier": "high", "joshi": 4},
     "cs": {"name": "Czech",       "native": "Čeština",          "tier": "high", "joshi": 4},
@@ -87,11 +96,11 @@ CATALOG = {
     # ---- Middle East / Central Asia ----
     "he": {"name": "Hebrew",      "native": "עברית",             "tier": "mid", "joshi": 3},
     "fa": {"name": "Persian",     "native": "فارسی",             "tier": "high", "joshi": 4},
-    "ps": {"name": "Pashto",      "native": "پښتو",              "tier": "low", "joshi": 2},
+    "ps": {"name": "Pashto",      "native": "پښتو",              "tier": "low", "joshi": 1},
     "az": {"name": "Azerbaijani", "native": "Azərbaycan",       "tier": "low", "joshi": 1},
     "kk": {"name": "Kazakh",      "native": "Қазақ",            "tier": "mid", "joshi": 3},
     "uz": {"name": "Uzbek",       "native": "Oʻzbek",            "tier": "mid", "joshi": 3},
-    "ky": {"name": "Kyrgyz",      "native": "Кыргыз",           "tier": "high", "joshi": 4},
+    "ky": {"name": "Kyrgyz",      "native": "Кыргыз",           "tier": "low",  "joshi": 1},
     "tg": {"name": "Tajik",       "native": "Тоҷикӣ",           "tier": "low", "joshi": 1},
     "mn": {"name": "Mongolian",   "native": "Монгол",           "tier": "low", "joshi": 1},
     "ka": {"name": "Georgian",    "native": "ქართული",          "tier": "mid", "joshi": 3},
@@ -145,6 +154,34 @@ PENDING = [c for c, m in CATALOG.items() if not m.get("authored")]
 
 def tier_of(code: str) -> str:
     return CATALOG.get(code, {}).get("tier", "mid")
+
+
+# The published Joshi et al. mapping, kept in the repo so the classes above can be
+# checked against the source instead of trusted.
+JOSHI_FILE = "data/joshi_lang2tax.txt"
+JOSHI_FILE_SHA256 = "2e182e8f4bd9adb0bc04af2f74852d770581ac0b5a3609224ced7b08266d6dd2"
+
+# Catalog code -> the name(s) the file uses, where it is not simply the English
+# name in lowercase. Several entries means the file splits the language and every
+# entry must agree.
+JOSHI_FILE_NAMES = {
+    "zh": ["mandarin"], "no": ["norwegian (bokmål)", "norwegian (nynorsk)"],
+    "pa": ["eastern punjabi"], "ky": ["kirghiz"], "sl": ["slovenian"],
+    "si": ["sinhalese"], "ht": ["haitian"],
+}
+
+
+def joshi_file_classes(path: str | None = None) -> dict[str, list[int]]:
+    """Each catalog code's class(es) as read from the published file."""
+    from pathlib import Path
+    p = Path(path) if path else Path(__file__).parent / JOSHI_FILE
+    rows: dict[str, list[int]] = {}
+    for line in p.read_text(encoding="utf-8").splitlines():
+        name, _, cls = line.rpartition(",")
+        rows.setdefault(name.strip().lower(), []).append(int(cls))
+    return {code: [c for n in JOSHI_FILE_NAMES.get(code, [m["name"].lower()])
+                   for c in rows.get(n, [])]
+            for code, m in CATALOG.items()}
 
 
 if __name__ == "__main__":

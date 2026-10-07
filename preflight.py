@@ -148,9 +148,10 @@ def check_requirements() -> None:
 
     used = _third_party_imports()
     # Optional providers are imported lazily and documented as optional, so their
-    # absence from requirements is deliberate rather than a mistake.
-    # openpyxl builds reviewer spreadsheets; the deployed app never touches it.
-    optional = {"openai", "google", "openpyxl"}
+    # absence from requirements is deliberate rather than a mistake. (openpyxl is
+    # declared: CI runs the review tools. The deployed API installs from
+    # pyproject.toml, so it does not carry openpyxl either way.)
+    optional = {"openai", "google"}
     aliases = {"google": "google-genai"}
     missing = []
     for m in sorted(used):

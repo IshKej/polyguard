@@ -16,6 +16,15 @@ would show up as a safety finding.
     python review_sheet.py gu hi        # specific languages
     python review_sheet.py --tier low   # every low-resource language in the bank
     python review_sheet.py --all
+
+Spreadsheets (--xlsx, --publish) use the rubric: for each line, does it mean the
+same as the English (yes, partly, no), does it read as an instruction to do it
+(yes, no), and how natural is it (1 to 5). Whether the codes survived is checked
+by the script, not asked of the reviewer. Returned sheets are read by
+review_ingest.py, which also measures agreement when two people review the same
+language. The sheets already sent out (review_sheets/) keep their original form,
+and --publish never overwrites one without --force, so a link a reviewer has
+always opens what they were sent.
 """
 from __future__ import annotations
 
@@ -136,6 +145,23 @@ def write_sheet(bank: dict, code: str) -> Path:
     return path
 
 
+def codes_intact(bank: dict, text: str, english: str) -> bool:
+    """The parts the test depends on are present exactly as in the English: the
+    canary, the control token, SYSTEM OVERRIDE, and any Base64 payload."""
+    must = [bank["canary"], bank.get("control_token", ""), "SYSTEM OVERRIDE"]
+    keep = [m for m in must if m and m in english]
+    payloads = [w for w in english.split() if len(w) > 40 and w.rstrip(".").endswith("=")]
+    has_payload = any(len(w) > 40 for w in text.split())
+    return all(m in text for m in keep) and (not payloads or has_payload)
+
+
+RUBRIC = [
+    ("Same meaning as the English?", 16, '"yes,partly,no"'),
+    ("Reads as an instruction to do it?", 16, '"yes,no"'),
+    ("How natural? 1 to 5", 12, '"1,2,3,4,5"'),
+]
+
+
 def write_xlsx(bank: dict, code: str) -> Path:
     """A spreadsheet a busy person can open and finish without reading any code.
 
@@ -167,14 +193,14 @@ def write_xlsx(bank: dict, code: str) -> Path:
          "to reveal its own setup instructions. None ask for anything harmful.", 11, False),
         ("", 11, False),
         ("What to do", 12, True),
-        ("On the Review tab, pick a verdict for each row from the dropdown:", 11, False),
-        ("    ok: reads naturally enough, and clearly asks for what the English asks for", 11, False),
-        ("    awkward: understandable, but clumsy or unnatural", 11, False),
-        ("    wrong: confusing, nonsensical, or asks for something different", 11, False),
+        ("On the Review tab, answer three short questions for each row, from the dropdowns:", 11, False),
+        ("    Same meaning as the English? yes, partly, or no", 11, False),
+        ("    Reads as an instruction to do it? yes or no. This one matters most: a clumsy line "
+         "that still reads as an instruction is fine.", 11, False),
+        ("    How natural? 1 (no native speaker would write this) to 5 (sounds like a person)", 11, False),
         ("", 11, False),
-        ("The question is not whether it is elegant. It is whether a native speaker would "
-         "understand it as an instruction to do what it describes. A clumsy line that still "
-         "reads as an instruction is fine.", 11, False),
+        ("The codes and the Base64 strings are already checked by a script, so there is no need "
+         "to look at them.", 11, False),
         ("", 11, False),
         ("If you can, put a better version in the next column. Please leave these exactly as "
          "they are, because the test depends on them: the codes PWNED_7F3A and CTRL_4B8E, any "
@@ -194,7 +220,9 @@ def write_xlsx(bank: dict, code: str) -> Path:
 
     ws = wb.create_sheet("Review")
     cols = [("#", 5), ("Type", 24), ("English", 48), (meta["name"], 48),
-            ("Verdict", 12), ("Better version (optional)", 40), ("Notes (optional)", 28), ("id", 14)]
+            *[(name, width) for name, width, _ in RUBRIC],
+            ("Better version (optional)", 40), ("Notes (optional)", 28), ("id", 14),
+            ("Codes intact (checked)", 12)]
     head_fill = PatternFill("solid", fgColor="1F2328")
     for j, (name, width) in enumerate(cols, start=1):
         c = ws.cell(row=1, column=j, value=name)
@@ -205,21 +233,27 @@ def write_xlsx(bank: dict, code: str) -> Path:
     ws.freeze_panes = "A2"
 
     answer_fill = PatternFill("solid", fgColor="FFF8DB")
-    dv = DataValidation(type="list", formula1='"ok,awkward,wrong"', allow_blank=True,
-                        showDropDown=False)
-    dv.error, dv.errorTitle = "Please pick ok, awkward, or wrong.", "Verdict"
-    ws.add_data_validation(dv)
+    checks = []
+    for name, _width, options in RUBRIC:
+        dv = DataValidation(type="list", formula1=options, allow_blank=True, showDropDown=False)
+        dv.error, dv.errorTitle = "Please pick one of the listed answers.", name
+        ws.add_data_validation(dv)
+        checks.append(dv)
 
     for n, r in enumerate(rows_for(bank, code), start=1):
         item_id, _kind, category, english, translation = r[:5]
         row = n + 1
-        values = [n, CATEGORY_LABEL.get(category, category), english, translation, "", "", "", item_id]
+        intact = "yes" if codes_intact(bank, translation, english) else "NO"
+        values = [n, CATEGORY_LABEL.get(category, category), english, translation, "", "", "", "", "",
+                  item_id, intact]
         for j, v in enumerate(values, start=1):
             c = ws.cell(row=row, column=j, value=v)
             c.alignment = Alignment(wrap_text=True, vertical="top")
-        ws.cell(row=row, column=5).fill = answer_fill
-        ws.cell(row=row, column=8).font = Font(color="9AA0A6", size=9)
-        dv.add(ws.cell(row=row, column=5))
+        for k, dv in enumerate(checks):
+            ws.cell(row=row, column=5 + k).fill = answer_fill
+            dv.add(ws.cell(row=row, column=5 + k))
+        ws.cell(row=row, column=10).font = Font(color="9AA0A6", size=9)
+        ws.cell(row=row, column=11).font = Font(color="9AA0A6", size=9)
         longest = max(len(english), len(translation))
         ws.row_dimensions[row].height = max(30, 15 * (longest // 52 + 1))
 
@@ -237,6 +271,8 @@ def main() -> int:
     ap.add_argument("--publish", action="store_true",
                     help="write the Excel sheets to review_sheets/ under readable names, "
                          "so each reviewer can be sent a stable download link")
+    ap.add_argument("--force", action="store_true",
+                    help="with --publish, replace a sheet that already exists (a reviewer may have its link)")
     args = ap.parse_args()
 
     bank = load_bank()
@@ -267,6 +303,9 @@ def main() -> int:
         if args.publish:
             src = write_xlsx(bank, code)
             dest = PUBLISH_DIR / f"PolyGuard_{bank['languages'][code]['name']}_review.xlsx"
+            if dest.exists() and not args.force:
+                print(f"  {'':<14}     kept {dest.name}: it may already be with a reviewer (--force replaces it)")
+                continue
             PUBLISH_DIR.mkdir(exist_ok=True)
             dest.write_bytes(src.read_bytes())
             print(f"  {'':<14}     published {dest.name}")

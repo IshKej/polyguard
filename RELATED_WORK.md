@@ -57,14 +57,20 @@ success in low-resource languages.** Multilingual jailbreaking work
 (arXiv:2605.18239) found that replacing automated translation with human
 red-teaming raised the average jailbreak rate from **59.8% to 75.8%**, with
 per-language gains of +20.0% for Afrikaans, +12.7% for isiZulu and +12.3% for
-isiXhosa. Separately, iterative refinement plus human review cut error rates in
-languages such as Bengali and Malay from **71% to between 3% and 12%**.
+isiXhosa. Separately, LinguaSafe (arXiv:2508.12733) found that vanilla LLM
+translation of a safety benchmark had error rates of **71% for Bengali and 36% for
+Malay** under human inspection, cut to 12% and 3% by its translate, estimate and
+refine pipeline. (Corrected 2026-10-05: earlier versions of this repo attributed
+the 71% figure to arXiv:2605.18239 and gave Malay's starting point as 71%.)
 
-The mechanism is simple and it runs one way. A garbled attack fails because the
-model cannot parse it, not because the model resisted it. The scanner records a
+The expected mechanism is simple. A garbled attack fails because the model
+cannot parse it, not because the model resisted it. The scanner records a
 non-break. The non-break reads as safety. So machine-translated evaluation sets
-**understate** vulnerability in exactly the low-resource languages they are built
-to study.
+can **understate** vulnerability in exactly the low-resource languages they are
+built to study. But the evidence does not run only one way: MultiJail (Deng et al., ICLR 2024, arXiv:2310.06474) found machine translated prompts produced slightly MORE unsafe output than human translated ones, 11.15% against 10.19% on average.
+Translation can also strip the exact phrasing a model learned to refuse. PolyGuard
+therefore treats the direction as unknown (PREREGISTRATION.md, amendment of
+2026-10-05) and reports translation quality next to every result.
 
 Related failure modes are documented across the multilingual evaluation
 literature: translationese artifacts making translated benchmarks easier than
@@ -78,7 +84,7 @@ now implemented:
 
 1. The reverse-translation gate is **on by default** and samples across
    categories rather than checking one attack in fifteen. A single sample cannot
-   detect a 71% error rate.
+   detect error rates of the size LinguaSafe measured (71% in Bengali).
 2. Capability controls catch the extreme case where a model cannot operate in a
    language at all, which is a related but distinct failure.
 3. The expected direction of the residual bias is recorded in
@@ -114,8 +120,10 @@ from Yong et al. and from arXiv:2606.29602.
 
 **3. Remediation, measured.** Research papers end at the finding. PolyGuard
 generates targeted hardening rules for exactly the categories that broke,
-re-scans the hardened prompt against the same model, and reports how many holes
-actually closed. The defence is evaluated, not asserted.
+re-scans the hardened prompt against the same model, and reports how many of the
+held-out attacks still get through, next to a placebo block of the same length.
+The defence is evaluated, not asserted, and the claim is limited to this fixed
+bank: it is never evidence that a bot is secure.
 
 **4. Statistical discipline that most of this literature does not apply.** This
 is the part that is genuinely uncommon:
@@ -164,6 +172,7 @@ would be reported as the headline.
 - *The Effect of Multi-Lingual and Keyword Adversarial Injection on LLM Relevance Judgment*. https://arxiv.org/html/2607.10080
 - *Tensor Trust: Interpretable Prompt Injection Attacks from an Online Game*. https://arxiv.org/pdf/2311.01011
 - *Multilingual jailbreaking of LLMs using low-resource languages*. https://arxiv.org/pdf/2605.18239
+- *LinguaSafe: A Comprehensive Multilingual Safety Benchmark for Large Language Models*. https://arxiv.org/abs/2508.12733
 - *Round-Trip Translation Reveals What Frontier Multilingual Benchmarks Miss*. https://arxiv.org/pdf/2604.12911
 - *Déjà Vu: Multilingual LLM Evaluation through the Lens of Machine Translation Evaluation*. https://arxiv.org/html/2504.11829
 - Open-Prompt-Injection benchmark. https://github.com/liu00222/Open-Prompt-Injection

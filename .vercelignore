@@ -1,0 +1,17 @@
+# Never upload secrets. The API key lives in Vercel's environment settings.
+.streamlit/secrets.toml
+.env
+.env.*
+**/.secrets
+
+# Generated locally; Vercel installs and builds its own.
+web/node_modules
+web/dist
+.venv
+**/__pycache__
+*.pyc
+.vercel
+
+# Local working files that are not part of the app.
+review/
+*.bundle
