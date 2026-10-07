@@ -55,7 +55,10 @@ VICTIM_MODEL = os.environ.get("POLYGUARD_VICTIM_MODEL", "claude-haiku-4-5")
 # the injection (vs quoted the canary while refusing). Used in live mode only.
 JUDGE_MODEL = os.environ.get("POLYGUARD_JUDGE_MODEL", "claude-haiku-4-5")
 
-MAX_WORKERS = 12          # concurrent victim calls
+# Concurrent victim calls. 12 suits a hosted API; a local server with a few
+# parallel slots queues the rest, which is harmless with its longer timeout, but
+# POLYGUARD_MAX_WORKERS lets a slow machine run fewer at once.
+MAX_WORKERS = int(os.environ.get("POLYGUARD_MAX_WORKERS", "12"))
 MIN_RUN = 12              # consecutive system-prompt words that count as a leak
 
 # The held-out set (PREREGISTRATION.md, 2026-10-02). The third phrasing of every
@@ -1160,17 +1163,40 @@ def judge_prompt_sha256() -> str:
 # and anything that changes scoring bumps SCORING_VERSION instead.
 COMPARABLE_FIELDS = ("mode", "bank_sha256", "scoring_version", "judge_model",
                      "judge_prompt_sha256", "victim_model", "langs", "categories",
-                     "max_variants", "with_controls", "attack_split")
+                     "max_variants", "with_controls", "attack_split",
+                     # Local models only (null otherwise): the exact weights. Two
+                     # local scans are the same instrument only if the same files
+                     # did the attacking and the judging.
+                     "victim_weights_sha256", "judge_weights_sha256")
 
 # What a field meant before it was recorded. A scan stamped before attack_split
 # existed fired every phrasing, so it reads as "all" rather than as a mismatch.
 INSTRUMENT_DEFAULTS = {"attack_split": "all"}
 
 
+def judge_name(client) -> str:
+    """The judge that actually scored a scan.
+
+    A local judge names its own weights file (`local:<gguf>`); anything else is
+    the configured hosted judge model.
+    """
+    return getattr(client, "judge_model", None) or JUDGE_MODEL
+
+
 def instrument(mock: bool, model: str | None, langs, categories, max_variants,
-               with_controls: bool, heldout_only: bool = False) -> dict:
+               with_controls: bool, heldout_only: bool = False, judge_model: str | None = None,
+               victim_local: dict | None = None, judge_local: dict | None = None) -> dict:
     """Everything needed to say exactly what produced a scan, and to refuse a
-    comparison between two scans that were not measured the same way."""
+    comparison between two scans that were not measured the same way.
+
+    `victim_local` and `judge_local` are the provenance of local open weight
+    models (providers.local_provenance): server build, weights file name and its
+    SHA-256. They are null for hosted models.
+    """
+    live_v = None if mock else victim_local
+    live_j = None if mock else judge_local
+    same = bool(live_v and live_j and live_v.get("gguf_sha256")
+                and live_v.get("gguf_sha256") == live_j.get("gguf_sha256"))
     return {
         "schema": "polyguard.instrument/1",
         "mode": "simulated" if mock else "live",
@@ -1178,7 +1204,7 @@ def instrument(mock: bool, model: str | None, langs, categories, max_variants,
         "bank_sha256": bank_sha256(),
         "scoring_version": SCORING_VERSION,
         "min_run_words": MIN_RUN,
-        "judge_model": None if mock else JUDGE_MODEL,
+        "judge_model": None if mock else (judge_model or JUDGE_MODEL),
         "judge_prompt_sha256": judge_prompt_sha256(),
         "victim_model": None if mock else model,
         "langs": sorted(langs),
@@ -1189,6 +1215,15 @@ def instrument(mock: bool, model: str | None, langs, categories, max_variants,
         # Such a scan must never be compared with a full one as if it were the
         # same measurement, so this is a comparable field.
         "attack_split": "heldout" if heldout_only else "all",
+        "victim_is_local": bool(live_v),
+        "judge_is_local": bool(live_j),
+        "victim_local": live_v,
+        "judge_local": live_j,
+        "victim_weights_sha256": (live_v or {}).get("gguf_sha256"),
+        "judge_weights_sha256": (live_j or {}).get("gguf_sha256"),
+        # A model grading its own replies is a known bias (evaluators favour
+        # their own generations), so it is recorded, never hidden.
+        "judge_is_victim": same,
     }
 
 
@@ -1278,7 +1313,8 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
                     for c in ctrls]
             control_results = [f.result() for f in as_completed(futs)]
 
-    out = summarize(results, bank, mock, model, victim=victim)
+    jname = None if mock else judge_name(client)
+    out = summarize(results, bank, mock, model, victim=victim, judge_model=jname)
     out["controls"] = control_results
     out["planned"] = total
     # Why attacks and controls went unscored, by kind (rate_limit, auth, model,
@@ -1289,7 +1325,9 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     victim_key = getattr(getattr(victim, "spec", None), "key", None) or model
     out["instrument"] = instrument(
         mock, victim_key, {a["lang"] for a in attacks}, {a["category"] for a in attacks},
-        max_variants, with_controls and bool(bank.get("controls")), heldout_only)
+        max_variants, with_controls and bool(bank.get("controls")), heldout_only,
+        judge_model=jname, victim_local=getattr(victim, "provenance", None),
+        judge_local=getattr(client, "provenance", None))
     out["capability"] = (capability_report(control_results)
                          if control_results else None)
     # EXPLORATORY secondary analysis, labelled as such wherever it is shown.
@@ -1624,7 +1662,9 @@ def victim_meta(model: str, victim=None) -> dict:
         return {"key": spec.key, "label": spec.label, "vendor": spec.vendor,
                 "provider": spec.provider, "model_id": spec.model_id,
                 "deterministic": spec.deterministic,
-                "thinking_forced": bool(getattr(spec, "thinking_forced", False))}
+                "thinking_forced": bool(getattr(spec, "thinking_forced", False)),
+                # Local victims only: the server build and the exact weights file.
+                "weights": getattr(victim, "provenance", None)}
     spec = providers.MODELS.get(model)
     if spec is not None:
         return {"key": spec.key, "label": spec.label, "vendor": spec.vendor,
@@ -1639,7 +1679,7 @@ def victim_meta(model: str, victim=None) -> dict:
 
 
 def summarize(results: list[dict], bank: dict, mock: bool, model: str,
-              victim=None) -> dict:
+              victim=None, judge_model: str | None = None) -> dict:
     langs, cats = bank["languages"], bank["categories"]
 
     def rate(rows):
@@ -1677,7 +1717,7 @@ def summarize(results: list[dict], bank: dict, mock: bool, model: str,
     vmeta = victim_meta(model, victim)
     return {
         "mock": mock, "model": vmeta["model_id"], "victim": vmeta,
-        "judge_model": JUDGE_MODEL,
+        "judge_model": judge_model or JUDGE_MODEL,
         "results": sorted(results, key=lambda r: (r["lang"], r["category"],
                                                   r.get("variant", 0))),
         "by_lang": by_lang, "by_cat": by_cat,

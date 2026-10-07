@@ -331,10 +331,17 @@ def cmd_scan(args) -> int:
 
     victim, client = None, None
     if not args.mock:
-        client = providers.judge_client()
+        try:
+            client = providers.judge_client()
+        except Exception as e:
+            # A local judge that is configured but not running. Never fall back
+            # to anything else: the judge is part of the instrument.
+            print(f"The configured judge is not reachable: {e}", file=sys.stderr)
+            return 2
         if client is None:
-            print("No ANTHROPIC_API_KEY found. Re-run with --mock to try the "
-                  "pipeline offline, or set the key for a real scan.",
+            print("No judge is configured. Set ANTHROPIC_API_KEY, or run a local "
+                  "judge (POLYGUARD_JUDGE_BACKEND=local, see docs/quickstart.md), "
+                  "or re-run with --mock to try the pipeline offline.",
                   file=sys.stderr)
             return 2
         try:
@@ -365,8 +372,18 @@ def cmd_scan(args) -> int:
     payload = scan_payload(out, prompt, args, redact_replies=args.redact_replies)
 
     # A simulated run attacked nothing, so it names no model.
-    victim = "none (simulated run)" if payload.get("mock") else payload["model"]
+    vm = payload.get("victim") or {}
+    victim = ("none (simulated run)" if payload.get("mock") else
+              vm.get("label") if vm.get("provider") == "local" else payload["model"])
     print(f"\nPolyGuard {VERSION}  victim: {victim}")
+    inst = payload.get("instrument") or {}
+    if not payload.get("mock") and (inst.get("victim_is_local") or inst.get("judge_is_local")):
+        print(f"  judge: {payload.get('judge_model')}")
+        print("  NOTE: a local open weight model on this machine, not a production "
+              "chatbot. These numbers describe that model only.")
+        if inst.get("judge_is_victim"):
+            print("  NOTE: the judge is the victim model itself, which is known to "
+                  "favour its own replies. Use a second model for real results.")
     print_summary(out)
 
     exit_code = 0
@@ -561,7 +578,12 @@ def write_bundle(folder: Path, payload: dict, prompt: str, args) -> None:
         "prompt_sha256": payload["prompt_sha256"],
         "prompt_included": bool(args.bundle_include_prompt),
         "environment": {"python": platform.python_version(), "platform": platform.platform(),
-                        "anthropic": version_of("anthropic"), "openai": version_of("openai")},
+                        "anthropic": version_of("anthropic"), "openai": version_of("openai"),
+                        # Local runs: which llama-server build served each model.
+                        "victim_server": ((payload.get("instrument") or {}).get("victim_local")
+                                          or {}).get("server_build"),
+                        "judge_server": ((payload.get("instrument") or {}).get("judge_local")
+                                         or {}).get("server_build")},
         "files": {p.name: _sha256(p) for p in files},
         "how_to_check": [
             "git checkout <instrument.git_commit>",

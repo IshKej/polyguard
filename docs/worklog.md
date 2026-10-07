@@ -7,6 +7,19 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-07** Merged `sprint/local-models`: a `local` victim and local LLM judge
+  through llama-server (`C:\dev\llm\`, Qwen3.5 4B victim, Gemma 4 E2B judge,
+  both Apache 2.0), `rejudge.py` for a second judge with kappa, and the first real
+  scans: four example bots on the 20 language bank, `results/local/2026-10-06/`.
+  Judges disagreed (kappa 0.17 to 0.30), mostly over replies that translated an
+  injected line; an assisted review (not yet checked by Ishaan) found 4 real breaks
+  in 1197. Controls failed even in English for every example bot. Logged in the
+  preregistration as pilots, not the study. Fixed: share links refused genuine
+  results after the browser turned 1.0 into 1 (AUDIT 76). Suites: test_engine 239,
+  verify_all 232, API 92, e2e 21. Open for Ishaan: check the 4 breaks and the
+  translation replies, the judge wording for translated injections, a bot prompt
+  that accepts the controls in English, the 4 defence and stats choices.
+
 - **2026-10-07** Merged `sprint/translation-quality`: GlotLID v3 language ID and
   LaBSE similarity for all 73 languages in `translation_quality.json`
   (`tq_report.py`; rebuild needs the local venv `C:\dev\llm\tq-venv`). Shown
@@ -136,7 +149,7 @@ the web app and hosting.
 
 ## In progress
 
-- **PAUSED 2026-10-06. Resume here.** Main is at the stats merge, CI green.
+- **(Resolved 2026-10-07, all four branches merged.) Was: PAUSED 2026-10-06.** Main is at the stats merge, CI green.
   Merged and done: defences, stats. Still on branches, paused with WIP commits:
   `sprint/local-models` (`C:\dev\pg-wt\local-models`) and
   `sprint/translation-quality` (`C:\dev\pg-wt\translation-quality`). To resume:

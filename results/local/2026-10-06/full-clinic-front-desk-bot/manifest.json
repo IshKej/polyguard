@@ -1,0 +1,95 @@
+{
+  "schema": "polyguard.bundle/1",
+  "generated_at": "2026-10-07T07:13:53+00:00",
+  "mode": "live",
+  "command": "python cli.py scan --quiet --prompt C:/dev/llm/prompts/clinic-front-desk-bot.txt --model local --bundle results/local/2026-10-06/full-clinic-front-desk-bot --bundle-include-prompt",
+  "instrument": {
+    "schema": "polyguard.instrument/1",
+    "mode": "live",
+    "git_commit": "2f7145cba431025b15c8e66f0aaebf18e33ef18b-dirty",
+    "bank_sha256": "3d665ef61a4a9dde8cc125e1c9fdb4561621db2e7cf9b7b1d60ca6e95993dff9",
+    "scoring_version": "1.1",
+    "min_run_words": 12,
+    "judge_model": "local:gemma-4-E2B-it-Q4_K_M.gguf",
+    "judge_prompt_sha256": "5cf308cad7c728ccddb9b03cbe31f201f521a7606a326e0af0d09be6842a18a3",
+    "victim_model": "local",
+    "langs": [
+      "ar",
+      "de",
+      "el",
+      "en",
+      "es",
+      "fr",
+      "gu",
+      "hi",
+      "id",
+      "it",
+      "ja",
+      "ko",
+      "pl",
+      "pt",
+      "ru",
+      "tl",
+      "tr",
+      "uk",
+      "vi",
+      "zh"
+    ],
+    "categories": [
+      "indirect_injection",
+      "instruction_override",
+      "obfuscated_payload",
+      "role_play_jailbreak",
+      "system_prompt_extraction"
+    ],
+    "max_variants": 3,
+    "with_controls": true,
+    "victim_is_local": true,
+    "judge_is_local": true,
+    "victim_local": {
+      "backend": "llama.cpp llama-server",
+      "url": "http://127.0.0.1:8080",
+      "name": "qwen3.5-4b",
+      "gguf_file": "Qwen3.5-4B-Q4_K_M.gguf",
+      "gguf_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+      "gguf_sha256_missing_because": null,
+      "server_build": "b11435-43fe9c642",
+      "n_ctx": 2048,
+      "parallel_slots": 4
+    },
+    "judge_local": {
+      "backend": "llama.cpp llama-server",
+      "url": "http://127.0.0.1:8081",
+      "name": "gemma-4-e2b",
+      "gguf_file": "gemma-4-E2B-it-Q4_K_M.gguf",
+      "gguf_sha256": "740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8",
+      "gguf_sha256_missing_because": null,
+      "server_build": "b11435-43fe9c642",
+      "n_ctx": 2048,
+      "parallel_slots": 2
+    },
+    "victim_weights_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+    "judge_weights_sha256": "740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8",
+    "judge_is_victim": false
+  },
+  "prompt_sha256": "2d4616a43532a6179c0a53b7151047c4bcc54a8e964850e039e202e031c9781b",
+  "prompt_included": true,
+  "environment": {
+    "python": "3.14.3",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "anthropic": "0.86.0",
+    "openai": null,
+    "victim_server": "b11435-43fe9c642",
+    "judge_server": "b11435-43fe9c642"
+  },
+  "files": {
+    "prompt.txt": "2d4616a43532a6179c0a53b7151047c4bcc54a8e964850e039e202e031c9781b",
+    "report.html": "a0b627b8234dab947c04935d906ceba4cf316dbd090d536b14fdda61a3d4893a",
+    "scan.json": "d74497955e8fdc81fd7a050adc1d6843b191eb279b79fd171733817d17316fa1"
+  },
+  "how_to_check": [
+    "git checkout <instrument.git_commit>",
+    "python -c \"import engine; print(engine.bank_sha256())\"   # must equal instrument.bank_sha256",
+    "python cli.py replay scan.json   # recomputes every rate and test from the evidence"
+  ]
+}

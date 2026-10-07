@@ -909,6 +909,249 @@ check("the printed table and file never claim security",
       "not evidence that the bot is secure" in _buf.getvalue()
       and "never evidence of security" in _pay["claim"])
 
+# ---------------------------------------------------------------------------
+# The local provider (llama-server), against a fake HTTP server. No GPU, no
+# model, no network: a stand-in that speaks the same JSON, records every request
+# and can be told to fail in each way a real server fails.
+# ---------------------------------------------------------------------------
+import hashlib as _hl  # noqa: E402
+import json as _json  # noqa: E402
+import os as _os  # noqa: E402
+import tempfile as _tf  # noqa: E402
+import threading as _th  # noqa: E402
+import time as _time  # noqa: E402
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import cli as _cli  # noqa: E402
+import report_html as _rh  # noqa: E402
+
+_weights_file = _os.path.join(_tf.mkdtemp(), "fake-model-Q4_K_M.gguf")
+Path(_weights_file).write_bytes(b"GGUF fake weights for the test suite")
+_WEIGHTS_SHA = _hl.sha256(Path(_weights_file).read_bytes()).hexdigest()
+_BANK = engine.load_bank()
+_FAKE = {"victim": "tokens", "judge": "yes", "requests": []}
+
+
+class _FakeLlama(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def _send(self, code, obj):
+        raw = _json.dumps(obj).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def do_GET(self):
+        if self.path == "/health":
+            return self._send(200, {"status": "ok"})
+        if self.path == "/props":
+            return self._send(200, {"model_path": _weights_file, "build_info": "b0-fake",
+                                    "total_slots": 2,
+                                    "default_generation_settings": {"n_ctx": 2048}})
+        return self._send(404, {"error": "not found"})
+
+    def do_POST(self):
+        body = _json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        _FAKE["requests"].append(body)
+        if self.path != "/v1/chat/completions":
+            return self._send(404, {"error": "not found"})
+        if "response_format" in body:                      # a judge call
+            mode = _FAKE["judge"]
+            if mode == "http400":
+                return self._send(400, {"error": "bad grammar"})
+            if mode == "slow":
+                _time.sleep(1.0)
+            text = {"yes": '{"complied": true}', "no": '{"complied": false}',
+                    "empty": ""}.get(mode, '{"complied": true}')
+            finish = "stop"
+        else:                                              # a victim call
+            mode = _FAKE["victim"]
+            if mode == "http429":
+                return self._send(429, {"error": "busy"})
+            if mode == "truncated":
+                text, finish = "", "length"
+            elif mode == "reasoning":
+                return self._send(200, {"choices": [{"message": {
+                    "role": "assistant", "content": "", "reasoning_content": "Thinking Process: ..."},
+                    "finish_reason": "length"}]})
+            else:
+                # Both tokens, so every canary attack and every control reaches
+                # the judge, which is the path under test.
+                text = f"{_BANK['canary']} {_BANK.get('control_token', 'CTRL_4B8E')}"
+                finish = "stop"
+        return self._send(200, {"choices": [{"message": {"role": "assistant", "content": text},
+                                             "finish_reason": finish}]})
+
+
+class _QuietServer(ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        pass                         # the timeout test hangs up on purpose
+
+
+_srv = _QuietServer(("127.0.0.1", 0), _FakeLlama)
+_th.Thread(target=_srv.serve_forever, daemon=True).start()
+_URL = f"http://127.0.0.1:{_srv.server_address[1]}"
+_ENV_KEYS = ("POLYGUARD_LOCAL_URL", "POLYGUARD_LOCAL_MODEL", "POLYGUARD_JUDGE_BACKEND",
+             "POLYGUARD_JUDGE_URL", "POLYGUARD_JUDGE_LOCAL_MODEL", "ANTHROPIC_API_KEY")
+_saved_env = {k: _os.environ.pop(k, None) for k in _ENV_KEYS}
+_saved_dotenv = _pv._DOTENV
+_pv._DOTENV = {}                     # a developer's .env must not leak into the tests
+try:
+    _ls = _pv.local_spec()
+    check("local victim is unconfigured, not probed, until POLYGUARD_LOCAL_URL is set",
+          _pv.model_status(_ls)["ready"] is False and _pv.model_status(_ls)["has_key"] is False)
+    _os.environ.update({"POLYGUARD_LOCAL_URL": _URL + "/v1", "POLYGUARD_LOCAL_MODEL": "fake-4b"})
+    _ls = _pv.local_spec()
+    check("the local victim is labelled as a local open weight model, not a production chatbot",
+          _ls.label == "local open-weight model fake-4b, not a production chatbot"
+          and _ls.provider == "local" and "local" in _pv.MODELS)
+    check("a local victim takes temperature 0 but is never reported as bit for bit repeatable",
+          _ls.supports_temperature and not _ls.deterministic)
+    check("a running local server makes the local victim ready",
+          _pv.model_status(_ls)["ready"] is True)
+
+    _v = _pv.build_victim("local")
+    check("the local victim records the weights file and its real SHA-256 from the server",
+          _v.provenance["gguf_file"] == "fake-model-Q4_K_M.gguf"
+          and _v.provenance["gguf_sha256"] == _WEIGHTS_SHA
+          and _v.provenance["server_build"] == "b0-fake")
+    _FAKE["requests"].clear()
+    _v.complete("SYSTEM PROMPT", "USER TEXT")
+    _rq = _FAKE["requests"][-1]
+    check("the local victim request: system then user, temperature 0, thinking off, 300 token cap",
+          _rq["messages"] == [{"role": "system", "content": "SYSTEM PROMPT"},
+                              {"role": "user", "content": "USER TEXT"}]
+          and _rq["temperature"] == 0 and _rq["max_tokens"] == 300
+          and _rq["chat_template_kwargs"] == {"enable_thinking": False}
+          and "response_format" not in _rq)
+    _FAKE["victim"] = "truncated"
+    check("a local victim cut off before answering raises instead of reading as a refusal",
+          _raises(lambda: _v.complete("S", "U")))
+    _FAKE["victim"] = "reasoning"
+    check("a local model that reasoned before answering is refused, not scored",
+          _raises(lambda: _v.complete("S", "U")))
+    _FAKE["victim"] = "tokens"
+
+    check("no judge without a key or an explicit local judge: never a keyword fallback",
+          _pv.judge_client() is None)
+    _os.environ["POLYGUARD_JUDGE_BACKEND"] = "local"
+    _jc = _pv.judge_client()
+    check("POLYGUARD_JUDGE_BACKEND=local gives an LLM judge that names its weights file",
+          isinstance(_jc, _pv.LocalJudgeClient)
+          and _jc.judge_model == "local:fake-model-Q4_K_M.gguf"
+          and engine.judge_name(_jc) == "local:fake-model-Q4_K_M.gguf")
+    _FAKE["requests"].clear()
+    check("the local judge returns the verdict through the unchanged engine judge",
+          engine.llm_judge_compliance(_jc, "some reply", "CANARY") is True)
+    _jr = _FAKE["requests"][-1]
+    check("the local judge is schema constrained with the engine's own schema, thinking off",
+          _jr["response_format"]["json_schema"]["schema"] == engine._JUDGE_SCHEMA
+          and _jr["temperature"] == 0 and _jr["chat_template_kwargs"] == {"enable_thinking": False}
+          and _jr["messages"][0]["role"] == "system" and "CANARY" in _jr["messages"][0]["content"])
+
+    _ls_out = engine.scan(SP, langs=["en"], victim=_v, client=_jc, mock=False, max_variants=1)
+    _inst = _ls_out["instrument"]
+    _canary_attacks = [r for r in _ls_out["results"] if r["goal"] != "extract"]
+    check("a local scan runs end to end: every canary attack judged, no errors",
+          _ls_out["n_errors"] == 0 and _canary_attacks
+          and all(r["broke"] for r in _canary_attacks)
+          and all(c["followed"] and not c["error"] for c in _ls_out["controls"]))
+    check("the instrument records that victim and judge are local, with file names and hashes",
+          _inst["mode"] == "live" and _inst["victim_is_local"] and _inst["judge_is_local"]
+          and _inst["victim_local"]["gguf_file"] == "fake-model-Q4_K_M.gguf"
+          and _inst["victim_weights_sha256"] == _WEIGHTS_SHA
+          and _inst["judge_weights_sha256"] == _WEIGHTS_SHA
+          and _inst["judge_model"] == "local:fake-model-Q4_K_M.gguf"
+          and _ls_out["judge_model"] == _inst["judge_model"])
+    check("a model judging its own replies is recorded, not hidden",
+          _inst["judge_is_victim"] is True)
+    check("the scan's victim record carries the local weights",
+          _ls_out["victim"]["provider"] == "local"
+          and _ls_out["victim"]["weights"]["gguf_sha256"] == _WEIGHTS_SHA
+          and _ls_out["victim"]["deterministic"] is False)
+    _other = {**_inst, "victim_weights_sha256": "0" * 64}
+    check("two local scans with different weights files are refused as not comparable",
+          any(d.startswith("victim_weights_sha256")
+              for d in _cli.instrument_differences({"instrument": _inst}, {"instrument": _other})))
+    _html = _rh.build_report({**_cli.scan_payload(
+        _ls_out, SP, type("A", (), {})()), "generated_at": "t"})
+    check("the report says local open weight model, not a production chatbot, and names the weights",
+          "not a production chatbot" in _html and "fake-model-Q4_K_M.gguf" in _html
+          and "judged its own replies" in _html)
+
+    # Judge failures are missing data. Never a break, never a keyword guess.
+    for _mode, _kind in (("http400", "bad_request"), ("empty", "other")):
+        _FAKE["judge"] = _mode
+        _bad = engine.scan(SP, langs=["en"], categories=["instruction_override"],
+                           victim=_v, client=_jc, mock=False, max_variants=1, with_controls=False)
+        _r = _bad["results"][0]
+        check(f"a local judge failure ({_mode}) is an unscored error, not a break or a guess",
+              _r["error"] and _r["error_stage"] == "judge" and _r["broke"] is False
+              and _r["error_kind"] == _kind and _bad["n_errors"] == 1)
+    _FAKE["judge"] = "no"
+    _ok = engine.scan(SP, langs=["en"], categories=["instruction_override"],
+                      victim=_v, client=_jc, mock=False, max_variants=1, with_controls=False)
+    check("a reply the local judge calls a refusal is a hold, even with the canary in it",
+          _ok["n_errors"] == 0 and _ok["n_broke"] == 0)
+    _FAKE["judge"] = "yes"
+
+    # Error kinds, the same vocabulary as the hosted vendors.
+    _FAKE["victim"] = "http429"
+
+    def _kind_of(fn):
+        try:
+            fn()
+        except Exception as e:      # noqa: BLE001
+            return _pv.classify_error(e)
+        return None
+    check("a local 429 is a rate limit", _kind_of(
+        lambda: _pv._local_request(_URL, "/v1/chat/completions", {"messages": []},
+                                   retries=0)) == "rate_limit")
+    _FAKE["victim"] = "tokens"
+    check("a missing endpoint is a model error", _kind_of(
+        lambda: _pv._local_request(_URL, "/nope", retries=0)) == "model")
+    _FAKE["judge"] = "slow"
+    check("a local call past its timeout is a timeout", _kind_of(
+        lambda: _pv._local_request(_URL, "/v1/chat/completions",
+                                   {"response_format": {}}, timeout=0.2)) == "timeout")
+    _FAKE["judge"] = "yes"
+    _srv.shutdown()
+    _srv.server_close()
+    # A port that accepts and hangs up at once. A closed port would do too, but
+    # Windows takes two seconds to refuse a connection, and this suite stays fast.
+    import socket as _sock  # noqa: E402
+    _hangup = _sock.socket()
+    _hangup.bind(("127.0.0.1", 0))
+    _hangup.listen(16)
+
+    def _hang_up_forever():
+        while True:
+            try:
+                _hangup.accept()[0].close()
+            except OSError:
+                return
+    _th.Thread(target=_hang_up_forever, daemon=True).start()
+    _dead = f"http://127.0.0.1:{_hangup.getsockname()[1]}"
+    _os.environ["POLYGUARD_LOCAL_URL"] = _dead
+    check("a server that drops the connection is a network error, after bounded retries", _kind_of(
+        lambda: _pv._local_request(_dead, "/health", retries=1)) == "network")
+    check("and the local victim then reports itself not ready instead of failing a scan",
+          _pv.model_status(_pv.local_spec())["ready"] is False
+          and _raises(lambda: _pv.build_victim("local")))
+    _os.environ["POLYGUARD_JUDGE_URL"] = _dead
+    check("a configured local judge that is down raises rather than quietly vanishing",
+          _raises(_pv.judge_client))
+finally:
+    for _k, _val in _saved_env.items():
+        _os.environ.pop(_k, None)
+        if _val is not None:
+            _os.environ[_k] = _val
+    _pv._DOTENV = _saved_dotenv
+
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}")

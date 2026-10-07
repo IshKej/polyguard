@@ -10,8 +10,21 @@ Deadline: **Congressional App Challenge, 26 October 2026.**
 
 Built, audited, verified offline, and **live at https://polyguard-ten.vercel.app**
 (Ishaan's Vercel account, with a Supabase database for share links, game answers
-and the spend guard). **No live scan has ever run.** Every number in the app today
-is from a language-independent mock. The API key is the single gate on the
+and the spend guard). **No live scan against a production chatbot or a paid API
+has ever run.** Every number in the app today is from a language-independent mock.
+
+**2026-10-06: first real scans, local only.** The four `examples.py` bots were
+scanned in all 20 bank languages against a local open weight model (Qwen3.5 4B
+Q4_K_M via llama.cpp on this laptop's GPU), judged by a second local model
+(Gemma 4 E2B), at zero cost. Bundles, second judge passes and an assisted review (not yet checked by Ishaan) of
+every break: `results/local/2026-10-06/`; setup and the full log:
+`docs/progress/local-models.md`. What they show: the whole pipeline (adapter,
+LLM judge, controls, statistics, report, replay) works on real model output,
+and how that one small model behaved. What they cannot show: anything about
+production chatbots, anything about low resource languages (Gujarati is the only
+one), or a trustworthy break rate, because the two judges agreed poorly (kappa
+0.17 to 0.30) and most judged breaks were the bot faithfully translating a quoted
+injection. By hand, 4 of 1197 scored attacks were real breaks. The API key is the single gate on the
 research; `python setup_key.py` plugs it in everywhere at once.
 
 **2026-10-02:** Spanish and Vietnamese native speaker feedback received and
@@ -34,8 +47,8 @@ checked exactly and only catches total collapse (see the decisions list below).
 python generate_attack_bank.py   # rebuild corpus       -> 1095 attacks + 438 controls
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
-python test_engine.py            # unit, a few seconds -> 177/177
-python verify_all.py             # full battery        -> 225/225
+python test_engine.py            # unit, a few seconds -> 239/239
+python verify_all.py             # full battery        -> 232/232
 python api/test_api.py           # web API             -> 90/90
 python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 21/21
 python test_stats_properties.py  # 32 properties of the statistics on random inputs -> 32/32
@@ -110,7 +123,8 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 |---|---|
 | `app.py` | Streamlit UI and report |
 | `engine.py` | Scan engine, break detection, all statistics |
-| `providers.py` | Victim models across vendors; judge held fixed |
+| `providers.py` | Victim models across vendors; judge held fixed; `local` victim and judge via llama-server |
+| `rejudge.py` | Second judge over a saved scan: agreement, kappa, every disagreement |
 | `defenses.py` | Remediation: scan to hardened prompt |
 | `generate_attack_bank.py` | Builds the 20 author-written languages + controls |
 | `expand_languages.py` | Machine-translates the other 67, with a verification gate |
@@ -197,7 +211,7 @@ gate is on by default and native review is tracked rather than waved off.
 | Capability controls | 438 (6 per language) |
 | Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
 | Verification checks | 230 |
-| Unit tests | 212 (every public engine function) |
+| Unit tests | 239 (every public engine function) |
 | Audit findings | 75 across 19 rounds (74 fixed; 62, cancellation, open and assigned) |
 | Native speaker feedback integrated | 3 of 20 (Spanish, Vietnamese, Arabic); Portuguese pending; none validated |
 | Live scans ever run | 0 |
