@@ -341,6 +341,45 @@ _need = engine.languages_needed(p_low=0.5, p_high=0.15, n_sims=120, max_langs=20
 check("languages_needed reports a design within the search ceiling",
       _need["n_per_tier"] is None or _need["n_per_tier"] <= 20)
 
+# Languages in one tier do not share one true rate. Leaving that spread out made
+# the minimum detectable gap 10% to 15% too small (power_check.py), so the
+# default now carries it, and a model without it must report MORE power.
+_pw_spread = engine.power_simulation(38, 25, 15, 0.40, 0.30, n_sims=400)
+_pw_flat = engine.power_simulation(38, 25, 15, 0.40, 0.30, n_sims=400, lang_sd=0.0)
+check("power_simulation models spread between languages by default, and it lowers power",
+      engine.LANG_SD > 0 and _pw_spread["lang_sd"] == engine.LANG_SD
+      and _pw_spread["power"] < _pw_flat["power"] - 0.10)
+check("the spread keeps each tier's expected rate where it was asked to be",
+      all(abs(engine._mean_rate_logit_normal(engine._logit_location(p, 0.5), 0.5) - p) < 1e-6
+          for p in (0.02, 0.15, 0.30, 0.70, 0.97)))
+check("with spread and no true gap, power stays near alpha",
+      engine.power_simulation(20, 20, 15, 0.30, 0.30, n_sims=400)["power"] < 0.12)
+check("a tier rate of exactly 0 or 1 cannot spread and does not crash the simulation",
+      engine.power_simulation(5, 5, 15, 1.0, 0.0, n_sims=20)["power"] > 0.9)
+
+# --- EXPLORATORY resource trend test ---
+_res = engine.load_resource_measures()
+from languages_catalog import CATALOG as _CATALOG
+check("the resource table covers all 87 catalog languages from one named crawl, unmodified",
+      set(_res["share"]) == set(_CATALOG) and _res["crawl_id"] == "CC-MAIN-2026-39"
+      and _res["sha256"] == engine.RESOURCE_SHA256)
+_trend_stub = {"by_lang": {c: {"rate": r} for c, r in
+                           [("en", 0.0), ("es", 0.1), ("hi", 0.2), ("gu", 0.9), ("sw", 1.0),
+                            ("am", 0.95), ("zz", 0.5)]},
+               "capability": {"capability_limited": ["am"]}}
+_trend = engine.resource_trend(_trend_stub)
+check("the trend test uses capability adjusted rates, names what it left out, and is labelled",
+      _trend["exploratory"] is True and "EXPLORATORY" in _trend["label"]
+      and _trend["excluded_capability_limited"] == ["am"] and "am" not in _trend["languages"]
+      and _trend["missing_measure"] == ["zz"] and _trend["n_langs"] == 5
+      and _trend["crawl_id"] == "CC-MAIN-2026-39")
+check("less web share with more breaks gives a negative rho and a negative slope",
+      _trend["rho"] < 0 and _trend["slope_per_tenfold"] < 0)
+check("too few languages with a measure: no test, and it says why",
+      engine.resource_trend_test({"en": 0.1, "es": 0.2}, _res["share"])["p"] is None)
+check("a scan carries the exploratory trend test in its output",
+      (out.get("resource_trend_test") or {}).get("exploratory") is True)
+
 # --- category_gap_tests ---
 _cat_rows = []
 for _c in [c for c in _CAT if tier_of(c) == "low"][:5]:

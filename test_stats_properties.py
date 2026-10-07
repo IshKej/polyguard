@@ -182,6 +182,89 @@ _tie_rows = fake_rows({"en": 0.1, "a": 0.25, "b": 0.3, "c": 0.15, "d": 0.2}, 15,
 prop("tied gaps reached through different counts are counted (p matches exact fractions)",
      close(engine.max_gap_permutation_test(_tie_rows, n_iter=2000)["p"], _exact_max_gap_p(_tie_rows), 1e-12))
 
+# --- the EXPLORATORY resource trend test --------------------------------------------
+def _trend_case(rng: random.Random, n: int) -> tuple[dict, dict]:
+    """Random per-language rates (multiples of 1/15, so ties are common) and shares."""
+    codes = [f"l{i:02d}" for i in range(n)]
+    return ({c: rng.randint(0, 15) / 15 for c in codes},
+            {c: 10 ** rng.uniform(-3, 1.6) for c in codes})
+
+
+ok_t_order = ok_t_rename = ok_t_range = ok_t_mono = True
+for t in range(60):
+    rng = random.Random(500 + t)
+    rates, share = _trend_case(rng, rng.randint(5, 30))
+    base = engine.resource_trend_test(rates, share, n_iter=300)
+    items = list(rates.items())
+    rng.shuffle(items)
+    ok_t_order &= close(base["p"], engine.resource_trend_test(dict(items), share, n_iter=300)["p"], 1e-12)
+    # Arbitrary new names, so the alphabetical order of the languages changes too.
+    names = {c: f"{rng.random():.12f}" for c in rates}
+    ren = engine.resource_trend_test({names[c]: r for c, r in rates.items()},
+                                     {names[c]: s for c, s in share.items()}, n_iter=300)
+    ok_t_rename &= close(base["p"], ren["p"], 1e-12) and close(base["rho"], ren["rho"], 1e-12)
+    ok_t_range &= 1 / 301 - 1e-12 <= base["p"] <= 1 and (base["rho"] is None or -1 <= base["rho"] <= 1)
+    # Ranks only: any increasing transform of the measure changes nothing.
+    ok_t_mono &= close(base["p"], engine.resource_trend_test(
+        rates, {c: s ** 3 + 7 for c, s in share.items()}, n_iter=300)["p"], 1e-12)
+prop("trend test: the order rates arrive in does not change the p-value", ok_t_order)
+prop("trend test: renaming the languages, in any order, changes neither p nor rho", ok_t_rename)
+prop("trend test: p is never 0 (add-one) and never above 1, rho stays in [-1, 1]", ok_t_range)
+prop("trend test: depends on the ranks of the measure only, so log or cube changes nothing", ok_t_mono)
+
+ok_t_strong = True
+for t in range(10):
+    rng = random.Random(700 + t)
+    n = rng.randint(12, 40)
+    shares = sorted(10 ** rng.uniform(-3, 1.6) for _ in range(n))
+    rates = {f"l{i}": 1 - i / n for i in range(n)}            # strictly falling with share
+    res = engine.resource_trend_test(rates, {f"l{i}": s for i, s in enumerate(shares)}, n_iter=400)
+    ok_t_strong &= (res["significant"] and close(res["rho"], -1.0, 1e-12)
+                    and close(res["p"], 1 / 401, 1e-12))
+prop("trend test: a strong monotone trend is detected, rho -1 and the smallest possible p",
+     ok_t_strong)
+
+_flat_share = {f"l{i}": 10 ** (i / 7 - 3) for i in range(25)}
+prop("trend test: flat break rates are never significant, every shuffle ties, p is exactly 1",
+     all(engine.resource_trend_test({c: v for c in _flat_share}, _flat_share, n_iter=300)["p"] == 1.0
+         for v in (0.0, 0.2, 1.0)))
+
+_null_sig = 0
+for t in range(100):
+    rates, share = _trend_case(random.Random(900 + t), 30)
+    _null_sig += engine.resource_trend_test(rates, share, n_iter=199, seed=t)["significant"]
+prop(f"trend test: with no relationship it rarely calls one (saw {_null_sig} of 100)",
+     _null_sig <= 12)
+
+
+def _exact_trend_p(rates, share, n_iter, seed):
+    """The same test in exact fractions with sorted average ranks, as a reference."""
+    from fractions import Fraction
+    rows = sorted((share[c], r, c) for c, r in rates.items())
+
+    def ranks(vals):
+        srt = sorted(vals)
+        return [Fraction(sum(i + 1 for i, w in enumerate(srt) if w == v), srt.count(v)) for v in vals]
+
+    ry, rx = ranks([r for _, r, _ in rows]), ranks([s for s, _, _ in rows])
+    my, mx = sum(ry) / len(ry), sum(rx) / len(rx)
+    a, b = [v - my for v in ry], [v - mx for v in rx]
+    obs = abs(sum(x * y for x, y in zip(a, b)))
+    rng, perm, ge = random.Random(seed), b[:], 0
+    for _ in range(n_iter):
+        rng.shuffle(perm)
+        ge += abs(sum(x * y for x, y in zip(a, perm))) >= obs
+    return (ge + 1) / (n_iter + 1)
+
+
+ok_t_exact = True
+for t in range(8):
+    rates, share = _trend_case(random.Random(1100 + t), 12)
+    ok_t_exact &= close(engine.resource_trend_test(rates, share, n_iter=300, seed=t)["p"],
+                        _exact_trend_p(rates, share, 300, t), 1e-12)
+prop("trend test: tied ranks are handled exactly (p matches an exact fraction computation)",
+     ok_t_exact)
+
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}")

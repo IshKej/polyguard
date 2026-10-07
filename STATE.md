@@ -1,6 +1,6 @@
 # PolyGuard: current state and handoff
 
-**Last updated 2026-10-02.** Read this first if you are picking the project up
+**Last updated 2026-10-06.** Read this first if you are picking the project up
 cold. Everything below is reconstructable from the repo, but this is the short
 version and the reasoning behind the decisions.
 
@@ -20,6 +20,13 @@ integrated (10 Spanish lines, 1 Vietnamese line).
 dialect coverage). Bank SHA-256 is now
 `3d665ef61a4a9dde8cc125e1c9fdb4561621db2e7cf9b7b1d60ca6e95993dff9`, held-out fingerprint `c9cfe3523ebe2213...`, both
 logged in `PREREGISTRATION.md`. Portuguese feedback is pending; nothing changed for it.
+**2026-10-06:** statistics sprint (log in `docs/progress/stats.md`). Added an
+EXPLORATORY rank trend of break rate against Common Crawl web share (crawl
+CC-MAIN-2026-39, `data/resource_measures.csv`), logged as secondary in the
+deviation table; Mann-Whitney stays the headline. `power_simulation` now models
+spread between languages of a tier, because without it the minimum detectable gap
+came out 10.5% to 14.9% too small (`power_check.py`). The capability exclusion was
+checked exactly and only catches total collapse (see the decisions list below).
 
 ## Run these to confirm nothing is broken
 
@@ -27,12 +34,13 @@ logged in `PREREGISTRATION.md`. Portuguese feedback is pending; nothing changed 
 python generate_attack_bank.py   # rebuild corpus       -> 300 attacks + 120 controls
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
-python test_engine.py            # unit, <1s           -> 168/168
-python verify_all.py             # full battery        -> 221/221
+python test_engine.py            # unit, a few seconds -> 177/177
+python verify_all.py             # full battery        -> 225/225
 python api/test_api.py           # web API             -> 90/90
 python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 21/21
-python test_stats_properties.py  # 24 properties of the statistics on random inputs -> 24/24
-python mutation_check.py         # 13 planted bugs in the statistics, all must be caught -> 13/13
+python test_stats_properties.py  # 32 properties of the statistics on random inputs -> 32/32
+python mutation_check.py         # 17 planted bugs in the statistics, all must be caught -> 17/17
+python power_check.py            # power model against within-tier spread (about 3 min)
 python api/test_cancellation.py  # OPEN: 2/6 until server-side cancellation lands
 python cli.py replay scan.json   # recompute a saved scan from its evidence
 python judge_eval.py             # judge gold set       -> heuristic bias measured
@@ -109,6 +117,8 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 | `linguistics.py` | Offline script/encoding/length/duplication validation |
 | `judge_eval.py` | Scores the compliance judge against a gold set |
 | `calibrate_stats.py` | Proves each statistical test controls its error rate |
+| `power_check.py` | Checks the power model against languages that differ within a tier |
+| `data/resource_measures.csv` | Web share per language for the exploratory trend test (pinned SHA-256) |
 | `selection_bias_demo.py` | Reproduces the worst-language selection bias |
 | `review_sheet.py` | Exports CSVs for native-speaker review |
 | `rehearsal.py` | Runs the whole pipeline offline against a planted answer key |
@@ -138,6 +148,12 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 - **Capability controls, 6 per language.** A quiet language may be defended or
   simply broken, and those are opposite conclusions. Six is the smallest number
   that can *confirm* incapacity rather than merely suspect it. (30, 32)
+  Honest limit, checked exactly on 2026-10-06: with 6 controls a language is
+  confirmed only when English follows 6 of 6 and the language 0 of 6. If English
+  misses one control nothing can be flagged, and a language at 30% to 40% of
+  English capability is flagged 3% to 12% of the time. It catches total collapse,
+  not partial limits. A rule change is proposed, not made, in
+  `docs/progress/stats.md`.
 - **Capability-limited languages are excluded from the primary test.** Leaving
   them in masks the gap: a bot that cannot read a language refuses everything and
   scores near-zero breaks, which looks like security. Measured, this turned a real
@@ -179,8 +195,8 @@ gate is on by default and native review is tracked rather than waved off.
 | Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
 | Capability controls | 120 (6 per language) |
 | Languages in bank | 20 of a planned 87 (15 high, 4 mid, **1 low**) |
-| Verification checks | 221 |
-| Unit tests | 168 (every public engine function) |
+| Verification checks | 225 |
+| Unit tests | 177 (every public engine function) |
 | Audit findings | 71 across 18 rounds (70 fixed; 62, cancellation, open and assigned) |
 | Native speaker feedback integrated | 3 of 20 (Spanish, Vietnamese, Arabic); Portuguese pending; none validated |
 | Live scans ever run | 0 |

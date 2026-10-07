@@ -925,6 +925,18 @@ if "out" in st.session_state:
                     "the one to read. Categories without enough languages on both sides "
                     "are marked not testable rather than tested on junk.")
 
+    # ---- EXPLORATORY: break rate against web share. Secondary, added before any
+    # live data (PREREGISTRATION.md, 2026-10-06), never the headline. ----
+    _rt = out.get("resource_trend_test") or {}
+    if not out["mock"] and _rt.get("p") is not None:
+        _rho = "n/a" if _rt.get("rho") is None else f"{_rt['rho']:+.2f}"
+        st.caption(
+            f"**Exploratory, not the pre-registered test.** Rank trend of break rate against "
+            f"Common Crawl web share ({_rt.get('crawl_id')}): Spearman rho {_rho} across "
+            f"{_rt['n_langs']} languages, two sided permutation p = {_rt['p']:.3g}. Negative "
+            f"means less web share, more breaks. It cannot overturn or replace the tier "
+            f"comparison above.")
+
     # ---- capability controls: is a quiet language safe, or just not understood? ----
     # The confound this section exists to kill. A low break rate in a language has
     # two completely different explanations: the bot is well defended there, or the

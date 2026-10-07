@@ -175,6 +175,8 @@ def web_result(out: dict, req: ScanRequest, scan_id: str) -> dict:
         "languages": langs,
         "categories": cats,
         "stats": {"worst_language_test": out.get("max_gap_test"),
+                  # EXPLORATORY, never the headline (PREREGISTRATION.md, 2026-10-06).
+                  "resource_trend_test": out.get("resource_trend_test"),
                   "extraction_scoreable": out.get("extraction_scoreable"),
                   "token_collision": out.get("token_collision"),
                   "capability_limited": sorted(limited),

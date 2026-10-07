@@ -438,9 +438,41 @@ def benjamini_hochberg(pvals: list[float]) -> list[float]:
     return adj
 
 
+# Spread of true break rates between languages of the SAME tier, as a standard
+# deviation on the logit scale. An assumption, not a measurement: the first live
+# scan is what can estimate it. 0 reproduces the old model, in which every
+# language in a tier had exactly the same true rate; power_check.py measured that
+# model's minimum detectable gap at 10% to 15% below a model with realistic
+# spread, so the default is the cautious value (docs/progress/stats.md).
+LANG_SD = 0.5
+_NORMAL_NODES = None
+
+
+def _mean_rate_logit_normal(loc: float, sd: float) -> float:
+    """Expected rate when the logit is Normal(loc, sd), by 400 equal probability nodes."""
+    global _NORMAL_NODES
+    if _NORMAL_NODES is None:
+        from statistics import NormalDist
+        _NORMAL_NODES = [NormalDist().inv_cdf((i + 0.5) / 400) for i in range(400)]
+    return sum(1 / (1 + math.exp(-(loc + sd * q))) for q in _NORMAL_NODES) / len(_NORMAL_NODES)
+
+
+def _logit_location(rate: float, sd: float) -> float:
+    """The logit location whose expected rate under spread `sd` is `rate`."""
+    lo, hi = -15.0, 15.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if _mean_rate_logit_normal(mid, sd) < rate:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
 def power_simulation(n_low_langs: int, n_high_langs: int, attacks_per_lang: int,
                      p_low: float, p_high: float, n_sims: int = 500,
-                     alpha: float = 0.05, seed: int = 99) -> dict:
+                     alpha: float = 0.05, seed: int = 99,
+                     lang_sd: float = LANG_SD) -> dict:
     """
     How often would this design actually detect a gap of this size?
 
@@ -450,8 +482,15 @@ def power_simulation(n_low_langs: int, n_high_langs: int, attacks_per_lang: int,
     it also needs to say whether a given null was informative.
 
     Simulates whole scans: each language draws `attacks_per_lang` Bernoulli
-    outcomes at its tier's true rate, then the same clustered Mann-Whitney test
+    outcomes at its own true rate, then the same clustered Mann-Whitney test
     the app runs is applied. Power is the share of simulated scans that reject.
+
+    Languages in a tier do not share one true rate. Each language's rate is
+    drawn with logit spread `lang_sd` around its tier, calibrated so the tier's
+    EXPECTED rate is still exactly `p_low` or `p_high`. That spread is the part
+    more attacks cannot remove, and leaving it out (lang_sd=0, the model used
+    until 2026-10-06) made the minimum detectable gap 10% to 15% too small in
+    power_check.py. A tier rate of exactly 0 or 1 cannot spread and is used as is.
 
     Convention is that 80% power is the minimum worth running a study at.
     """
@@ -461,26 +500,39 @@ def power_simulation(n_low_langs: int, n_high_langs: int, attacks_per_lang: int,
     if attacks_per_lang <= 0 or n_low_langs <= 0 or n_high_langs <= 0:
         return {"power": 0.0, "n_low_langs": n_low_langs, "n_high_langs": n_high_langs,
                 "attacks_per_lang": attacks_per_lang, "p_low": p_low, "p_high": p_high,
-                "n_sims": 0, "adequate": False,
+                "n_sims": 0, "adequate": False, "lang_sd": lang_sd,
                 "undefined": "no attacks or no languages on one side"}
     rng = random.Random(seed)
+
+    def tier_rate(p):
+        """Draws one language's true rate; a constant when there is no spread."""
+        if lang_sd <= 0 or p <= 0 or p >= 1:
+            return lambda: p
+        loc = _logit_location(p, lang_sd)
+        return lambda: 1 / (1 + math.exp(-(loc + lang_sd * rng.gauss(0, 1))))
+
+    draw_lo, draw_hi = tier_rate(p_low), tier_rate(p_high)
     hits = 0
     for _ in range(n_sims):
-        lo = [sum(rng.random() < p_low for _ in range(attacks_per_lang)) / attacks_per_lang
-              for _ in range(n_low_langs)]
-        hi = [sum(rng.random() < p_high for _ in range(attacks_per_lang)) / attacks_per_lang
-              for _ in range(n_high_langs)]
+        lo = []
+        for _ in range(n_low_langs):
+            r = draw_lo()
+            lo.append(sum(rng.random() < r for _ in range(attacks_per_lang)) / attacks_per_lang)
+        hi = []
+        for _ in range(n_high_langs):
+            r = draw_hi()
+            hi.append(sum(rng.random() < r for _ in range(attacks_per_lang)) / attacks_per_lang)
         if (mann_whitney_u(lo, hi)["p"] or 1.0) < alpha:
             hits += 1
     power = hits / n_sims
     return {"power": power, "n_low_langs": n_low_langs, "n_high_langs": n_high_langs,
             "attacks_per_lang": attacks_per_lang, "p_low": p_low, "p_high": p_high,
-            "n_sims": n_sims, "adequate": power >= 0.80}
+            "n_sims": n_sims, "adequate": power >= 0.80, "lang_sd": lang_sd}
 
 
 def languages_needed(p_low: float, p_high: float, attacks_per_lang: int = 15,
                      target_power: float = 0.80, max_langs: int = 45,
-                     n_sims: int = 300, seed: int = 7) -> dict:
+                     n_sims: int = 300, seed: int = 7, lang_sd: float = LANG_SD) -> dict:
     """
     Smallest number of languages PER TIER that reaches `target_power` for a gap of
     this size. Answers "is the planned scan big enough?" before spending the money,
@@ -493,13 +545,14 @@ def languages_needed(p_low: float, p_high: float, attacks_per_lang: int = 15,
     found = None
     for n in range(3, max_langs + 1):
         pw = power_simulation(n, n, attacks_per_lang, p_low, p_high,
-                              n_sims=n_sims, seed=seed + n)["power"]
+                              n_sims=n_sims, seed=seed + n, lang_sd=lang_sd)["power"]
         curve.append({"n_per_tier": n, "power": pw})
         if found is None and pw >= target_power:
             found = n
             break
     return {"n_per_tier": found, "target_power": target_power, "curve": curve,
-            "p_low": p_low, "p_high": p_high, "attacks_per_lang": attacks_per_lang}
+            "p_low": p_low, "p_high": p_high, "attacks_per_lang": attacks_per_lang,
+            "lang_sd": lang_sd}
 
 
 def max_gap_permutation_test(results: list[dict], ref_lang: str = "en",
@@ -571,6 +624,142 @@ def max_gap_permutation_test(results: list[dict], ref_lang: str = "en",
     return {"observed": observed, "p": p, "null_mean": null_sum / n_iter,
             "n_langs": len(by), "n_iter": n_iter, "significant": p < 0.05,
             "worst_lang": worst_lang}
+
+
+# --------------------------------------------------------------------------- #
+# EXPLORATORY secondary analysis: break rate against web share
+# --------------------------------------------------------------------------- #
+# Logged in PREREGISTRATION.md (deviation log, 2026-10-06) before any live data,
+# as exploratory and secondary. Mann-Whitney on tiers stays the primary test and
+# the headline; nothing here can replace it.
+RESOURCE_PATH = Path(__file__).with_name("data") / "resource_measures.csv"
+RESOURCE_SHA256 = "110a0aa0cb9c8406276e1487f8b2e001895edab6c2b9b97b027f837c732dd6f3"
+RESOURCE_MEASURE = "log10 Common Crawl page share (CLD2 language id)"
+TREND_ITER = 10000
+TREND_SEED = 20261006
+
+
+def load_resource_measures(path: Path | None = None) -> dict:
+    """Common Crawl page share per catalog language, from data/resource_measures.csv.
+
+    Only three columns are read: `code`, `cc_share_percent` and `cc_crawl_id`.
+    The file's Joshi and tier columns are a snapshot taken before the
+    2026-10-05 Joshi correction and are deliberately ignored; tiers always come
+    from languages_catalog. A missing file returns an empty table rather than
+    raising, because this is called while building a report.
+    """
+    import csv
+    path = path or RESOURCE_PATH
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return {"share": {}, "crawl_id": None, "sha256": None, "path": str(path)}
+    rows = list(csv.DictReader(raw.decode("utf-8").splitlines()))
+    share = {r["code"]: float(r["cc_share_percent"]) for r in rows
+             if r.get("cc_share_percent") not in (None, "")}
+    crawls = sorted({r["cc_crawl_id"] for r in rows if r.get("cc_crawl_id")})
+    return {"share": share,
+            "crawl_id": crawls[0] if len(crawls) == 1 else ("mixed: " + ", ".join(crawls)),
+            "sha256": hashlib.sha256(raw).hexdigest(), "path": str(path)}
+
+
+def _centered_doubled_ranks(values: list[float]) -> list[int]:
+    """Average ranks, doubled and centred, so every one is an exact integer.
+
+    A tied block covering sorted positions i..j (0-based) has average rank
+    (i + j + 2) / 2. Doubling gives i + j + 2, and the doubled ranks always sum
+    to n (n + 1), so subtracting n + 1 centres them. Integers mean the test
+    statistic below is an exact integer, with no floating point ties to lose.
+    """
+    n = len(values)
+    order = sorted(range(n), key=lambda k: values[k])
+    out = [0] * n
+    i = 0
+    while i < n:
+        j = i
+        while j + 1 < n and values[order[j + 1]] == values[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            out[order[k]] = i + j + 1 - n
+        i = j + 1
+    return out
+
+
+def resource_trend_test(rates: dict[str, float], share: dict[str, float],
+                        n_iter: int = TREND_ITER, seed: int = TREND_SEED,
+                        min_langs: int = 5) -> dict:
+    """EXPLORATORY. Do languages with less web presence break more often?
+
+    Spearman rank correlation between each language's break rate and its
+    Common Crawl page share, with a two sided permutation p-value. The language
+    is the unit, as in the primary test: the share values are shuffled across
+    languages and the correlation recomputed. A negative rho means less web
+    share, more breaks. It is rank based, so taking log10 of the share changes
+    nothing; the log is used only for the descriptive slope.
+
+    Three details carried over from max_gap_permutation_test:
+      * Order: the rows are sorted by their VALUES (share, rate) before the
+        seeded shuffle, so neither the order rates arrive in nor the language
+        names can move the p-value. Rows whose share and rate are both equal
+        are interchangeable, so the name used to break that tie cannot matter.
+      * Ties: average ranks, doubled so they are integers, make the statistic an
+        exact integer, so "at least as extreme" is an exact comparison and an
+        equal statistic always counts (the float tie bug fixed in the max-gap
+        test cannot occur here).
+      * Add-one, so p is never exactly zero.
+
+    Languages without a share, or with a missing rate, are left out and named.
+    Fewer than `min_langs` usable languages returns no test.
+    """
+    usable = sorted((share[c], r, c) for c, r in rates.items()
+                    if r is not None and share.get(c) is not None and share[c] > 0)
+    missing = sorted(c for c, r in rates.items()
+                     if r is not None and not (share.get(c) is not None and share[c] > 0))
+    n = len(usable)
+    base = {"rho": None, "p": None, "n_langs": n, "n_iter": 0, "seed": seed,
+            "significant": False, "slope_per_tenfold": None,
+            "languages": [c for _, _, c in usable], "missing_measure": missing}
+    if n < min_langs:
+        return {**base, "reason": f"needs at least {min_langs} languages with a measure"}
+    a = _centered_doubled_ranks([r for _, r, _ in usable])
+    b = _centered_doubled_ranks([s for s, _, _ in usable])
+    saa, sbb = sum(v * v for v in a), sum(v * v for v in b)
+    observed = abs(sum(x * y for x, y in zip(a, b)))
+    rng = random.Random(seed)
+    perm, ge = b[:], 0
+    for _ in range(n_iter):
+        rng.shuffle(perm)
+        if abs(sum(x * y for x, y in zip(a, perm))) >= observed:
+            ge += 1
+    p_trend = (ge + 1) / (n_iter + 1)
+    rho = (sum(x * y for x, y in zip(a, b)) / math.sqrt(saa * sbb)) if saa and sbb else None
+    # Descriptive only: change in break rate per tenfold increase in web share.
+    xs = [math.log10(s) for s, _, _ in usable]
+    ys = [r for _, r, _ in usable]
+    mx, my = sum(xs) / n, sum(ys) / n
+    sxx = sum((x - mx) ** 2 for x in xs)
+    slope = (sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx) if sxx else None
+    return {**base, "rho": rho, "p": p_trend, "n_iter": n_iter, "significant": p_trend < 0.05,
+            "slope_per_tenfold": slope,
+            "reason": None if rho is not None else "no variation in rates or shares"}
+
+
+def resource_trend(out: dict, measures: dict | None = None) -> dict:
+    """The exploratory trend test on a scan's per-language rates.
+
+    Uses the same capability-adjusted rates as the primary test: languages
+    confirmed capability-limited are left out (see tier_rates), and named.
+    """
+    measures = measures if measures is not None else load_resource_measures()
+    limited = set((out.get("capability") or {}).get("capability_limited") or [])
+    by_lang = out.get("by_lang", {})
+    rates = {c: d.get("rate") for c, d in by_lang.items() if c not in limited}
+    res = resource_trend_test(rates, measures["share"])
+    return {**res, "exploratory": True,
+            "label": "EXPLORATORY secondary analysis, not the pre-registered test",
+            "measure": RESOURCE_MEASURE, "crawl_id": measures.get("crawl_id"),
+            "measures_sha256": measures.get("sha256"),
+            "excluded_capability_limited": sorted(limited & set(by_lang))}
 
 
 def load_bank() -> dict:
@@ -1065,6 +1254,8 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
         max_variants, with_controls and bool(bank.get("controls")))
     out["capability"] = (capability_report(control_results)
                          if control_results else None)
+    # EXPLORATORY secondary analysis, labelled as such wherever it is shown.
+    out["resource_trend_test"] = resource_trend(out)
     out["max_variants"] = max_variants
     # Extraction needs a MIN_RUN-word verbatim overlap to register. A system
     # prompt shorter than that makes every extraction attack unscoreable, which

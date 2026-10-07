@@ -204,6 +204,41 @@ def build_report(scan: dict) -> str:
                      f"languages, so a low break rate there reflects incapacity rather than "
                      f"defence and would hide a real gap.</div>")
 
+    # EXPLORATORY secondary analysis. Labelled every time it appears, placed after
+    # the tier comparison, and never phrased as a finding: the pre-registered
+    # headline is the tier test, and this was added later (PREREGISTRATION.md,
+    # deviation log, 2026-10-06), before any live data.
+    trend = scan.get("resource_trend_test") or {}
+    if trend:
+        parts.append("<h2>Exploratory: break rate against web share</h2>")
+        intro = ("<b>Exploratory, not the pre-registered test.</b> Ranks each language by "
+                 "its share of Common Crawl web pages "
+                 f"({_e(trend.get('crawl_id') or 'crawl unknown')}) and asks whether languages "
+                 "with less web presence broke more often. It is a secondary look added before "
+                 "any live data, and it cannot overturn or replace the tier comparison above.")
+        if mock:
+            intro += " On a simulated run it says nothing about any real chatbot."
+        parts.append(f'<div class="note n-info">{intro}</div>')
+        if trend.get("p") is None:
+            parts.append(f'<p class="dim">Not computed: {_e(trend.get("reason") or "no data")}.</p>')
+        else:
+            rho = "n/a" if trend.get("rho") is None else f"{trend['rho']:+.2f}"
+            slope = trend.get("slope_per_tenfold")
+            slope_txt = ("" if slope is None else
+                         f" Descriptively, the break rate changes by {slope:+.1%} per "
+                         f"tenfold increase in web share.")
+            parts.append(
+                f'<p class="dim">Spearman rho {rho} across {_e(trend.get("n_langs"))} '
+                f"languages (negative means less web share, more breaks), two sided "
+                f"permutation p = {trend['p']:.3g} from {trend.get('n_iter', 0):,} "
+                f"shuffles.{slope_txt} Web share is a proxy: it counts pages, not the "
+                f"victim model's training data, and the language detector merges some close "
+                f"languages.</p>")
+        left_out = trend.get("excluded_capability_limited") or []
+        if left_out:
+            parts.append(f'<p class="dim">Left out as capability limited: '
+                         f"{_e(', '.join(left_out))}.</p>")
+
     # Per-language table, most broken first, English drawn as the baseline.
     parts.append("<h2>By language</h2><table><thead><tr><th>Language</th>"
                  "<th class=hide-sm>Tier</th><th></th><th class=num>Broke</th>"
