@@ -1,0 +1,11 @@
+This copy of PolyGuard is retired as of 2026-09-29.
+
+The working copy is now at:   C:\dev\polyguard
+The source of truth is:       https://github.com/IshKej/polyguard
+
+Why it moved: Git and the new web app's node_modules folder create and delete
+thousands of small files, and OneDrive reports every one as a deleted file.
+
+Nothing here is needed any more. This folder was left in place on purpose so
+OneDrive would not report another mass deletion. It is safe to delete whenever
+you like; OneDrive will list its files as deleted when you do, which is expected.
