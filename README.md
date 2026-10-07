@@ -8,7 +8,9 @@
 
 Most AI safety testing happens in English. PolyGuard takes a chatbot's system prompt, attacks a live copy of that bot with **5 kinds of prompt injection** in **every language in its attack bank**, and shows, per language and per resource tier, which attacks got through. The point is to measure the gap between how well a bot is defended in English and how well it is defended in everyone else's language.
 
-> **Where this stands.** The instrument is built and audited ([AUDIT.md](AUDIT.md)). No live scan has run yet, the bank has only one low resource language (Gujarati), and native speaker feedback has been received and integrated for only three languages, Spanish, Vietnamese and Arabic. Until those change, nothing here is a result. [STATE.md](STATE.md) has the details.
+> **Where this stands.** The instrument is built and audited ([AUDIT.md](AUDIT.md)). No live scan against a production chatbot or a paid API has run yet, the bank has only one low resource language (Gujarati), and native speaker feedback has been received and integrated for only three languages, Spanish, Vietnamese and Arabic. Until those change, nothing here is a result. [STATE.md](STATE.md) has the details.
+
+> **First real scans, local only (2026-10-06).** The four example bots were scanned in all 20 bank languages against a small local open weight model (Qwen3.5 4B on a laptop GPU, judged by Gemma 4 E2B) at zero cost: [results/local/2026-10-06/](results/local/2026-10-06/). They show the pipeline works on real model output and how that one small model behaved; they say nothing about production chatbots, and they exposed a judge problem (most judged breaks were faithful translations), so read [HAND_REVIEW.md](results/local/2026-10-06/HAND_REVIEW.md) before any number.
 
 New here? [docs/quickstart.md](docs/quickstart.md) runs it in three minutes with no key, shows how the pieces fit together, and lists what to do when something goes wrong. [docs/performance.md](docs/performance.md) has measured latency and sizes.
 
