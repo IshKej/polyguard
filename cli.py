@@ -43,6 +43,7 @@ from pathlib import Path
 import defenses
 import engine
 import providers
+import tq_report
 from languages_catalog import CATALOG, tier_of
 
 VERSION = "1.1"
@@ -218,7 +219,10 @@ def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> 
         "english_break_rate": out["en_rate"],
         "worst_language_test": out.get("max_gap_test"),
         "capability": out.get("capability"),
-        "by_lang": {c: {**d, "tier": tier_of(c)} for c, d in out["by_lang"].items()},
+        "by_lang": {c: {**d, "tier": tier_of(c),
+                         # automated proxy, not a validation (tq_report.py)
+                         "translation_quality": tq_report.lang_quality(c)}
+                     for c, d in out["by_lang"].items()},
         "by_category": out["by_cat"],
         "broken_categories": defenses.broken_categories_from(out["results"]),
         "instrument": out.get("instrument"),

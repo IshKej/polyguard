@@ -28,6 +28,7 @@ import streamlit as st
 import defenses
 import engine
 import providers
+import tq_report
 from languages_catalog import CATALOG, tier_of
 
 CATALOG_TIERS = {k: v["tier"] for k, v in CATALOG.items()}
@@ -1158,7 +1159,9 @@ if "out" in st.session_state:
         "by_language": {d["name"]: {"tier": tier_of(c), "broke": d["broke"],
                                     "total": d["total"], "rate": d["rate"],
                                     "provenance": d.get("provenance", "author"),
-                                    "native_reviewed": d.get("native_reviewed", False)}
+                                    "native_reviewed": d.get("native_reviewed", False),
+                                    # automated proxy, not a validation (tq_report.py)
+                                    "translation_quality": tq_report.lang_quality(c)}
                         for c, d in out["by_lang"].items()},
         "by_category": out["by_cat"],
     }

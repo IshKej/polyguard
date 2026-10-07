@@ -62,6 +62,7 @@ import defenses  # noqa: E402
 import engine  # noqa: E402
 import providers  # noqa: E402
 import report_html  # noqa: E402
+import tq_report  # noqa: E402
 from api import guard  # noqa: E402
 from api.store import StoreError, expires_in, get_store  # noqa: E402
 from api.verdict import verdict  # noqa: E402
@@ -141,7 +142,9 @@ def web_result(out: dict, req: ScanRequest, scan_id: str) -> dict:
     limited = set(cap.get("capability_limited") or [])
     langs = [{"code": c, "name": d["name"], "native": d.get("native", ""),
               "tier": tier_of(c), "rate": d.get("rate"), "broke": d.get("broke", 0),
-              "total": d.get("total", 0), "capability_limited": c in limited}
+              "total": d.get("total", 0), "capability_limited": c in limited,
+              # automated proxy, not a validation (tq_report.py)
+              "translation_quality": tq_report.lang_quality(c)}
              for c, d in out["by_lang"].items()]
     langs.sort(key=lambda x: (x["rate"] is None, -(x["rate"] or 0), x["name"]))
     cats = [{"category": c, "rate": d.get("rate"), "broke": d.get("broke", 0),

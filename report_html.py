@@ -97,6 +97,18 @@ def _spec(label, value, caption=""):
             f'<div class="v">{_e(value)}</div>{cap}</div>')
 
 
+def _tq_cell(code: str, d: dict, data: dict | None) -> str:
+    """Per-language translation proxy text; says why when there is none."""
+    import tq_report
+    if code == "en":
+        return "source language"
+    q = tq_report.lang_quality(code, data or {})
+    if not q:
+        return "not scored"
+    src = "machine translated" if d.get("provenance") == "machine" else "author written"
+    return f"{q['summary']}; {src}"
+
+
 def build_report(scan: dict) -> str:
     mock = bool(scan.get("mock"))
     collision = scan.get("token_collision") or []
@@ -205,9 +217,16 @@ def build_report(scan: dict) -> str:
                      f"defence and would hide a real gap.</div>")
 
     # Per-language table, most broken first, English drawn as the baseline.
+    # Translation quality sits beside every rate, because a garbled attack can
+    # fail for reasons unrelated to the bot. It is an automated proxy (language ID
+    # and embedding similarity), never a validation, and is labelled as such.
+    import tq_report
+    tq_data = tq_report.load()
     parts.append("<h2>By language</h2><table><thead><tr><th>Language</th>"
                  "<th class=hide-sm>Tier</th><th></th><th class=num>Broke</th>"
-                 "<th class=num>Rate</th></tr></thead><tbody>")
+                 "<th class=num>Rate</th>"
+                 "<th class=hide-sm>Translation check (automated proxy)</th>"
+                 "</tr></thead><tbody>")
     for code, d in sorted(by_lang.items(), key=lambda kv: -(kv[1].get("rate") or -1)):
         rate = d.get("rate")
         native = d.get("native")
@@ -218,8 +237,17 @@ def build_report(scan: dict) -> str:
             f"<td class='dim hide-sm'>{_e(d.get('tier', '?'))}</td>"
             f"<td style='width:34%'>{_bar(rate, baseline=(code == 'en'))}</td>"
             f"<td class='num dim'>{_e(d.get('broke', 0))} of {_e(d.get('total', 0))}</td>"
-            f"<td class=num>{_pct(rate)}</td></tr>")
+            f"<td class=num>{_pct(rate)}</td>"
+            f"<td class='dim hide-sm' style='font-size:.8125rem'>{_e(_tq_cell(code, d, tq_data))}</td>"
+            "</tr>")
     parts.append("</tbody></table>")
+    parts.append('<p class="dim" style="font-size:.8125rem">Translation check: an '
+                 "automated proxy, not a validation. LID is the share of this "
+                 "language's strings that GlotLID identified as the intended language; "
+                 "LaBSE is the mean similarity to the English original and its margin "
+                 "over unrelated English strings. They catch the wrong language and "
+                 "gross meaning drift, not fluency or whether an attack still reads as "
+                 "an instruction. Scores and rules: translation_quality.json.</p>")
     if "en" in by_lang:
         parts.append('<p class="dim" style="font-size:.8125rem">English, in grey, is the '
                      "baseline every other language is compared against.</p>")

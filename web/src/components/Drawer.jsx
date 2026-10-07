@@ -41,6 +41,11 @@ export default function Drawer({ lang, rows, onClose }) {
             <p className="mt-2 text-(--mute)">
               {lang.name}, {lang.tier} resource. {broke} of {scored} attacks got through ({pct(scored ? broke / scored : null)}).
             </p>
+            {lang.translation_quality && (
+              <p className="caption mt-2 text-(--mute)">
+                Translation check, an automated proxy and not a validation: {lang.translation_quality.summary}.
+              </p>
+            )}
           </div>
           <button type="button" onClick={onClose} className="btn btn-line btn-sm shrink-0">Close</button>
         </header>

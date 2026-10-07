@@ -55,6 +55,55 @@ These run with no API key. They are necessary, not sufficient: **none of them
 establish fluency, naturalness, or that an attack still reads as an attack.**
 Only a speaker can do that.
 
+## Automated translation quality scores
+
+`translation_quality.json` holds two offline scores for every one of the 73 bank
+languages, author written and machine alike, and `python tq_report.py` prints them.
+They were produced on 2026-10-06 by GlotLID v3 (language identification) and LaBSE
+(cross-lingual sentence similarity), both Apache-2.0, with the model revisions and
+file hashes recorded in the JSON. The flag rules were written down before any score
+was computed (`docs/progress/translation-quality.md`).
+
+**What they show.** Whether each attack and control is in the intended language once
+the canary, control token, Base64 and English marker are stripped, and whether its
+meaning sits close to its own English original rather than to an unrelated one. The
+threshold for "unrelated" comes from data: the 99th percentile of 25,920 deliberately
+wrong pairs (0.549), against a median of 0.897 for the correct pairs.
+
+**What they do not show.** Fluency, register, dialect, a single wrong verb inside an
+otherwise faithful sentence, or whether a native speaker would read an attack as an
+instruction to do the thing it describes. Embedding similarity rewards a sentence on
+the right topic even when a detail is flipped. Both tools are weakest in exactly the
+low-resource languages where translation is most likely to fail, so a low score there
+may be the tool, and a high score is not evidence that the translation is good. No
+language may be called verified, validated or human-checked because of these scores.
+
+**What they found.** All 53 machine translations cleared the gross failure bar except
+one. Yoruba is flagged: two of its controls are no closer to their English original
+than an unrelated English sentence is, and its mean similarity (0.74) is the lowest in
+the bank. Removing the Yoruba tone marks raises those two strings well above the
+threshold, so the flag cannot say whether the translation or the tool is at fault.
+Language identification put every machine language at 86% or more, and the misses
+were near neighbours (Malay read as Indonesian, Croatian as Bosnian or Serbian) or a
+single string (one Galician control read as Spanish, one Albanian control as Gheg).
+Arabic, which is author written and has had native feedback, had three strings
+labelled as Egyptian or Najdi Arabic; that is a dialect question for a reviewer, not a
+translation failure.
+
+**Where a native reviewer is needed most**, from the flags and the bottom of the
+LaBSE ranking (most are low resource, so they also carry the hypothesis):
+
+1. Yoruba (flagged).
+2. Shona (0.79), Chichewa (0.81), Xhosa and Zulu (0.84), the lowest similarity
+   scores after Yoruba, in languages where LaBSE itself is least reliable.
+3. Thai (0.84) and Lao (0.85), the lowest scores outside Africa, in scripts the
+   author cannot read.
+4. Galician and Albanian, to check the one string each that was identified as another
+   language.
+
+These scores are an ordering for scarce reviewer time and a covariate for the
+analysis. They are not a substitute for the review below.
+
 ## How to get a language reviewed
 
 1. Export a review sheet:
@@ -131,8 +180,10 @@ The correct phrasing anywhere this project is described is:
 > had no native review. The Arabic is Modern Standard Arabic, and its review
 > does not establish coverage of Arabic dialects. Languages added later are
 > machine-translated and checked by reverse translation: 53 so far, none reviewed
-> by a native speaker. Translation quality is a known limitation and a possible
-> confound.
+> by a native speaker. Every language also carries two automated quality scores
+> (language identification and sentence similarity), which flag gross failures
+> but do not validate anything. Translation quality is a known limitation and a
+> possible confound.
 
 Do not write "verified", "validated", "professionally translated", or
 "human-checked" about any language in this project, including Spanish,

@@ -122,38 +122,49 @@ reads as an instruction. The bottom of the LaBSE ranking (yo, sn, ny, xh, zu, th
 also where LaBSE itself has the least training data, so a low score there is
 ambiguous by construction.
 
-## Paused (2026-10-06), state for whoever resumes
+## Step 4. Scores next to the per-language results (2026-10-06)
 
-No model job is running. All suites were green at the baseline (step 0b); nothing
-outside `tq_report.py`, `translation_quality.json` and this log has been changed yet,
-so they have not been rerun.
+Every surface that shows a per-language break rate now carries the language's score,
+always with the words "automated proxy, not a validation" (`tq_report.lang_quality`
+puts that label inside the value, so a consumer cannot show the numbers without it):
 
-**Done**
-- Step 1, language ID (GlotLID v3) on all 1,533 strings, and step 2, LaBSE similarity
-  with the wrong pair threshold: scored, reproducible, committed in
-  `translation_quality.json` with model revisions, file SHA-256, licenses and versions.
-- Step 3, `tq_report.py`: standard library reader (`python tq_report.py`,
-  `--flagged`, `--check` for missing or stale languages) plus `--build` (heavy, lazy
-  imports). Result: Yoruba is the only flagged language.
+- `report_html.py`: a "Translation check (automated proxy)" column in the by-language
+  table, plus a footnote on what the two scores catch and miss.
+- `cli.py` JSON export (`by_lang`), `app.py` summary export (`by_language`) and the
+  web API language rows (`api/server.py`), as a `translation_quality` field.
+- Web: the language drawer shows one line under the break rate.
+- `verify_all.py` 115: `translation_quality.json` scores every machine translated bank
+  language for its current text (a changed translation makes its score stale and
+  fails the check until `tq_report.py --build` is rerun). 116: the proxy label is
+  present in the report and on every score, and every model is pinned by SHA-256.
+- `preflight.py`: the five build only imports (fasttext, numpy, sentence_transformers,
+  torch, transformers) are exempt from requirements.txt, since only `--build` uses
+  them and a deploy must not install them.
+- Docstring count in `verify_all.py` corrected to 225 (it said 213 against 223 real).
 
-**Left**
-- Step 4: show `tq_report.lang_quality(code)` next to per-language rates, labelled
-  "automated proxy, not a validation": `report_html.py` by-language table, the CLI
-  JSON export (`cli.py` `by_lang`), the app summary export (`app.py` `by_language`),
-  and `api/server.py` `web_result` language rows. Add a `verify_all.py` check that
-  `translation_quality.json` covers every machine translated bank language (use
-  `tq_report.coverage(...)["machine_missing"] == []`), and update the check count in the
-  `verify_all.py` docstring if `consistency.py` reads it.
-- Step 5: `NATIVE_REVIEW.md` section on what the scores do and do not show, and a
-  reviewer priority list from the flags (Yoruba first, then the bottom of the LaBSE
-  ranking: sn, ny, xh, zu, th; then gl and sq for their one off label each).
-- Step 6: rerun every suite and record counts here.
-- The note on Arabic dialect labels belongs in the step 5 text, not as a flag.
+## Step 5. NATIVE_REVIEW.md
 
-**Next command**
+New section "Automated translation quality scores": what the scores show, what they
+do not, what they found, and a reviewer priority list: Yoruba (flagged); Shona,
+Chichewa, Xhosa, Zulu; Thai and Lao; Galician and Albanian for their single
+misidentified string. The honest statement for the writeup now mentions the two
+automated scores and says they validate nothing.
+
+## Step 6. Suites
+
+All green on 2026-10-06 after steps 4 and 5: test_engine 168/168,
+test_stats_properties 24/24, api/test_api 90/90, verify_all 225/225 (two new checks),
+consistency clean, mutation_check 13/13 mutants killed, rehearsal answer key PASS,
+preflight ready. Web: `npm run lint` clean and `npm run build` succeeds.
+
+## Status: done
+
+Not in this sprint: stage B (NLLB round trip with chrF) and stage D (MetricX QE)
+from the research plan; the provenance contrast; the quality covariate and the
+sensitivity analyses in the statistics, which should be pre-registered in
+PREREGISTRATION.md before any live scan. If a translation changes (for example after
+native feedback), verify_all check 115 fails until the scores are rebuilt:
+
 ```bash
-cd C:/dev/pg-wt/translation-quality && export PYTHONIOENCODING=utf-8 && python tq_report.py --check && python tq_report.py --flagged
+C:/dev/llm/tq-venv/Scripts/python.exe tq_report.py --build --glotlid C:/dev/llm/models/glotlid/model_v3.bin --labse C:/dev/llm/models/labse
 ```
-then edit `report_html.py` (by-language table) as the first step 4 change. To rebuild
-the scores: `C:/dev/llm/tq-venv/Scripts/python.exe tq_report.py --build --glotlid
-C:/dev/llm/models/glotlid/model_v3.bin --labse C:/dev/llm/models/labse` (about 5 min, CPU).

@@ -234,7 +234,7 @@ def print_report(data: dict, bank: dict, flagged_only: bool = False) -> None:
 # --------------------------------------------------------------------------- #
 def _sha256_file(path: Path) -> str:
     h = hashlib.sha256()
-    with open(path, "rb") as fh:
+    with Path(path).open("rb") as fh:            # binary: no text encoding applies
         for chunk in iter(lambda: fh.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
