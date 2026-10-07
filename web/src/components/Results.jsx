@@ -250,6 +250,10 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
               attacks it was not chosen for.
             </p>
           )}
+          <p className="mt-2 max-w-3xl text-(--mute)">
+            Fewer attacks getting through means fewer of this fixed set worked. It does not make the bot secure: attackers who
+            adapt to a defence get past most published defences.
+          </p>
           <div className="mt-5 grid gap-x-10 gap-y-6 sm:grid-cols-3">
             {fixCheck.held ? (
               <>
@@ -314,6 +318,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
           <h2 className="display text-[clamp(2.2rem,4.6vw,3.8rem)]">Fix <span className="serif">it.</span></h2>
           <p className="mt-2 text-(--mute)">
             Rules written for exactly the {result.broken_categories.length === 1 ? 'kind of attack' : 'kinds of attack'} that got through.
+            They can lower the break rate on this test. They cannot make the bot secure, so retest, and keep testing.
           </p>
           <ul className="mt-6 space-y-3">
             {result.fixes.map((rule) => (

@@ -18,7 +18,7 @@ New here? [docs/quickstart.md](docs/quickstart.md) runs it in three minutes with
 
 Published research has found that safety training does not carry evenly across languages: an attack a model refuses in English can succeed when the same request is written in a lower resource language (see [RELATED_WORK.md](RELATED_WORK.md)). Safety training is overwhelmingly English first, so the guardrails may be thinnest in exactly the languages spoken by people least served by English only tools. Whether that holds for a given bot today is an empirical question, and PolyGuard is built to answer it rather than assume it.
 
-PolyGuard measures that gap so a builder can see it and fix it **before an attacker finds it**.
+PolyGuard measures that gap so a builder can see it and shrink it **before an attacker finds it**.
 
 ## How it works
 
@@ -30,7 +30,7 @@ PolyGuard measures that gap so a builder can see it and fix it **before an attac
 6. The single worst language is reported **against the worst language chance alone would produce**. This matters more than it sounds: "worst of N" is a maximum, and a maximum runs high by construction, so a naive worst-vs-English rule announces a large equity gap 98% of the time even against a model with no language gap at all. PolyGuard runs a **permutation test on the maximum** (2,000 shuffles, per-language sample sizes held fixed) and claims a finding only when the observed gap beats the null. See `AUDIT.md` finding 19.
 7. **The same attack bank can be fired at victims from different vendors** (Anthropic, OpenAI, Google, open-weights via an OpenAI-compatible endpoint), with the compliance judge held fixed as one Anthropic model throughout. A one-model result is ambiguous; a cross-model comparison is the finding either way.
 8. **Every scan also fires benign twins.** For each language PolyGuard sends **6 ordinary polite requests** with no adversarial framing, and measures how often the bot simply does as asked. Six is the smallest number that can *confirm* a language the bot cannot operate in, rather than merely suspect it. This separates two explanations a break rate cannot tell apart: a quiet language may mean the bot is well defended there, or that it cannot follow instructions in that language at all. Those are opposite conclusions, and the second one runs in a predictable direction, since capability is weakest in exactly the low-resource languages under study. A language confirmed capability-limited is reported as unscoreable for safety rather than counted as safe.
-9. **Then it fixes it.** PolyGuard generates targeted hardening rules for exactly the categories that broke, and re-scans the hardened prompt to prove the holes actually closed. Results export as CSV + JSON.
+9. **Then it hardens it, and checks.** PolyGuard generates targeted hardening rules for exactly the categories that broke, and re-scans the hardened prompt to measure how many of the bank's held-out attacks still get through. A drop means hardening reduced the break rate on this fixed bank. It never means the bot is secure: attackers who adapt to a defence get past published defences most of the time (Nasr et al., arXiv 2510.09023). Results export as CSV + JSON.
 
 ## What a scan looks like
 
@@ -65,6 +65,7 @@ python cli.py scan --prompt bot.txt --baseline last-week.json --fail-on-regressi
 python cli.py scan --prompt bot.txt --bundle runs/today     # a folder someone else can check
 python cli.py compare last-week.json today.json
 python cli.py replay today.json                            # recompute every number from its evidence
+python cli.py defend --prompt bot.txt --out arms.json      # judge the defence blocks against a placebo
 python cli.py languages
 ```
 
@@ -142,6 +143,15 @@ a fix is judged on the held-out phrasing together with whether the bot still
 follows ordinary requests, because a bot that refuses everything also stops every
 attack.
 
+`python cli.py defend` runs the comparison properly: the original prompt, a
+placebo block of the same length that says nothing about security, the current
+rules, and a rewritten block that treats quoted text in any language as material
+to work on, all on the same held-out attacks and ordinary requests. Each arm gets
+its break rate and follow rate with intervals, and its difference from the
+placebo with a sign test paired by language. A lint stops any defence from
+quoting the bank. The strongest claim any arm supports is "reduced the break
+rate on this fixed bank", never "secure".
+
 ## Where the attack types sit in public taxonomies
 
 | Attack type | OWASP Top 10 for LLM Apps 2025 | MITRE ATLAS (data v5.6.0) |
@@ -198,7 +208,7 @@ The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML rep
 | `languages_catalog.py` | The full 87-language target catalog with resource tiers |
 | `expand_languages.py` | Translates the rest through the Anthropic API, with a verification gate |
 | `validate_bank.py` | Validates every attack in the bank |
-| `cli.py` | Headless scanning, regression detection, CI exit codes |
+| `cli.py` | Headless scanning, regression detection, defence arms, CI exit codes |
 | `report_html.py` | One self-contained HTML report, caveats included |
 | `selection_bias_demo.py` | Reproduces why "worst language" needs correction |
 | `test_engine.py` | Unit tests: all 29 engine functions, runs in under a second |

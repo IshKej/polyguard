@@ -120,8 +120,10 @@ from Yong et al. and from arXiv:2606.29602.
 
 **3. Remediation, measured.** Research papers end at the finding. PolyGuard
 generates targeted hardening rules for exactly the categories that broke,
-re-scans the hardened prompt against the same model, and reports how many holes
-actually closed. The defence is evaluated, not asserted.
+re-scans the hardened prompt against the same model, and reports how many of the
+held-out attacks still get through, next to a placebo block of the same length.
+The defence is evaluated, not asserted, and the claim is limited to this fixed
+bank: it is never evidence that a bot is secure.
 
 **4. Statistical discipline that most of this literature does not apply.** This
 is the part that is genuinely uncommon:
