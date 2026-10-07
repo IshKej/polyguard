@@ -7,6 +7,17 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-05** `3a86029` OWASP LLM Top 10 2025 and MITRE ATLAS (v5.6.0) tags per
+  attack type in `engine.TAXONOMY`, `/api/meta`, the report and README (check 118).
+  CI green on the 73 language ship (`75e5fe6`).
+
+- **2026-10-05** `75e5fe6` Bank shipped at 73 languages: 1095 attacks, 438
+  controls, 25 high / 24 mid / 24 low, 53 machine translated (none native
+  reviewed), new SHA `4e2ba320...` and held-out `3cf67897...` in the
+  preregistration. Review sheets for the 53. Six research notes committed in
+  `docs/research/` (the obfuscation note stays local, not committed). 14 catalog
+  languages remain: API pipeline or native speakers only.
+
 - **2026-10-05** Statistics and interpretation fixes from the research notes:
   the max-gap permutation test dropped exact ties that differ only in floating
   point (p too small; AUDIT 74, property test against exact fractions, a 13th
