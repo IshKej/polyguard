@@ -44,6 +44,7 @@ from pathlib import Path
 import defenses
 import engine
 import providers
+import tq_report
 from languages_catalog import CATALOG, tier_of
 
 VERSION = "1.1"
@@ -223,7 +224,10 @@ def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> 
         # the headline: rank trend of break rate against Common Crawl web share.
         "resource_trend_test": out.get("resource_trend_test"),
         "capability": out.get("capability"),
-        "by_lang": {c: {**d, "tier": tier_of(c)} for c, d in out["by_lang"].items()},
+        "by_lang": {c: {**d, "tier": tier_of(c),
+                         # automated proxy, not a validation (tq_report.py)
+                         "translation_quality": tq_report.lang_quality(c)}
+                     for c, d in out["by_lang"].items()},
         "by_category": out["by_cat"],
         "broken_categories": defenses.broken_categories_from(out["results"]),
         "instrument": out.get("instrument"),

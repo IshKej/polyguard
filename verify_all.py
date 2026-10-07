@@ -1,5 +1,5 @@
 """
-PolyGuard full verification battery. Runs 213 independent checks across the data, the
+PolyGuard full verification battery. Runs 225 independent checks across the data, the
 engine, the statistics, the generator, the remediation loop, and the live app.
 Exits non-zero if any check fails.
 
@@ -1507,7 +1507,7 @@ _api = _sp.run([sys.executable, str(HERE / "api" / "test_api.py")], cwd=str(HERE
                capture_output=True, text=True, encoding="utf-8", timeout=600)
 ck("114. the web API suite passes", _api.returncode == 0 and "API tests passed" in _api.stdout)
 
-# 115. The exploratory trend test reads a frozen resource table, like the bank's
+# 121. The exploratory trend test reads a frozen resource table, like the bank's
 # fingerprint: a changed measure would be a changed analysis.
 _rm = engine.load_resource_measures()
 ck("121. the web share table is the pinned file, from one crawl, covering the catalog",
@@ -1515,7 +1515,7 @@ ck("121. the web share table is the pinned file, from one crawl, covering the ca
    and set(_rm["share"]) == set(cat.CATALOG) and all(v > 0 for v in _rm["share"].values())
    and engine.RESOURCE_SHA256 in (HERE / "PREREGISTRATION.md").read_text(encoding="utf-8"))
 
-# 116. Wherever the trend test appears it is labelled exploratory, never a finding.
+# 122. Wherever the trend test appears it is labelled exploratory, never a finding.
 _trend_html = report_html.build_report(
     {"mock": False, "by_lang": {}, "resource_trend_test":
      {"p": 0.01, "rho": -0.5, "n_langs": 30, "n_iter": 10000, "crawl_id": "CC-MAIN-2026-39"}})
@@ -1523,6 +1523,34 @@ ck("122. the exploratory trend test is labelled exploratory in the report, CLI a
    "Exploratory, not the pre-registered test" in _trend_html
    and "EXPLORATORY" in (HERE / "cli.py").read_text(encoding="utf-8")
    and "Exploratory, not the pre-registered test" in app_src)
+
+# 123. Translation quality is the main confound in a per-language rate, and 53
+# languages are machine translated with no native review. Every one of them must
+# carry an automated quality score for the text that is actually in the bank: a
+# missing score hides the confound, and a score for older text describes strings
+# nobody sends. Regenerate with `tq_report.py --build` (needs the local models).
+import tq_report as _tq
+_tq_data = _tq.load()
+_tq_cov = _tq.coverage(_tq_data, bank)
+_tq_stale_machine = [c for c in _tq_cov["stale"] if c in _tq.machine_codes(bank)]
+if _tq_cov["machine_missing"] or _tq_stale_machine:
+    print(f"  translation_quality.json: missing {_tq_cov['machine_missing']}, "
+          f"stale {_tq_stale_machine}")
+ck("123. translation_quality.json scores every machine translated language, for its current text",
+   _tq_data is not None and len(_tq.machine_codes(bank)) > 0
+   and not _tq_cov["machine_missing"] and not _tq_stale_machine)
+
+# 124. The score is a proxy and must say so wherever it sits next to a rate, and the
+# JSON must name the models it came from with their file hashes.
+_tq_html = report_html.build_report({"by_lang": {
+    c: {"name": bank["languages"][c]["name"], "rate": 0.0, "broke": 0, "total": 15,
+        "provenance": bank["languages"][c]["provenance"]} for c in _tq.machine_codes(bank)[:3]}})
+ck("124. per-language translation scores are labelled an automated proxy, not a validation",
+   "automated proxy" in _tq_html and "not a validation" in _tq_html
+   and all(_tq.lang_quality(c)["label"] == "automated proxy, not a validation"
+           for c in _tq.machine_codes(bank))
+   and all(len(m.get("sha256") or next(iter(m.get("files", {}).values()), {}).get("sha256", "")) == 64
+           for m in (_tq_data or {}).get("models", {}).values()))
 
 # report
 passed = sum(1 for _, ok in checks if ok)

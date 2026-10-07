@@ -152,10 +152,14 @@ def check_requirements() -> None:
     # declared: CI runs the review tools. The deployed API installs from
     # pyproject.toml, so it does not carry openpyxl either way.)
     optional = {"openai", "google"}
+    # Only `tq_report.py --build` imports these, lazily, to regenerate the committed
+    # translation_quality.json on a local machine. Reading the scores needs none of
+    # them, so a deploy must not install about 3 GB of model tooling.
+    build_only = {"fasttext", "numpy", "sentence_transformers", "torch", "transformers"}
     aliases = {"google": "google-genai"}
     missing = []
     for m in sorted(used):
-        if m in optional:
+        if m in optional or m in build_only:
             continue
         if m.lower() not in declared and aliases.get(m, m).lower() not in declared:
             missing.append(m)

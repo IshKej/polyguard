@@ -7,6 +7,13 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-07** Merged `sprint/translation-quality`: GlotLID v3 language ID and
+  LaBSE similarity for all 73 languages in `translation_quality.json`
+  (`tq_report.py`; rebuild needs the local venv `C:\dev\llm\tq-venv`). Shown
+  beside every per-language rate as "automated proxy, not a validation". Only
+  Yoruba flagged; review priority in NATIVE_REVIEW.md (Yoruba, then Shona,
+  Chichewa, Xhosa, Zulu, Thai, Lao). Checks 123 and 124. verify_all 232.
+
 - **2026-10-06** Merged `sprint/defences`: `python cli.py defend` runs baseline,
   placebo, current and data_boundary arms on the held-out phrasing with a paired
   sign test against placebo; `defenses.lint_all` keeps defence text from quoting
