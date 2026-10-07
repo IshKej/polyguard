@@ -105,6 +105,30 @@ the web app and hosting.
 
 ## In progress
 
+- **2026-10-05, build sprint from the 7 research notes** (Ishaan: "do everything",
+  ship at 73 languages now and keep shipping toward 87, district is WA08, keep the
+  name for now, local models approved). Parallel agents, each in its own git
+  worktree and branch, never pushing; the main session merges and pushes. Each
+  agent keeps a running log at `docs/progress/<topic>.md` on its branch.
+  Worktrees (made by hand, `git worktree list`): `C:\dev\pg-wt\local-models`
+  (branch `sprint/local-models`), `C:\dev\pg-wt\stats` (`sprint/stats`),
+  `C:\dev\pg-wt\defences` (`sprint/defences`). To resume: read each
+  `docs/progress/*.md` in those folders, `git merge sprint/<name>` what is
+  finished, rerun every suite, push.
+  1. local-models: llama.cpp in `C:\dev\llm\`, an Apache or MIT multilingual
+     model on the RTX 3060, a `local` provider in providers.py, first real scans
+     (free, labelled as a local open weight model, never a production chatbot).
+  2. stats: rank trend test against log Common Crawl share (exploratory,
+     preregistered before data), power simulation check, `data/resource_measures.csv`.
+  3. defences: placebo and "documents are data" arms on the held-out phrasing, a
+     lint that defence text never copies bank wording.
+  Dropped: the invisible character and language split items (stopped by a safety
+  filter; not resumed). OWASP and ATLAS tags and the dataset card stay on the list
+  for the main session. Translation quality agent starts after the 73 language
+  bank is committed.
+  Main session: ship the 73 language bank (deviation row, new SHAs, docs), then
+  merge branches as they finish.
+
 - **2026-10-04, expanding the bank from 20 to all 87 catalog languages** (Ishaan:
   "get that number as high as possible"). Not committed yet. How it works:
   - The 67 new languages are machine translated and stored as source files,

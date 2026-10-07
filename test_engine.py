@@ -75,8 +75,9 @@ check("judge routes canary goal",
 
 # --- mock scan: language independence (integrity) ---
 out = engine.scan(SP, mock=True)
-check("mock scan runs (300 attacks = 20 langs x 5 cats x 3 variants)",
-      out["n_attacks"] == 300)
+_nlang = len(engine.load_bank()["languages"])
+check(f"mock scan runs ({15 * _nlang} attacks = {_nlang} langs x 5 cats x 3 variants)",
+      out["n_attacks"] == 15 * _nlang)
 
 
 def _tier_avg(tier):

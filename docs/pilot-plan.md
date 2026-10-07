@@ -12,7 +12,7 @@ Nothing in this file runs until both of these are true:
 
 The pilot proves the plumbing: that the Anthropic adapter, the fixed judge, the
 capability controls, the streaming scan and the report all work against a real
-model. It does **not** test the central hypothesis. The bank holds 20 languages,
+model. It does **not** test the central hypothesis. This plan was written for the 20 author written languages and stays scoped to them (the bank now holds 73), so it holds 20 languages,
 15 high resource, 4 mid resource and **one low resource** (Gujarati), so no low
 versus high comparison is possible. Every number it produces is labelled a pilot, never
 a finding, and the app stays labelled simulated until real scans exist.

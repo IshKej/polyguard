@@ -1,8 +1,10 @@
 # Native speaker review
 
-**Status as of 2026-10-04: native speaker feedback has been received and
+**Status as of 2026-10-05: native speaker feedback has been received and
 integrated for 3 of the 20 hand-authored languages, Spanish, Vietnamese and
-Arabic. Portuguese feedback is pending. The other 16 have had no native review.** Feedback
+Arabic. Portuguese feedback is pending. The other 16 have had no native review.
+The 53 machine translated languages added on 2026-10-05 have had no native review
+at all.** Feedback
 received and integrated is not a validation: it means a speaker read the lines and
 their corrections are now in the bank, not that the language is certified correct.
 The bank's `native_reviewed` flag is still false for every language.
@@ -128,8 +130,9 @@ The correct phrasing anywhere this project is described is:
 > Vietnamese and Arabic, and Portuguese feedback is pending; the other 16 have
 > had no native review. The Arabic is Modern Standard Arabic, and its review
 > does not establish coverage of Arabic dialects. Languages added later are
-> machine-translated and checked by reverse translation. Translation quality is
-> a known limitation and a possible confound.
+> machine-translated and checked by reverse translation: 53 so far, none reviewed
+> by a native speaker. Translation quality is a known limitation and a possible
+> confound.
 
 Do not write "verified", "validated", "professionally translated", or
 "human-checked" about any language in this project, including Spanish,

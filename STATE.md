@@ -24,7 +24,7 @@ logged in `PREREGISTRATION.md`. Portuguese feedback is pending; nothing changed 
 ## Run these to confirm nothing is broken
 
 ```bash
-python generate_attack_bank.py   # rebuild corpus       -> 300 attacks + 120 controls
+python generate_attack_bank.py   # rebuild corpus       -> 1095 attacks + 438 controls
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, <1s           -> 168/168
@@ -54,10 +54,11 @@ If any of those fail, something regressed. They all pass as of this writing.
 1. **Anthropic API key.** Needs a parent's card. Gates the live scan, the
    language expansion, the judge validation and the remediation proof. Nothing
    else is close to this in importance.
-2. **The 38 low-resource languages.** The bank holds 20 languages: 15 high, 4
-   mid, **1 low** (Gujarati, after the 2026-10-05 Joshi correction). The central
-   hypothesis is therefore untested, not supported.
-   `python expand_languages.py --tier low` fills them, needs the key.
+2. **The last 14 catalog languages and native review.** The bank holds 73
+   languages: 25 high, 24 mid, 24 low; 20 author written, 53 machine translated
+   (`machine_translations/`, checked by `python expand_languages.py --check-stored`).
+   Missing: Pashto, Tajik, Mongolian, Armenian, Nepali, Sinhala, Khmer, Burmese, Javanese, Sundanese, Swahili, Amharic, Somali and Kinyarwanda. They need `python expand_languages.py --langs ...` with the
+   key, or native speakers. The central hypothesis is testable now but untested.
 3. **Server-side cancellation (Ishaan's, in progress).** Closing the tab does not
    stop a paid scan: 228 more calls after a visitor leaves, measured. Brief and
    acceptance tests: `docs/design/cancellation.md`, `api/test_cancellation.py`.
@@ -176,11 +177,11 @@ gate is on by default and native review is tracked rather than waved off.
 
 | | |
 |---|---|
-| Attacks | 300 (20 languages x 5 categories x 3 phrasings) |
-| Capability controls | 120 (6 per language) |
-| Languages in bank | 20 of a planned 87 (15 high, 4 mid, **1 low**) |
-| Verification checks | 221 |
+| Attacks | 1095 (73 languages x 5 categories x 3 phrasings) |
+| Capability controls | 438 (6 per language) |
+| Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
+| Verification checks | 223 |
 | Unit tests | 168 (every public engine function) |
-| Audit findings | 71 across 18 rounds (70 fixed; 62, cancellation, open and assigned) |
+| Audit findings | 75 across 19 rounds (74 fixed; 62, cancellation, open and assigned) |
 | Native speaker feedback integrated | 3 of 20 (Spanish, Vietnamese, Arabic); Portuguese pending; none validated |
 | Live scans ever run | 0 |

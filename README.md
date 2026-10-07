@@ -8,7 +8,7 @@
 
 Most AI safety testing happens in English. PolyGuard takes a chatbot's system prompt, attacks a live copy of that bot with **5 kinds of prompt injection** in **every language in its attack bank**, and shows, per language and per resource tier, which attacks got through. The point is to measure the gap between how well a bot is defended in English and how well it is defended in everyone else's language.
 
-> **Where this stands.** The instrument is built and audited ([AUDIT.md](AUDIT.md)). No live scan has run yet, the bank has only one low resource language (Gujarati), and native speaker feedback has been received and integrated for only three languages, Spanish, Vietnamese and Arabic. Until those change, nothing here is a result. [STATE.md](STATE.md) has the details.
+> **Where this stands.** The instrument is built and audited ([AUDIT.md](AUDIT.md)). No live scan has run yet. The bank holds 73 languages (25 high, 24 mid, 24 low resource): 20 written by the author and 53 machine translated, none of which a native speaker has reviewed. Native speaker feedback has been received and integrated for only three languages, Spanish, Vietnamese and Arabic. Until those change, nothing here is a result. [STATE.md](STATE.md) has the details.
 
 New here? [docs/quickstart.md](docs/quickstart.md) runs it in three minutes with no key, shows how the pieces fit together, and lists what to do when something goes wrong. [docs/performance.md](docs/performance.md) has measured latency and sizes.
 
@@ -144,10 +144,12 @@ attack.
 
 ## Limits of what a result can show
 
-- **The bank has one low resource language (Gujarati)**, so the central
-  hypothesis is untested: one language cannot stand for a tier. Results per
-  language are real measurements; the low versus high comparison cannot be made
-  until the low resource languages exist.
+- **23 of the 24 low resource languages are machine translated** (Gujarati is the
+  exception), so tier and translation method overlap. A low versus high gap could
+  come from translation quality rather than from the bot's defences, and the
+  literature does not settle which way that error pushes. Author written against
+  machine translated is reported within tier, and every machine translated
+  language is labelled as such.
 - **Resource tier is a proxy.** It is Joshi et al.'s (2020) class for how much text
   and tooling exists in a language, not a measure of how much of a particular
   model's safety training covered it. A tier gap is evidence about the proxy.

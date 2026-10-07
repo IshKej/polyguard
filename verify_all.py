@@ -51,8 +51,9 @@ CANARY = bank["canary"]
 B64_RE = re.compile(r"[A-Za-z0-9+/]{16,}={0,2}")
 
 # 2. bank shape
-ck("2. bank has 300 attacks / 20 langs (3 variants per cell)",
-   len(bank["attacks"]) == 300 and len(bank["languages"]) == 20)
+ck("2. bank has 15 attacks per language (5 categories x 3 variants), all from the catalog",
+   len(bank["attacks"]) == 15 * len(bank["languages"]) and len(bank["languages"]) >= 20
+   and set(bank["languages"]) <= set(cat.CATALOG))
 
 # 3. ids unique
 ids = [a["id"] for a in bank["attacks"]]
@@ -295,7 +296,7 @@ from collections import defaultdict
 cells = defaultdict(list)
 for a in bank["attacks"]:
     cells[(a["lang"], a["category"])].append(a["text"])
-ck("30. every cell has 3 variants", all(len(v) == 3 for v in cells.values()) and len(cells) == 100)
+ck("30. every cell has 3 variants", all(len(v) == 3 for v in cells.values()) and len(cells) == 5 * len(bank["languages"]))
 ck("31. variants within each cell are distinct (no fake depth)",
    all(len({t.strip() for t in v}) == len(v) for v in cells.values()))
 
@@ -730,7 +731,7 @@ ck("76. bank ships benign capability controls, kept OUT of the attacks",
    and bank.get("control_token") == "CTRL_4B8E"
    and all(bank["control_token"] in c["text"] for c in bank["controls"])
    and all(CANARY not in c["text"] for c in bank["controls"])
-   and len(bank["attacks"]) == 300)
+   and len(bank["attacks"]) == 15 * len(bank["languages"]))
 ck("76b. controls carry NO adversarial framing (they must be benign twins)",
    not [c["id"] for c in bank["controls"]
         if any(w in c["text"].lower()
