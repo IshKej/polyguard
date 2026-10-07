@@ -19,6 +19,70 @@ cd web && npm install && npm run dev             # the site, on http://localhost
 With a key: `python setup_key.py`, then follow [pilot-plan.md](pilot-plan.md).
 No paid call happens before that plan is approved.
 
+## Real scans for free, with a local open weight model
+
+No key and no account: an open weight model runs on your own GPU through
+llama.cpp's `llama-server`, and PolyGuard talks to it over HTTP. The result is
+a real measurement of that small model, and is labelled everywhere as "local
+open weight model, not a production chatbot". It says nothing about the
+chatbots companies deploy.
+
+What was used on a laptop with a 6 GB RTX 3060 (details, hashes and measured
+speeds in [progress/local-models.md](progress/local-models.md)):
+
+| Part | What | License |
+|---|---|---|
+| Runtime | llama.cpp prebuilt Windows CUDA 12.4 zip, build b11435, from the GitHub releases page | MIT |
+| Victim | `Qwen3.5-4B-Q4_K_M.gguf` from `unsloth/Qwen3.5-4B-GGUF` | Apache 2.0 |
+| Judge | `gemma-4-E2B-it-Q4_K_M.gguf` from `unsloth/gemma-4-E2B-it-GGUF` | Apache 2.0 |
+
+Check a model's license on its model card before downloading it. Skip any
+license with an age of consent clause (Llama and Gemma 3 have one), and skip
+Ollama, whose terms require users to be 18.
+
+Start two servers, the victim and a judge from a different model family, so no
+model grades its own replies:
+
+```bash
+llama-server -m C:/dev/llm/models/Qwen3.5-4B-Q4_K_M.gguf -ngl 99 -c 8192 -np 4 \
+  --host 127.0.0.1 --port 8080 --reasoning off --reasoning-budget 0 --cache-ram 0 --ctx-checkpoints 0
+llama-server -m C:/dev/llm/models/gemma-4-E2B-it-Q4_K_M.gguf -ngl 99 -ot "per_layer_token_embd=CPU" \
+  -c 4096 -np 2 --host 127.0.0.1 --port 8081 --reasoning off --reasoning-budget 0 --cache-ram 0 --ctx-checkpoints 0
+```
+
+Why each flag: an absolute `-m` path lets PolyGuard hash the weights file;
+`--reasoning off` stops a model thinking before it answers (PolyGuard refuses
+any reply that carries hidden reasoning); `--cache-ram 0` stops the server's
+prompt cache from filling system memory; `-ot "per_layer_token_embd=CPU"` keeps
+Gemma's large lookup tables in system memory so both models fit on a 6 GB GPU;
+`127.0.0.1` keeps both servers off the network.
+
+Then scan:
+
+```bash
+export POLYGUARD_LOCAL_URL=http://127.0.0.1:8080 POLYGUARD_LOCAL_MODEL=qwen3.5-4b
+export POLYGUARD_JUDGE_BACKEND=local POLYGUARD_JUDGE_URL=http://127.0.0.1:8081 POLYGUARD_JUDGE_LOCAL_MODEL=gemma-4-e2b
+python providers.py --smoke local                       # one harmless call
+python judge_eval.py --llm                              # the local judge on the gold set
+python cli.py scan --prompt bot.txt --model local --langs en,es,vi --bundle results/local/<date>/smoke
+python cli.py replay results/local/<date>/smoke/scan.json
+POLYGUARD_JUDGE_URL=http://127.0.0.1:8080 python rejudge.py results/local/<date>/smoke/scan.json   # second judge
+```
+
+The judge is always an LLM. If the judge server is down or returns no verdict,
+the attack is recorded as an unscored error, never scored by keywords. Every
+scan's instrument record names both weights files with their SHA-256 and the
+server build, and two scans made with different weights are refused as not
+comparable. `deterministic` is false for local models: temperature is 0, but the
+server batches requests, so runs are not bit for bit repeatable.
+
+| What you see | Why | What to do |
+|---|---|---|
+| "No llama-server is answering at ..." | The server is not running, or the URL is wrong | Start it; `curl http://127.0.0.1:8080/health` should say ok |
+| Errors saying "the local model reasoned before answering" | The server was started without `--reasoning off` | Restart it with the flags above |
+| Scans crawl and the machine swaps | The server's prompt cache filled system memory | Restart with `--cache-ram 0 --ctx-checkpoints 0` |
+| `gguf_sha256` is null in the instrument | The server was started with a relative `-m` path | Use an absolute path |
+
 ## How it fits together
 
 ```mermaid
