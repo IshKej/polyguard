@@ -149,6 +149,18 @@ the web app and hosting.
 
 ## In progress
 
+- **2026-10-07, round 3** (Ishaan: research every CAC winner of the last 10 years
+  and the national ones, compare, improve whatever is weaker, keep a running list;
+  keep innovating and fixing). Research goes OUTSIDE the repo, in
+  `OneDrive\Claude\applications\cac_research\` (winners CSVs, notes,
+  `RUNNING_LIST.md` of improvements). Engineering in worktrees under `C:\dev\pg-wt\`:
+  `judge-controls` (scoring of translated injections, controls that work in English,
+  iterated with the free local model), `arms` (placebo matched per defence, a
+  repeated baseline arm, headline uses the full fixed block), `stats2` (the
+  capability rule change proposed in round 2, pre-data). Each keeps
+  `docs/progress/<topic>.md`. Resume: read those files, merge finished branches,
+  rerun every suite, push.
+
 - **(Resolved 2026-10-07, all four branches merged.) Was: PAUSED 2026-10-06.** Main is at the stats merge, CI green.
   Merged and done: defences, stats. Still on branches, paused with WIP commits:
   `sprint/local-models` (`C:\dev\pg-wt\local-models`) and
