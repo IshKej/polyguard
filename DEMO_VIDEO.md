@@ -11,9 +11,11 @@ say, change it.
 
 ## Before you record
 
-- [ ] API key is in `.streamlit/secrets.toml` so the scan is **live**, not mock
-- [ ] Run `python expand_languages.py --tier low` first, so low-resource
-      languages actually appear in the results
+- [ ] A real scan is ready to show: either the free local model (see
+      `docs/quickstart.md`, "Local scans") or, once there is a key and approval,
+      the hosted model. Say on screen which one it is.
+- [ ] The bank already holds 24 low resource languages (73 in all); the last 14
+      catalog languages need the key or native speakers
 - [ ] Run `python verify_all.py` once, so you can show it passing on screen
 - [ ] Close every other tab and notification
 - [ ] Record at 1080p or better, browser zoom around 110% so text is readable
@@ -52,8 +54,10 @@ English will sometimes obey that exact same attack written in Hindi, or Swahili,
 or Tagalog.
 
 That matters because the people most affected are the ones least served by
-English-only tools. Researchers have measured this on published models. What
-nobody had built was a way for a developer to check their own bot."
+English-only tools. Researchers have measured this on published models, and
+some security tools already try attacks in other languages. What I could not find
+was a tool that treats each language as the thing being measured: a statistical
+test across languages, and a check that the bot understood the language at all."
 
 ### 0:40 to 1:00, who it is for and what it does
 
@@ -63,7 +67,7 @@ nobody had built was a way for a developer to check their own bot."
 behaves outside English.
 
 You paste in your bot's system prompt. PolyGuard spins up a live copy of that bot
-and attacks it, in up to eighty-seven languages, across five categories of
+and attacks it, in seventy-three languages today, across five categories of
 prompt-injection attack."
 
 ### 1:00 to 1:55, the demo itself
@@ -112,8 +116,8 @@ ninety-eight runs out of a hundred, because 'worst of eighty-seven' is a maximum
 and a maximum runs high by definition. I replaced it with a permutation test that
 corrects for it.
 
-There are over a hundred and fifty automated checks, and a calibration suite that
-proves every statistic actually controls its error rate."
+There are over two hundred and thirty automated checks, and a calibration suite
+that checks every statistic controls its error rate."
 
 ### 2:20 to 2:35, tools and close
 
@@ -153,10 +157,11 @@ PolyGuard
 **2. Explain the app's purpose.**
 PolyGuard tests whether an AI chatbot can be manipulated in languages other than
 English. A developer pastes in their chatbot's system prompt, and PolyGuard
-attacks a live copy of that bot across five categories of prompt injection in up
-to eighty-seven languages, reports which attacks succeeded and whether
-lower-resource languages are measurably less protected, then writes and tests
-security rules that close the holes it found.
+attacks a live copy of that bot across five categories of prompt injection in
+seventy-three languages (eighty-seven planned), reports which attacks succeeded
+and whether lower-resource languages are measurably less protected, then writes
+defence rules and measures, against a placebo of the same length, how much they
+reduce the break rate on attacks it held back.
 
 **3. What inspired you to create this app?**
 I speak Hindi and Gujarati at home. When I started reading about AI safety I
