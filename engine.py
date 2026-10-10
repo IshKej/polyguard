@@ -1407,10 +1407,11 @@ def defense_evaluation(before: list[dict], after: list[dict],
     }
 
 
-def arm_table(arms: dict, reference: str = "placebo", exclude_langs=()) -> list[dict]:
+def arm_table(arms: dict, references: dict | None = None, noise: tuple | None = None,
+              exclude_langs=()) -> list[dict]:
     """One row per evaluation arm: held-out break rate and benign control follow
-    rate, each with a continuity-corrected Wilson interval, and the difference
-    against the reference arm (the placebo).
+    rate, each with a continuity-corrected Wilson interval, the difference
+    against that arm's own reference, and the run to run noise beside it.
 
     `arms` maps an arm name to {"results": attack rows, "controls": control rows}.
     Only held-out attacks count, errors are excluded, and languages in
@@ -1418,11 +1419,21 @@ def arm_table(arms: dict, reference: str = "placebo", exclude_langs=()) -> list[
     arm alike, so no arm can look safer by including languages the bot cannot
     read.
 
-    The difference against the placebo is a point difference plus an exact sign
-    test PAIRED by language, the same unit as every other test here: attacks
-    against one bot in one language are correlated, so pooling them would
-    overstate the evidence. A placebo row compares with nothing.
+    `references` maps an arm to the arm it is compared with (by default
+    defenses.REFERENCE_OF: each defence against its own length-matched placebo,
+    the repeat against the baseline). `noise` names the (repeat, baseline) pair
+    (default defenses.NOISE_PAIR). Their difference is attached to every other
+    compared row as `noise`, because a defence difference no bigger than what the
+    same prompt does twice is not a defence effect.
+
+    Each difference is a point difference plus an exact sign test PAIRED by
+    language, the same unit as every other test here: attacks against one bot in
+    one language are correlated, so pooling them would overstate the evidence. An
+    arm without its reference in `arms` compares with nothing.
     """
+    import defenses  # local: defenses is a leaf module and engine stays importable alone
+    refs = defenses.REFERENCE_OF if references is None else references
+    noise = defenses.NOISE_PAIR if noise is None else noise
     skip = set(exclude_langs)
 
     def held(rows):
@@ -1438,17 +1449,42 @@ def arm_table(arms: dict, reference: str = "placebo", exclude_langs=()) -> list[
             by.setdefault(r.get("lang"), []).append(bool(r.get(key)))
         return {k: sum(v) / len(v) for k, v in by.items()}
 
-    ref = arms.get(reference)
-    ref_att = held(ref["results"]) if ref else []
-    ref_ctl = ctrl(ref.get("controls", ())) if ref else []
-    ref_by = per_lang(ref_att, "broke")
+    def rate(rows, key):
+        return sum(1 for r in rows if r.get(key)) / len(rows) if rows else None
 
+    def compare(name, ref_name):
+        """`name` minus `ref_name`, or None when either is missing or empty."""
+        if name not in arms or ref_name not in arms:
+            return None
+        att, ref_att = held(arms[name]["results"]), held(arms[ref_name]["results"])
+        if not att or not ref_att:
+            return None
+        ctl = ctrl(arms[name].get("controls", ()))
+        ref_ctl = ctrl(arms[ref_name].get("controls", ()))
+        mine, theirs = per_lang(att, "broke"), per_lang(ref_att, "broke")
+        shared = sorted(set(mine) & set(theirs))
+        worse = sum(1 for c in shared if mine[c] > theirs[c])
+        better = sum(1 for c in shared if mine[c] < theirs[c])
+        follow, ref_follow = rate(ctl, "followed"), rate(ref_ctl, "followed")
+        return {
+            "reference": ref_name,
+            "heldout_diff": rate(att, "broke") - rate(ref_att, "broke"),
+            "benign_diff": (follow - ref_follow
+                            if follow is not None and ref_follow is not None else None),
+            "languages_paired": len(shared),
+            "sign_test": sign_test(worse, better),
+        }
+
+    noise_cmp = compare(noise[0], noise[1]) if noise else None
+    noise_arm = noise[0] if noise else None
     out = []
     for name, arm in arms.items():
         att, ctl = held(arm["results"]), ctrl(arm.get("controls", ()))
         broke = sum(1 for r in att if r.get("broke"))
         followed = sum(1 for c in ctl if c.get("followed"))
-        row = {
+        ref_name = refs.get(name)
+        vs = compare(name, ref_name) if ref_name else None
+        out.append({
             "arm": name,
             "heldout_scored": len(att), "heldout_broke": broke,
             "heldout_rate": broke / len(att) if att else None,
@@ -1456,25 +1492,10 @@ def arm_table(arms: dict, reference: str = "placebo", exclude_langs=()) -> list[
             "benign_scored": len(ctl), "benign_followed": followed,
             "benign_rate": followed / len(ctl) if ctl else None,
             "benign_ci": wilson_ci_cc(followed, len(ctl)) if ctl else None,
-            "vs_placebo": None,
-        }
-        if ref and name != reference and att and ref_att:
-            mine = per_lang(att, "broke")
-            shared = sorted(set(mine) & set(ref_by))
-            worse = sum(1 for c in shared if mine[c] > ref_by[c])
-            better = sum(1 for c in shared if mine[c] < ref_by[c])
-            ref_rate = sum(1 for r in ref_att if r.get("broke")) / len(ref_att)
-            ref_follow = (sum(1 for c in ref_ctl if c.get("followed")) / len(ref_ctl)
-                          if ref_ctl else None)
-            row["vs_placebo"] = {
-                "heldout_diff": row["heldout_rate"] - ref_rate,
-                "benign_diff": (row["benign_rate"] - ref_follow
-                                if row["benign_rate"] is not None and ref_follow is not None
-                                else None),
-                "languages_paired": len(shared),
-                "sign_test": sign_test(worse, better),
-            }
-        out.append(row)
+            "vs_reference": vs,
+            # The repeat's own row IS the noise, so it does not carry a copy.
+            "noise": noise_cmp if vs is not None and name != noise_arm else None,
+        })
     return out
 
 

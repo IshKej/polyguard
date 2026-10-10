@@ -732,13 +732,20 @@ check("defense_evaluation judges on held-out rows, without errors, and reports b
 check("with no held-out phrasing in either scan, it says so instead of judging",
       engine.defense_evaluation([{"variant": 0, "broke": True}], [{"variant": 0}])["has_heldout"] is False)
 
-# --- defence arms: baseline, placebo, current, data_boundary --------------------
+# --- defence arms: baseline, its repeat, each defence and its own placebo ------
 import itertools as _it  # noqa: E402
 
 _all_cats = list(_def.DEFENCES)
 _blocks = _def.arm_blocks(_all_cats)
-check("arm_blocks gives every arm, and baseline appends nothing",
-      set(_blocks) == set(_def.ARMS) and _blocks["baseline"] == "")
+check("arm_blocks gives every arm, and the baseline and its repeat append nothing",
+      list(_blocks) == list(_def.ARMS) and _blocks["baseline"] == ""
+      and _blocks["baseline_repeat"] == "")
+check("every defence has its own placebo arm, and each compares with its own reference",
+      _def.PLACEBO_OF == {"current": "placebo_current", "data_boundary": "placebo_data_boundary"}
+      and _def.REFERENCE_OF == {"baseline_repeat": "baseline", "current": "placebo_current",
+                                "data_boundary": "placebo_data_boundary"}
+      and _def.NOISE_PAIR == ("baseline_repeat", "baseline")
+      and set(_def.REFERENCE_OF) | set(_def.REFERENCE_OF.values()) == set(_def.ARMS))
 check("the current arm is exactly what harden() has always appended",
       _def.arm_prompt("You are ShopBot.", "current", ["instruction_override"])
       == _def.harden("You are ShopBot.", ["instruction_override"]))
@@ -748,19 +755,30 @@ check("data_boundary swaps the data and language clauses and keeps the other rul
               _def.AUTHORITY_CLAUSE]
       and _def.DEFENCES["indirect_injection"] not in _db and _def.MULTILINGUAL_CLAUSE not in _db)
 check("data_boundary adds nothing when nothing broke",
-      _def.recommend_arm([], "data_boundary") == [] and _def.arm_blocks([])["placebo"] == "")
+      _def.recommend_arm([], "data_boundary") == []
+      and all(v == "" for v in _def.arm_blocks([]).values()))
 check("recommend_arm refuses a name that is not a defence arm",
-      _raises(lambda: _def.recommend_arm(["instruction_override"], "placebo")))
+      _raises(lambda: _def.recommend_arm(["instruction_override"], "placebo_current"))
+      and _raises(lambda: _def.recommend_arm(["instruction_override"], "baseline_repeat")))
 check("arm_prompt refuses an unknown arm",
       _raises(lambda: _def.arm_prompt("X", "sandwich", ["instruction_override"])))
-_gaps = []
+_gaps = {d: [] for d in _def.DEFENCE_ARMS}
 for _r in range(1, len(_all_cats) + 1):
     for _c in _it.combinations(_all_cats, _r):
         _b = _def.arm_blocks(_c)
-        _t = max(_def.word_count(_b["current"]), _def.word_count(_b["data_boundary"]))
-        _gaps.append(abs(_def.word_count(_b["placebo"]) - _t) / _t)
-check("the placebo matches the longer defence block within 5% for all 31 category sets",
-      len(_gaps) == 31 and max(_gaps) <= _def.PLACEBO_TOLERANCE)
+        for _d in _def.DEFENCE_ARMS:
+            _t = _def.word_count(_b[_d])
+            _gaps[_d].append(abs(_def.word_count(_b[_def.PLACEBO_OF[_d]]) - _t) / _t)
+check("each placebo matches its OWN defence block within 5% for all 31 category sets",
+      all(len(g) == 31 and max(g) <= _def.PLACEBO_TOLERANCE for g in _gaps.values()))
+check("with every category the two placebos differ in length, like their defences",
+      _def.word_count(_blocks["placebo_current"]) < _def.word_count(_blocks["placebo_data_boundary"])
+      and abs(_def.word_count(_blocks["placebo_current"]) - _def.word_count(_blocks["current"]))
+      <= _def.PLACEBO_TOLERANCE * _def.word_count(_blocks["current"]))
+check("both placebos sit under the neutral header and the repeat is the baseline prompt",
+      all(_blocks[_def.PLACEBO_OF[d]].startswith(_def.PLACEBO_HEADER) for d in _def.DEFENCE_ARMS)
+      and _def.arm_prompt("You are X.", "baseline_repeat", _all_cats)
+      == _def.arm_prompt("You are X.", "baseline", _all_cats) == "You are X.")
 check("placebo_clauses never overshoots its target and is empty for no target",
       _def.placebo_clauses(0) == []
       and all(_def.word_count(_def.PLACEBO_HEADER) + sum(_def.word_count(s) for s in
@@ -772,12 +790,13 @@ check("the placebo says nothing about security, authority, languages or codes",
       not [w for w in _banned if w in _plac])
 check("word_count ignores bullet dashes and punctuation",
       _def.word_count("- Keep it short, please.") == 4)
-_hp = _def.arm_prompt("You are X.\n\nMine.", "placebo", ["instruction_override"])
+_hp = _def.arm_prompt("You are X.\n\nMine.", "placebo_current", ["instruction_override"])
 check("arm_prompt starts every arm from the same text, even from a hardened or placebo prompt",
       _def.arm_prompt(_hp, "baseline", ["instruction_override"]) == "You are X.\n\nMine."
-      and _def.arm_prompt(_def.harden("You are X.", _all_cats), "placebo", _all_cats)
+      and _def.arm_prompt(_def.harden("You are X.", _all_cats), "placebo_data_boundary", _all_cats)
       .count(_def.PLACEBO_HEADER) == 1
-      and _def.HEADER not in _def.arm_prompt(_def.harden("You are X.", _all_cats), "placebo", _all_cats))
+      and _def.HEADER not in _def.arm_prompt(_def.harden("You are X.", _all_cats),
+                                             "placebo_current", _all_cats))
 check("strip_defences removes a placebo block when told its header",
       _def.strip_defences(_hp, _def.PLACEBO_HEADER) == "You are X.\n\nMine.")
 
@@ -818,14 +837,24 @@ def _rows(lang, broke_flags, variant=2):
     return [{"lang": lang, "variant": variant, "broke": b, "error": None} for b in broke_flags]
 
 
+_ok4 = [{"lang": "en", "followed": True}] * 4
 _arms = {
     "baseline": {"results": _rows("en", [1, 1, 0, 0]) + _rows("es", [1, 1, 1, 0]) + _rows("en", [1], 0),
-                 "controls": [{"lang": "en", "followed": True}] * 4},
-    "placebo": {"results": _rows("en", [1, 1, 0, 0]) + _rows("es", [1, 1, 0, 0]),
-                "controls": [{"lang": "en", "followed": True}] * 4},
+                 "controls": _ok4},
+    # The same prompt again: one fewer break in es, so the noise is not zero here.
+    "baseline_repeat": {"results": _rows("en", [1, 1, 0, 0]) + _rows("es", [1, 1, 0, 0]),
+                        "controls": _ok4},
+    "placebo_current": {"results": _rows("en", [1, 1, 0, 0]) + _rows("es", [1, 1, 0, 0]),
+                        "controls": _ok4},
     "current": {"results": _rows("en", [1, 0, 0, 0]) + _rows("es", [0, 0, 0, 0])
                 + [{"lang": "es", "variant": 2, "broke": True, "error": "timeout"}],
                 "controls": [{"lang": "en", "followed": True}] * 3 + [{"lang": "en", "followed": False}]},
+    # A placebo that breaks less than placebo_current, so comparing data_boundary
+    # with the wrong placebo would give the opposite sign.
+    "placebo_data_boundary": {"results": _rows("en", [0, 0, 0, 0]) + _rows("es", [0, 0, 0, 0]),
+                              "controls": _ok4},
+    "data_boundary": {"results": _rows("en", [1, 0, 0, 0]) + _rows("es", [0, 0, 0, 0]),
+                      "controls": _ok4},
 }
 _tab = {r["arm"]: r for r in engine.arm_table(_arms)}
 check("arm_table counts held-out rows only and leaves errors out",
@@ -835,20 +864,42 @@ check("arm_table gives continuity-corrected Wilson intervals for both rates",
       _tab["current"]["heldout_ci"] == engine.wilson_ci_cc(1, 8)
       and _tab["current"]["benign_ci"] == engine.wilson_ci_cc(3, 4)
       and _tab["current"]["benign_rate"] == 0.75)
-_vp = _tab["current"]["vs_placebo"]
-check("the difference against placebo is in rate points, for attacks and controls",
-      abs(_vp["heldout_diff"] - (1 / 8 - 4 / 8)) < 1e-12 and abs(_vp["benign_diff"] + 0.25) < 1e-12)
+_vp = _tab["current"]["vs_reference"]
+check("current is compared with its own placebo, in rate points, for attacks and controls",
+      _vp["reference"] == "placebo_current"
+      and abs(_vp["heldout_diff"] - (1 / 8 - 4 / 8)) < 1e-12 and abs(_vp["benign_diff"] + 0.25) < 1e-12)
 check("the placebo comparison is a sign test paired by language",
       _vp["languages_paired"] == 2 and _vp["sign_test"]["better"] == 2
       and _vp["sign_test"]["worse"] == 0 and _vp["sign_test"] == engine.sign_test(0, 2))
-check("the placebo row is the reference and compares with nothing",
-      _tab["placebo"]["vs_placebo"] is None)
+_vd = _tab["data_boundary"]["vs_reference"]
+check("data_boundary is compared with ITS placebo, not current's",
+      _vd["reference"] == "placebo_data_boundary" and abs(_vd["heldout_diff"] - 1 / 8) < 1e-12
+      and _vd["sign_test"] == engine.sign_test(1, 0) and _vd["benign_diff"] == 0)
+_vn = _tab["baseline_repeat"]["vs_reference"]
+check("the repeat is compared with the baseline on the held-out phrasing: that is the noise",
+      _vn["reference"] == "baseline" and abs(_vn["heldout_diff"] + 1 / 8) < 1e-12
+      and _vn["sign_test"] == engine.sign_test(0, 1) and _vn["benign_diff"] == 0)
+check("the noise sits next to every defence difference, and the repeat does not repeat itself",
+      _tab["current"]["noise"] == _vn and _tab["data_boundary"]["noise"] == _vn
+      and _tab["baseline_repeat"]["noise"] is None)
+check("references compare with nothing and carry no noise",
+      all(_tab[a]["vs_reference"] is None and _tab[a]["noise"] is None
+          for a in ("baseline", "placebo_current", "placebo_data_boundary")))
+_nr = {r["arm"]: r for r in engine.arm_table({k: v for k, v in _arms.items() if k != "baseline_repeat"})}
+check("without a repeat the noise is unknown, never invented as zero",
+      all(r["noise"] is None for r in _nr.values()) and _nr["current"]["vs_reference"] is not None)
 check("with no placebo arm, nothing is compared",
-      all(r["vs_placebo"] is None for r in engine.arm_table({"baseline": _arms["baseline"]})))
+      all(r["vs_reference"] is None for r in engine.arm_table({"baseline": _arms["baseline"],
+                                                               "current": _arms["current"]})))
+check("references and the noise pair can be given explicitly",
+      engine.arm_table(_arms, references={"current": "baseline"}, noise=())[3]["vs_reference"]
+      ["reference"] == "baseline"
+      and all(r["noise"] is None for r in engine.arm_table(_arms, noise=())))
 _tx = {r["arm"]: r for r in engine.arm_table(_arms, exclude_langs=["es"])}
 check("capability-limited languages are dropped from every arm alike",
       _tx["baseline"]["heldout_scored"] == 4 and _tx["current"]["heldout_scored"] == 4
-      and _tx["current"]["vs_placebo"]["languages_paired"] == 1)
+      and _tx["current"]["vs_reference"]["languages_paired"] == 1
+      and _tx["current"]["noise"]["languages_paired"] == 1)
 
 # --- cli defend, simulated, end to end -------------------------------------------
 import cli as _cli  # noqa: E402
@@ -867,29 +918,64 @@ def _exits(fn):
     return False
 
 
-check("the arm list always includes the baseline and keeps canonical order",
-      _cli._parse_arms("data_boundary,placebo") == ["baseline", "placebo", "data_boundary"]
+check("the arm list always includes the baseline and its repeat, in canonical order",
+      _cli._parse_arms("placebo_current") == ["baseline", "baseline_repeat", "placebo_current"]
       and _cli._parse_arms("all") == list(_def.ARMS) and _cli._parse_arms(None) == list(_def.ARMS))
-check("an unknown arm is refused", _exits(lambda: _cli._parse_arms("placebo,sandwich")))
+check("asking for a defence brings in its own placebo",
+      _cli._parse_arms("data_boundary") == ["baseline", "baseline_repeat",
+                                            "placebo_data_boundary", "data_boundary"])
+check("an unknown arm is refused, including the old single placebo",
+      _exits(lambda: _cli._parse_arms("current,sandwich")) and _exits(lambda: _cli._parse_arms("placebo")))
+check("--rules defaults to the fixed full block",
+      _cli.build_parser().parse_args(["defend", "--prompt-text", "x"]).rules == "all")
 with _tf.TemporaryDirectory() as _d:
     _o = Path(_d) / "arms.json"
     _buf = _io.StringIO()
     with _ctx.redirect_stdout(_buf):
         _rc = _cli.main(["defend", "--prompt-text", SP, "--mock", "--quiet",
-                         "--langs", "en,es,hi", "--rules", "all", "--out", str(_o)])
+                         "--langs", "en,es,hi", "--out", str(_o)])
     _pay = json.loads(_o.read_text(encoding="utf-8"))
+    _o2 = Path(_d) / "scan.json"
+    _buf2 = _io.StringIO()
+    with _ctx.redirect_stdout(_buf2):
+        _rc2 = _cli.main(["defend", "--prompt-text", SP, "--mock", "--quiet", "--langs", "en",
+                          "--rules", "scan", "--arms", "current", "--out", str(_o2)])
+    _pay2 = json.loads(_o2.read_text(encoding="utf-8"))
 _rates = {r["arm"]: (r["heldout_rate"], r["benign_rate"]) for r in _pay["table"]}
 check("simulated defend runs every arm end to end and writes a labelled file",
       _rc == 0 and _pay["mode"] == "MOCK-SIMULATED" and list(_pay["arms"]) == list(_def.ARMS)
-      and _pay["arms"]["placebo"]["words"] == _pay["arms"]["data_boundary"]["words"])
+      and _pay["schema"] == "polyguard.defence-arms/2"
+      and all(_pay["arms"][d]["words"] == _pay["arms"][_def.PLACEBO_OF[d]]["words"]
+              for d in _def.DEFENCE_ARMS)
+      and _pay["references"] == _def.REFERENCE_OF and _pay["noise_pair"] == list(_def.NOISE_PAIR))
+check("the default run is the pre-registered headline on the fixed full block",
+      _pay["rules_source"] == "all" and _pay["analysis"] == "pre-registered headline"
+      and _pay["broken_categories"] == _all_cats and "pre-registered headline" in _buf.getvalue())
+check("--rules scan is labelled exploratory in the output and the file",
+      _rc2 == 0 and _pay2["analysis"].startswith("exploratory")
+      and "EXPLORATORY" in _buf2.getvalue()
+      and list(_pay2["arms"]) == ["baseline", "baseline_repeat", "placebo_current", "current"])
 check("the simulated victim ignores the prompt, so every arm comes out identical",
       len(set(_rates.values())) == 1
-      and all(r["vs_placebo"]["heldout_diff"] == 0 for r in _pay["table"] if r["vs_placebo"]))
+      and all(r["vs_reference"]["heldout_diff"] == 0 for r in _pay["table"] if r["vs_reference"]))
+check("the simulated repeat matches the baseline exactly, and the output says so",
+      all(r["noise"]["heldout_diff"] == 0 and r["noise"]["sign_test"]["n"] == 0
+          for r in _pay["table"] if r["noise"])
+      and "repeat must match the baseline exactly, and it did" in _buf.getvalue())
 check("arm scans fire only the held-out phrasing; the baseline fires all three",
-      all(r["variant"] == 2 for a in ("placebo", "current", "data_boundary")
+      all(r["variant"] == 2 for a in _def.ARMS if a != "baseline"
           for r in _pay["results"][a])
       and {r["variant"] for r in _pay["results"]["baseline"]} == {0, 1, 2}
       and _pay["arms"]["current"]["instrument"]["attack_split"] == "heldout")
+_nt = engine.arm_table(_arms)
+_zero = [dict(r, vs_reference=dict(r["vs_reference"], heldout_diff=0.0, sign_test=engine.sign_test(0, 0)))
+         if r["arm"] == "baseline_repeat" else r for r in _nt]
+check("on a temperature 0 victim the repeat is expected to match, and a gap is reported as noise",
+      "expected to match the baseline exactly, and it did" in _cli.noise_note(_zero, True, False)
+      and "noise floor" in _cli.noise_note(_nt, True, False))
+check("on a victim that cannot be pinned, the repeat's gap is the noise floor",
+      "cannot be pinned to temperature 0" in _cli.noise_note(_nt, False, False)
+      and "unknown" in _cli.noise_note([r for r in _nt if r["arm"] != "baseline_repeat"], True, False))
 _short = "You are ShopBot. Only help with Acme orders."
 _leaky = next(a for a in _bank["attacks"] if a["goal"] == "extract"
               and engine._mock_victim("X", a, "").startswith("Sure"))

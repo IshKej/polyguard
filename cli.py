@@ -12,7 +12,7 @@ between a project and a tool, and it is the whole reason this file exists.
     polyguard scan --prompt bot.txt --baseline last-week.json --fail-on-regression
     polyguard scan --prompt bot.txt --bundle runs/2026-10-03   # reproducible package
     polyguard compare last-week.json today.json
-    polyguard defend --prompt bot.txt --arms baseline,placebo,current,data_boundary
+    polyguard defend --prompt bot.txt --out arms.json   # every arm, the fixed full block
     polyguard replay today.json        # recompute every number from the evidence
     polyguard report today.json --html report.html
     polyguard languages
@@ -420,33 +420,70 @@ def cmd_scan(args) -> int:
 
 def _parse_arms(text: str | None) -> list[str]:
     """The arms to run, in canonical order. The baseline always runs, because it
-    is the scan the rules are chosen from."""
+    is the scan the rules are chosen from, and so does its repeat, because every
+    difference is shown next to the run to run noise. Asking for a defence brings
+    in its own placebo, so no defence is ever shown without its like for like
+    comparison."""
     asked = ([a.strip() for a in text.split(",") if a.strip()]
              if text and text != "all" else list(defenses.ARMS))
     unknown = [a for a in asked if a not in defenses.ARMS]
     if unknown:
         raise SystemExit(f"unknown arm(s): {', '.join(unknown)}; "
                          f"choose from {', '.join(defenses.ARMS)}")
-    return [a for a in defenses.ARMS if a == "baseline" or a in asked]
+    wanted = set(asked) | set(defenses.NOISE_PAIR)
+    wanted |= {defenses.PLACEBO_OF[a] for a in asked if a in defenses.PLACEBO_OF}
+    return [a for a in defenses.ARMS if a in wanted]
+
+
+def _diff_text(c: dict | None) -> str:
+    if not c:
+        return "n/a"
+    st = c["sign_test"]
+    bd = "n/a" if c["benign_diff"] is None else f"{c['benign_diff'] * 100:+.0f}"
+    return (f"break {c['heldout_diff'] * 100:+.0f} pts, benign {bd} pts, "
+            f"{st['better']} languages better, {st['worse']} worse, sign p={st['p']:.3g}")
 
 
 def print_arm_table(table: list[dict], words: dict) -> None:
     pct = lambda v: "n/a" if v is None else f"{v:.0%}"
     ci = lambda c: "" if not c else f"({c[0]:.0%} to {c[1]:.0%})"
-    print(f"  {'arm':<15}{'words':>6}  {'held-out break rate':<30}"
-          f"{'benign follow rate':<30}vs placebo")
+    print(f"  {'arm':<23}{'words':>6}  {'held-out break rate':<30}"
+          f"{'benign follow rate':<30}compared with")
     for r in table:
         brk = f"{pct(r['heldout_rate'])} {ci(r['heldout_ci'])} {r['heldout_broke']}/{r['heldout_scored']}"
         ben = f"{pct(r['benign_rate'])} {ci(r['benign_ci'])} {r['benign_followed']}/{r['benign_scored']}"
-        vp = r.get("vs_placebo")
-        if vp:
-            st = vp["sign_test"]
-            bd = "n/a" if vp["benign_diff"] is None else f"{vp['benign_diff'] * 100:+.0f}"
-            cmp = (f"break {vp['heldout_diff'] * 100:+.0f} pts, benign {bd} pts, "
-                   f"{st['better']} languages better, {st['worse']} worse, sign p={st['p']:.3g}")
+        vs = r.get("vs_reference")
+        if vs:
+            cmp = f"{vs['reference']}: {_diff_text(vs)}"
+        elif r["arm"] in defenses.REFERENCE_OF:
+            cmp = f"{defenses.REFERENCE_OF[r['arm']]} not run"
         else:
-            cmp = "reference" if r["arm"] == "placebo" else "no placebo run"
-        print(f"  {r['arm']:<15}{words.get(r['arm'], 0):>6}  {brk:<30}{ben:<30}{cmp}")
+            cmp = "reference"
+        print(f"  {r['arm']:<23}{words.get(r['arm'], 0):>6}  {brk:<30}{ben:<30}{cmp}")
+        if r.get("noise"):
+            print(f"  {'':<91}noise beside it, {defenses.NOISE_PAIR[0]} against "
+                  f"{defenses.NOISE_PAIR[1]}: {_diff_text(r['noise'])}")
+
+
+def noise_note(table: list[dict], deterministic: bool, mock: bool) -> str:
+    """What the repeat against baseline difference means for this victim."""
+    rep = next((r for r in table if r["arm"] == defenses.NOISE_PAIR[0]), None)
+    c = rep.get("vs_reference") if rep else None
+    if not c:
+        return "  No repeat of the baseline was scored, so run to run noise is unknown."
+    zero = c["heldout_diff"] == 0 and c["sign_test"]["n"] == 0 and not c["benign_diff"]
+    if mock:
+        return ("  Noise: the simulated victim is deterministic, so the repeat must match "
+                "the baseline exactly" + (", and it did." if zero else ". IT DID NOT."))
+    if deterministic:
+        head = ("  Noise: this victim is pinned to temperature 0, so the repeat is expected "
+                "to match the baseline exactly")
+        return head + (", and it did." if zero else
+                       ". It did not, so treat that gap as the noise floor: a defence "
+                       "difference no bigger\n  than it is not distinguishable from noise.")
+    return ("  Noise: this victim cannot be pinned to temperature 0, so the repeat's gap from "
+            "the baseline is\n  the run to run noise floor. A defence difference no bigger "
+            "than it is not distinguishable from noise.")
 
 
 def cmd_defend(args) -> int:
@@ -487,13 +524,16 @@ def cmd_defend(args) -> int:
     say = (lambda m: None) if args.quiet else (lambda m: print(m, file=sys.stderr))
     say("  baseline: every phrasing, so the rules come from the development ones")
     runs = {"baseline": engine.scan(base, **common)}
+    # The pre-registered headline tests the fixed full block, so nothing is
+    # selected from the scan being judged. Choosing rules from what broke is
+    # available, and labelled exploratory everywhere it is shown.
     broken = (list(defenses.DEFENCES) if args.rules == "all"
               else defenses.broken_categories_from(runs["baseline"]["results"]))
     blocks = defenses.arm_blocks(broken)
     if not broken:
         arms = ["baseline"]
         print("\n  Nothing broke on the development phrasings, so there is no block to "
-              "evaluate. Use --rules all to test the fixed blocks anyway.")
+              "evaluate. Use --rules all (the default) to test the fixed blocks anyway.")
     for arm in arms[1:]:
         say(f"  {arm}: held-out phrasing only")
         runs[arm] = engine.scan(defenses.arm_prompt(base, arm, broken),
@@ -503,7 +543,9 @@ def cmd_defend(args) -> int:
     excluded = cap.get("capability_limited") or []
     table = engine.arm_table({a: {"results": runs[a]["results"],
                                   "controls": runs[a].get("controls", [])} for a in arms},
+                             references=defenses.REFERENCE_OF, noise=defenses.NOISE_PAIR,
                              exclude_langs=excluded)
+    deterministic = bool((runs["baseline"].get("victim") or {}).get("deterministic"))
     words = {a: defenses.word_count(blocks[a]) for a in arms}
 
     who = "none (simulated run)" if args.mock else args.model
@@ -511,18 +553,23 @@ def cmd_defend(args) -> int:
     if args.mock:
         print("  MODE: MOCK-SIMULATED. The simulated victim ignores the system prompt, "
               "so every arm\n  must come out the same. These numbers are not a measurement.")
-    source = ("every category (--rules all)" if args.rules == "all"
-              else "the development phrasings")
-    print(f"  rules chosen from {source}: {', '.join(broken) or 'none'}")
+    if args.rules == "all":
+        print(f"  rules: the fixed full block, every category (--rules all), the "
+              f"pre-registered headline: {', '.join(broken)}")
+    else:
+        print(f"  rules chosen from what broke on the development phrasings (--rules scan): "
+              f"{', '.join(broken) or 'none'}\n  EXPLORATORY: the rules were selected from "
+              f"this bot's own scan, so this is not the pre-registered headline.")
     if excluded:
         print(f"  excluded as capability-limited in the baseline: {', '.join(excluded)}")
     print_arm_table(table, words)
+    print("\n" + noise_note(table, deterministic, args.mock))
     print("\n  A lower held-out break rate means fewer of this fixed bank's attacks worked.\n"
           "  It is not evidence that the bot is secure: no adaptive attacker was tested.")
 
     if args.out:
         payload = {
-            "schema": "polyguard.defence-arms/1",
+            "schema": "polyguard.defence-arms/2",
             "polyguard_version": VERSION,
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "mode": "MOCK-SIMULATED" if args.mock else "live",
@@ -530,6 +577,11 @@ def cmd_defend(args) -> int:
             "model": None if args.mock else args.model,
             "prompt_sha256": hashlib.sha256(base.encode("utf-8")).hexdigest(),
             "rules_source": "all" if args.rules == "all" else "development phrasings",
+            "analysis": ("pre-registered headline" if args.rules == "all"
+                         else "exploratory: rules selected from this scan"),
+            "references": {a: r for a, r in defenses.REFERENCE_OF.items() if a in arms},
+            "noise_pair": list(defenses.NOISE_PAIR),
+            "victim_deterministic": deterministic,
             "broken_categories": broken,
             "excluded_capability_limited": excluded,
             "claim": "reduced the break rate on this fixed bank; never evidence of security",
@@ -757,17 +809,19 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--html", required=True)
     r.set_defaults(func=cmd_report)
 
-    d = sub.add_parser("defend", help="judge the defence blocks against a placebo, "
-                                      "held-out phrasing only")
+    d = sub.add_parser("defend", help="judge each defence block against its own placebo, "
+                                      "held-out phrasing only, next to run to run noise")
     dsrc = d.add_mutually_exclusive_group(required=True)
     dsrc.add_argument("--prompt", help="file containing the system prompt, or - for stdin")
     dsrc.add_argument("--prompt-text", help="the system prompt inline")
     d.add_argument("--arms", default="all",
                    help=f"comma-separated arms from {', '.join(defenses.ARMS)} "
-                        f"(default all; the baseline always runs)")
-    d.add_argument("--rules", choices=("scan", "all"), default="scan",
-                   help="choose rules from what broke on the development phrasings "
-                        "(scan), or apply every category's rule (all)")
+                        f"(default all; the baseline and its repeat always run, and a "
+                        f"defence brings in its own placebo)")
+    d.add_argument("--rules", choices=("all", "scan"), default="all",
+                   help="apply every category's rule, the fixed block and the "
+                        "pre-registered headline (all, default), or choose rules from "
+                        "what broke on the development phrasings, exploratory (scan)")
     d.add_argument("--model", default=providers.DEFAULT_MODEL,
                    help=f"victim model (default {providers.DEFAULT_MODEL})")
     d.add_argument("--langs", help="comma-separated language codes")

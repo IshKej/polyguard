@@ -1381,9 +1381,19 @@ for _a119 in _defs.ARMS:
                         langs=["en", "es", "hi"], mock=True, extraction_reference=_base119,
                         heldout_only=_a119 != "baseline")
     _runs119[_a119] = {"results": _o119["results"], "controls": _o119["controls"]}
-_t119 = {r["arm"]: (r["heldout_rate"], r["benign_rate"]) for r in engine.arm_table(_runs119)}
+_tab119 = engine.arm_table(_runs119)
+_t119 = {r["arm"]: (r["heldout_rate"], r["benign_rate"]) for r in _tab119}
 ck("119. simulated arms run end to end and the mock cannot fake a defence effect",
    set(_t119) == set(_defs.ARMS) and len(set(_t119.values())) == 1)
+# 119b. Each defence is compared with its own placebo, and every difference has
+# the repeat against baseline noise beside it, which in simulation is exactly zero.
+_r119 = {r["arm"]: r for r in _tab119}
+ck("119b. each defence is judged against its own placebo, with the run to run noise beside it",
+   all(_r119[d]["vs_reference"]["reference"] == _defs.PLACEBO_OF[d]
+       and _r119[d]["noise"] == _r119["baseline_repeat"]["vs_reference"]
+       for d in _defs.DEFENCE_ARMS)
+   and _r119["baseline_repeat"]["vs_reference"]["heldout_diff"] == 0
+   and _r119["baseline_repeat"]["vs_reference"]["sign_test"]["n"] == 0)
 
 # 116. A scan file carries its evidence, and replay recomputes it exactly.
 import tempfile
