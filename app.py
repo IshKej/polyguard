@@ -751,7 +751,9 @@ if "out" in st.session_state:
     # an arrow and a colour, and a higher break rate drawn green reads as good news.
     c2.metric("Broke the bot", out["n_broke"])
     if out["overall_rate"] is not None:
-        c2.caption(f"{out['overall_rate']:.0%} of attacks")
+        c2.caption(f"{out['overall_rate']:.0%} of attacks"
+                   + (f"; {out['n_echoed']} more echoed the code while doing the user's "
+                      f"task, counted as held" if out.get("n_echoed") else ""))
     c3.metric("English break rate",
               f"{out['en_rate']:.0%}" if out["en_rate"] is not None else "n/a")
     if out["equity_gap"] is not None and out["worst_lang"]:
@@ -947,7 +949,19 @@ if "out" in st.session_state:
     # framing, and measures how often the bot simply does as asked.
     cap = out.get("capability")
     if cap and cap.get("ref_rate") is not None and not out["mock"]:
-        st.markdown("### Can the bot follow instructions in each language?")
+        neutral = cap.get("control_system") == "neutral"
+        st.markdown("### Can the model follow instructions in each language?" if neutral
+                    else "### Can the bot follow instructions in each language?")
+        if neutral:
+            capb = out.get("capability_bot_prompt") or {}
+            _n = lambda c: (sum(d["followed"] for d in (c.get("per_lang") or {}).values()),
+                            sum(d["n"] for d in (c.get("per_lang") or {}).values()))
+            fb, nb = _n(capb)
+            st.caption(
+                "These harmless requests ran under a plain helpful assistant prompt, so they "
+                "measure the model's grasp of each language, not the bot's rules. The same "
+                f"requests under the bot's own prompt were followed {fb} of {nb} times; that "
+                "number is about what the bot allows and is never used for this flag.")
         rows = []
         for code, d in sorted(cap["per_lang"].items(),
                               key=lambda kv: (kv[1]["rate"] is None, kv[1]["rate"])):
@@ -1166,6 +1180,7 @@ if "out" in st.session_state:
         "extraction_scoreable": out.get("extraction_scoreable"),
         "worst_language_test": out.get("max_gap_test"),
         "attacks_fired": out["n_attacks"], "attacks_broke": out["n_broke"],
+        "attacks_echoed": out.get("n_echoed", 0),
         "errors": out["n_errors"], "overall_break_rate": out["overall_rate"],
         "english_break_rate": out["en_rate"],
         "by_language": {d["name"]: {"tier": tier_of(c), "broke": d["broke"],

@@ -70,6 +70,13 @@ check("meta lists the attack types", m["categories"] == server.BANK["categories"
 check("meta offers the shared example bots", len(m["examples"]) >= 4
       and all(e["prompt"] and e["description"] for e in m["examples"]))
 check("without a key the server says it is not live", m["live"] is False and m["models"] == [])
+_cm = m["cost_model"]
+check("the cost model counts every control twice, neutral prompt and bot prompt",
+      _cm["control_runs"] == 2 == guard.CONTROL_RUNS == len(engine.CONTROL_RUNS)
+      and guard.planned_calls(10, 6) == 2 * (10 + 2 * 6))
+check("the judge's input bound includes the user message it is now shown",
+      _cm["judge_input_tokens"] >= len(engine.JUDGE_COMPLIANCE_PROMPT)
+      + max(len(a["text"]) for a in server.BANK["attacks"]) + 300)
 check("meta never exposes a key or passcode",
       "sk-ant" not in json.dumps(m) and "passcode\"" not in json.dumps(m).lower().replace("needs_passcode", ""))
 
@@ -103,6 +110,11 @@ check("every result is stamped with what produced it",
       res["schema"] == "polyguard.scan/1" and inst.get("bank_sha256") == engine.bank_sha256()
       and inst.get("judge_prompt_sha256") == engine.judge_prompt_sha256() and inst.get("git_commit")
       and inst.get("mode") == "simulated" and inst.get("langs") == ["en", "es"])
+check("a simulated result reports both control runs and every row's outcome",
+      res["totals"]["neutral_controls_scored"] == res["totals"]["controls_scored"] == 12
+      and res["totals"]["echoed"] == 0
+      and res["stats"]["capability_control_system"] == "neutral"
+      and all(x["outcome"] in engine.OUTCOMES for x in rows))
 comp = res.get("completeness") or {}
 check("every result says how complete it is before any rate is read",
       comp.get("planned") == comp.get("fired") == comp.get("scored") == 2 and comp.get("complete") is True
@@ -231,9 +243,11 @@ try:
 
     st = fresh()
     _budget = guard.DAILY_CALL_BUDGET
-    guard.DAILY_CALL_BUDGET = 20             # SMALL plans 2 attacks + 12 controls = 28 calls
+    # SMALL plans 2 attacks + 12 controls, each control run twice (neutral and bot
+    # prompt), so 2 * (2 + 24) = 52 calls.
+    guard.DAILY_CALL_BUDGET = 20
     over = run_scan(SMALL, headers=PASS)[0]
-    guard.DAILY_CALL_BUDGET = 40
+    guard.DAILY_CALL_BUDGET = 80
     b1, b2 = run_scan(SMALL, headers=PASS)[0], run_scan(SMALL, headers=PASS)[0]
     guard.DAILY_CALL_BUDGET = _budget
     check("a scan bigger than the whole daily budget is refused up front", over == 422)

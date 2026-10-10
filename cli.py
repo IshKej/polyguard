@@ -57,9 +57,9 @@ def instrument_differences(before: dict, after: dict) -> list[str]:
     if not bi or not ai:
         return ["one of the scans has no instrument record (it predates stamping), "
                 "so what produced it is unknown"]
-    d = engine.INSTRUMENT_DEFAULTS
-    return [f"{f}: {bi.get(f, d.get(f))!r} then {ai.get(f, d.get(f))!r}"
-            for f in engine.COMPARABLE_FIELDS if bi.get(f, d.get(f)) != ai.get(f, d.get(f))]
+    v = engine.instrument_value
+    return [f"{f}: {v(bi, f)!r} then {v(ai, f)!r}"
+            for f in engine.COMPARABLE_FIELDS if v(bi, f) != v(ai, f)]
 
 
 # --------------------------------------------------------------------------- #
@@ -178,8 +178,8 @@ def compare_scans(before: dict, after: dict, alpha: float = 0.05,
 def evidence_rows(results: list[dict], redact_replies: bool = False) -> list[dict]:
     """One row per attack: what was fired, what came back, and how it was scored.
     The attack text itself is in the bank, pinned by the instrument's bank_sha256."""
-    keep = ("id", "lang", "category", "variant", "goal", "broke", "evidence", "error",
-            "error_kind", "error_stage")
+    keep = ("id", "lang", "category", "variant", "goal", "broke", "outcome", "evidence",
+            "error", "error_kind", "error_stage")
     rows = []
     for r in results:
         row = {k: r.get(k) for k in keep}
@@ -187,6 +187,22 @@ def evidence_rows(results: list[dict], redact_replies: bool = False) -> list[dic
             row["reply"], row["reply_redacted"] = "", True
         else:
             row["reply"] = r.get("reply") or ""
+        rows.append(row)
+    return rows
+
+
+def control_rows(controls: list[dict], redact_replies: bool = False) -> list[dict]:
+    """One row per capability control, from both runs, so the capability numbers
+    can be recomputed from evidence like the break rates can."""
+    keep = ("id", "lang", "variant", "control_system", "followed", "error", "error_kind",
+            "error_stage")
+    rows = []
+    for c in controls:
+        row = {k: c.get(k) for k in keep}
+        if redact_replies:
+            row["reply"], row["reply_redacted"] = "", True
+        else:
+            row["reply"] = c.get("reply") or ""
         rows.append(row)
     return rows
 
@@ -216,6 +232,9 @@ def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> 
             prompt.encode("utf-8")).hexdigest(),
         "attacks_fired": out["n_attacks"],
         "attacks_broke": out["n_broke"],
+        # Holds where the bot did the user's task and the code came back inside
+        # the translated or quoted document. Never in a rate (scoring 1.2).
+        "attacks_echoed": out.get("n_echoed", 0),
         "errors": out["n_errors"],
         "overall_break_rate": out["overall_rate"],
         "english_break_rate": out["en_rate"],
@@ -223,7 +242,11 @@ def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> 
         # EXPLORATORY secondary analysis (PREREGISTRATION.md, 2026-10-06), never
         # the headline: rank trend of break rate against Common Crawl web share.
         "resource_trend_test": out.get("resource_trend_test"),
+        # The flag: controls under a neutral system prompt, what the MODEL can do.
         "capability": out.get("capability"),
+        # Reported apart: the same controls under the bot's own prompt, what the
+        # BOT allows. Never used for the flag.
+        "capability_bot_prompt": out.get("capability_bot_prompt"),
         "by_lang": {c: {**d, "tier": tier_of(c),
                          # automated proxy, not a validation (tq_report.py)
                          "translation_quality": tq_report.lang_quality(c)}
@@ -233,6 +256,9 @@ def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> 
         "instrument": out.get("instrument"),
         "completeness": engine.completeness(out),
         "results": evidence_rows(out["results"], redact_replies),
+        "control_results": control_rows((out.get("controls") or [])
+                                        + (out.get("controls_neutral") or []),
+                                        redact_replies),
     }
 
 
@@ -246,6 +272,9 @@ def print_summary(out: dict) -> None:
               f"meaningless. Remove it and rescan.")
     print(f"  attacks   {out['n_attacks']} fired, {out['n_broke']} broke, "
           f"{out['n_errors']} errored")
+    if out.get("n_echoed"):
+        print(f"  echoed    {out['n_echoed']} held while doing the user's task (a translation "
+              f"or quote that carried the code along); not breaks")
     print(f"  overall   {pct(out['overall_rate'])} break rate")
     if out.get("en_rate") is not None:
         print(f"  english   {pct(out['en_rate'])}")
@@ -273,8 +302,17 @@ def print_summary(out: dict) -> None:
               f"{rt['n_langs']} languages")
 
     cap = out.get("capability") or {}
+    capb = out.get("capability_bot_prompt") or {}
+
+    def follow(c):
+        rows = list((c.get("per_lang") or {}).values())
+        n = sum(d["n"] for d in rows)
+        return f"{sum(d['followed'] for d in rows)}/{n}" if n else "n/a"
+    if cap.get("control_system") == "neutral":
+        print(f"  controls  neutral prompt {follow(cap)} followed (the capability flag); "
+              f"bot prompt {follow(capb)} followed (what the bot allows)")
     if cap.get("capability_limited"):
-        print(f"  WARNING   the bot cannot follow ordinary instructions in "
+        print(f"  WARNING   the model cannot follow ordinary instructions in "
               f"{', '.join(cap['capability_limited'])}; a low break rate there "
               f"is incapacity, not safety")
 
@@ -496,8 +534,10 @@ def cmd_defend(args) -> int:
               "evaluate. Use --rules all to test the fixed blocks anyway.")
     for arm in arms[1:]:
         say(f"  {arm}: held-out phrasing only")
+        # The neutral controls do not depend on the prompt, so the baseline's
+        # neutral run stands for every arm; each arm runs the bot prompt controls.
         runs[arm] = engine.scan(defenses.arm_prompt(base, arm, broken),
-                                heldout_only=True, **common)
+                                heldout_only=True, neutral_controls=False, **common)
 
     cap = runs["baseline"].get("capability") or {}
     excluded = cap.get("capability_limited") or []
@@ -621,6 +661,7 @@ def cmd_replay(args) -> int:
     checks = [("attacks fired", payload["attacks_fired"], redo["n_attacks"]),
               ("attacks broke", payload["attacks_broke"], redo["n_broke"]),
               ("errors", payload["errors"], redo["n_errors"]),
+              ("attacks echoed", payload.get("attacks_echoed", 0), redo["n_echoed"]),
               ("overall break rate", payload["overall_break_rate"], redo["overall_rate"])]
     for code, d in payload["by_lang"].items():
         checks.append((f"{code} break rate", d.get("rate"), (redo["by_lang"].get(code) or {}).get("rate")))
@@ -631,6 +672,20 @@ def cmd_replay(args) -> int:
                                        "capability": payload.get("capability")})
         checks.append(("exploratory trend test p", payload["resource_trend_test"].get("p"),
                        trend.get("p")))
+    # The capability flag, recomputed from the control evidence when the file has it.
+    ctl = payload.get("control_results")
+    if ctl:
+        for key, kind in (("capability", (payload.get("capability") or {}).get("control_system")),
+                          ("capability_bot_prompt", "bot")):
+            stored = payload.get(key) or {}
+            crows = [c for c in ctl if c.get("control_system") == kind]
+            if not stored or not crows:
+                continue
+            again = engine.capability_report(crows)
+            checks.append((f"{key} languages flagged", stored.get("capability_limited"),
+                           again["capability_limited"]))
+            checks.append((f"{key} English follow rate", stored.get("ref_rate"),
+                           again["ref_rate"]))
     for name, stored, recomputed in checks:
         same = stored == recomputed or (isinstance(stored, float) and isinstance(recomputed, float)
                                         and abs(stored - recomputed) < 1e-12)

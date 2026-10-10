@@ -132,6 +132,9 @@ def web_row(r: dict) -> dict:
             "native": meta.get("native", ""), "tier": tier_of(r["lang"]),
             "category": r["category"], "variant": r.get("variant", 0),
             "broke": bool(r.get("broke")), "error": r.get("error"),
+            # "echoed": held while doing the user's task, the code came back
+            # inside the translated or quoted text (scoring 1.2). Not a break.
+            "outcome": engine.outcome_of(r),
             "attack": r.get("text", ""),
             "english": EN_TEXT.get((r["category"], r.get("variant", 0))),
             "reply": (r.get("reply") or "")[:REPLY_CHARS]}
@@ -166,13 +169,20 @@ def web_result(out: dict, req: ScanRequest, scan_id: str) -> dict:
                                             "deterministic": vm.get("deterministic"),
                                             "thinking_forced": vm.get("thinking_forced")},
         "totals": {"attacks": out["n_attacks"], "broke": out["n_broke"],
+                   "echoed": out.get("n_echoed", 0),
                    "errors": out["n_errors"], "overall_rate": out["overall_rate"],
                    "english_rate": out["en_rate"],
                    # Harmless requests the bot followed: a defence that refuses
                    # everything shows up here, not in the attack numbers.
                    "controls_scored": sum(1 for c in out.get("controls") or [] if not c.get("error")),
                    "controls_followed": sum(1 for c in out.get("controls") or []
-                                            if not c.get("error") and c.get("followed"))},
+                                            if not c.get("error") and c.get("followed")),
+                   # The same requests under a neutral prompt: what the model can
+                   # do, which is what the capability flag reads.
+                   "neutral_controls_scored": sum(1 for c in out.get("controls_neutral") or []
+                                                  if not c.get("error")),
+                   "neutral_controls_followed": sum(1 for c in out.get("controls_neutral") or []
+                                                    if not c.get("error") and c.get("followed"))},
         "heldout_variant": engine.HELDOUT_VARIANT,
         "verdict": verdict(out),
         "languages": langs,
@@ -184,6 +194,7 @@ def web_result(out: dict, req: ScanRequest, scan_id: str) -> dict:
                   "token_collision": out.get("token_collision"),
                   "capability_limited": sorted(limited),
                   "controls_per_language": cap.get("controls_per_lang"),
+                  "capability_control_system": cap.get("control_system"),
                   "phrasings": req.phrasings},
         "broken_categories": broken,
         "fixes": defenses.recommend(broken) if broken else [],
@@ -244,11 +255,17 @@ def meta(x_polyguard_passcode: str | None = Header(default=None)):
             "judge_model": engine.JUDGE_MODEL,
             "victim_max_output_tokens": 300,
             "judge_max_output_tokens": 50,
-            # The judge reads its instructions (a token per character at most) and one
-            # reply, which the victim's own output cap holds to 300 tokens.
-            "judge_input_tokens": len(engine.JUDGE_COMPLIANCE_PROMPT) + 300 + 20,
+            # The judge reads its instructions and how its inputs are framed (a token
+            # per character at most), the user message that carried the attack (so a
+            # faithful translation is not mistaken for obedience), and one reply,
+            # which the victim's own output cap holds to 300 tokens.
+            "judge_input_tokens": (len(engine.JUDGE_COMPLIANCE_PROMPT)
+                                   + len(engine.JUDGE_COMPLIANCE_INPUT)
+                                   + max(len(a["text"]) for a in BANK["attacks"]) + 300 + 20),
             "max_attack_chars": max(len(a["text"]) for a in BANK["attacks"] + BANK["controls"]),
             "controls_per_language": max(CONTROLS_PER_LANG.values(), default=0),
+            # Every control runs under a neutral prompt and under the bot's own.
+            "control_runs": guard.CONTROL_RUNS,
         },
         "languages": [{"code": c, "name": m["name"], "native": m["native"], "tier": tier_of(c),
                        "native_reviewed": bool(m.get("native_reviewed"))}
