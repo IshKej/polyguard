@@ -67,7 +67,7 @@ python cli.py scan --prompt bot.txt --baseline last-week.json --fail-on-regressi
 python cli.py scan --prompt bot.txt --bundle runs/today     # a folder someone else can check
 python cli.py compare last-week.json today.json
 python cli.py replay today.json                            # recompute every number from its evidence
-python cli.py defend --prompt bot.txt --out arms.json      # judge the defence blocks against a placebo
+python cli.py defend --prompt bot.txt --out arms.json      # judge each defence against its own placebo
 python cli.py languages
 ```
 
@@ -145,14 +145,19 @@ a fix is judged on the held-out phrasing together with whether the bot still
 follows ordinary requests, because a bot that refuses everything also stops every
 attack.
 
-`python cli.py defend` runs the comparison properly: the original prompt, a
-placebo block of the same length that says nothing about security, the current
-rules, and a rewritten block that treats quoted text in any language as material
-to work on, all on the same held-out attacks and ordinary requests. Each arm gets
-its break rate and follow rate with intervals, and its difference from the
-placebo with a sign test paired by language. A lint stops any defence from
-quoting the bank. The strongest claim any arm supports is "reduced the break
-rate on this fixed bank", never "secure".
+`python cli.py defend` runs the comparison properly: the original prompt, the
+same prompt a second time, the current rules, and a rewritten block that treats
+quoted text in any language as material to work on, each defence next to its own
+placebo block of the same length that says nothing about security, all on the
+same held-out attacks and ordinary requests. Each arm gets its break rate and
+follow rate with intervals, and each defence its difference from its own placebo
+with a sign test paired by language. Beside every difference sits the gap between
+the prompt and its repeat: on a victim pinned to temperature 0 that should be
+zero, and on one that cannot be pinned it is the noise floor. By default the full
+fixed block is tested, so nothing is chosen from the scan being judged; choosing
+rules from what broke (`--rules scan`) is labelled exploratory. A lint stops any
+defence from quoting the bank. The strongest claim any arm supports is "reduced
+the break rate on this fixed bank", never "secure".
 
 ## Where the attack types sit in public taxonomies
 

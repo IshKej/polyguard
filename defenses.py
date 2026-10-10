@@ -119,14 +119,24 @@ def already_hardened(system_prompt: str) -> bool:
 # A defence is judged against the same held-out attacks under several arms, so a
 # drop in break rate can be told apart from "any longer prompt changes things".
 #
-#   baseline       the prompt as written, nothing appended
-#   placebo        a block of the same length with neutral style notes and nothing
-#                  about security, under a header that says nothing about security
-#   current        the block harden() has always produced (rules v1)
-#   data_boundary  the same category rules, with the data clause and the language
-#                  clause rewritten (docs/research/defenses.md, section 3.2):
-#                  quoted or pasted text, in any language, is material to work on,
-#                  and this system message outranks it
+#   baseline               the prompt as written, nothing appended
+#   baseline_repeat        the same unhardened prompt run a second time on the
+#                          held-out phrasing, so run to run noise is measured
+#                          instead of assumed away
+#   placebo_current        neutral style notes, nothing about security, under a
+#                          header that says nothing about security, matched in
+#                          length to the current block
+#   current                the block harden() has always produced (rules v1)
+#   placebo_data_boundary  the same kind of placebo, matched to data_boundary
+#   data_boundary          the same category rules, with the data clause and the
+#                          language clause rewritten (docs/research/defenses.md,
+#                          section 3.2): quoted or pasted text, in any language,
+#                          is material to work on, and this system message
+#                          outranks it
+#
+# Each defence is compared with its OWN placebo, so the comparison is like for
+# like in length, and every difference is shown next to the repeat's difference
+# from the baseline, the noise floor.
 #
 # Every clause is one bullet line, because strip_defences removes exactly the run
 # of bullet lines under a header and nothing after it.
@@ -191,8 +201,15 @@ PLACEBO_SENTENCES = (
     "Stay concise.",
 )
 
-ARMS = ("baseline", "placebo", "current", "data_boundary")
+ARMS = ("baseline", "baseline_repeat", "placebo_current", "current",
+        "placebo_data_boundary", "data_boundary")
 DEFENCE_ARMS = ("current", "data_boundary")
+PLACEBO_OF = {d: f"placebo_{d}" for d in DEFENCE_ARMS}
+# What each arm is compared with in the table. A placebo and the baseline are
+# references themselves and compare with nothing.
+REFERENCE_OF = {"baseline_repeat": "baseline", **PLACEBO_OF}
+# The pair whose difference is the run to run noise, shown next to every other one.
+NOISE_PAIR = ("baseline_repeat", "baseline")
 PLACEBO_TOLERANCE = 0.05
 
 
@@ -240,18 +257,20 @@ def placebo_clauses(target_words: int) -> list[str]:
 def arm_blocks(broken_categories) -> dict[str, str]:
     """The text appended under each arm, for one set of broken categories.
 
-    The placebo is matched to the LONGER of the two defence blocks, so neither
-    defence arm can beat it simply by being longer.
+    Each defence gets its own placebo, matched to that defence's length within
+    PLACEBO_TOLERANCE, so no defence is compared with a placebo longer or
+    shorter than itself. The baseline and its repeat append nothing.
     """
-    current = _block(HEADER, recommend_arm(broken_categories, "current"))
-    boundary = _block(HEADER, recommend_arm(broken_categories, "data_boundary"))
-    target = max(word_count(current), word_count(boundary))
-    placebo = _block(PLACEBO_HEADER, placebo_clauses(target))
-    if target and abs(word_count(placebo) - target) > PLACEBO_TOLERANCE * target:
-        raise ValueError(f"placebo is {word_count(placebo)} words against a target of "
-                         f"{target}; extend PLACEBO_SENTENCES")
-    return {"baseline": "", "placebo": placebo, "current": current,
-            "data_boundary": boundary}
+    blocks = {"baseline": "", "baseline_repeat": ""}
+    for d in DEFENCE_ARMS:
+        blocks[d] = _block(HEADER, recommend_arm(broken_categories, d))
+        target = word_count(blocks[d])
+        placebo = _block(PLACEBO_HEADER, placebo_clauses(target))
+        if target and abs(word_count(placebo) - target) > PLACEBO_TOLERANCE * target:
+            raise ValueError(f"the placebo for {d} is {word_count(placebo)} words against "
+                             f"a target of {target}; extend PLACEBO_SENTENCES")
+        blocks[PLACEBO_OF[d]] = placebo
+    return {a: blocks[a] for a in ARMS}
 
 
 def arm_prompt(system_prompt: str, arm: str, broken_categories) -> str:

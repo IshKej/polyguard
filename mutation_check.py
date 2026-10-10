@@ -64,6 +64,16 @@ MUTANTS = [
      "power simulation ignoring the spread between languages (optimistic power)"),
     ("defenses.py", 'if r.get("broke") and r.get("variant", 0) != HELDOUT_VARIANT}',
      'if r.get("broke")}', "defences chosen using the held-out phrasing (AUDIT.md 65)"),
+    ("defenses.py", "        target = word_count(blocks[d])",
+     "        target = max(word_count(_block(HEADER, recommend_arm(broken_categories, a)))"
+     " for a in DEFENCE_ARMS)",
+     "every placebo matched to the longer defence, not its own (the old single placebo)"),
+    ("engine.py", "        ref_name = refs.get(name)",
+     '        ref_name = refs.get(name) and "placebo_current"',
+     "every defence compared with the same placebo instead of its own"),
+    ("engine.py", "    noise_cmp = compare(noise[0], noise[1]) if noise else None",
+     "    noise_cmp = compare(noise[0], noise[0]) if noise else None",
+     "run to run noise measured against itself, so it always reads zero"),
 ]
 
 SUITES = ["test_engine.py", "test_stats_properties.py"]
