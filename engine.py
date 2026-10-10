@@ -982,7 +982,7 @@ def run_control(client, system_prompt, control, token, mock, model, victim=None)
                 "error_kind": providers.classify_error(ex), "error_stage": "victim"}
 
 
-# Capability rule. PREREGISTRATION.md deviation log, 2026-10-07, before any paid
+# Capability rule. PREREGISTRATION.md deviation log, 2026-10-09, before any paid
 # live data. The 2026-09-17 rule ("the top of the language's interval sits under
 # half of English's observed rate") is kept, computed beside it and reported as a
 # sensitivity check: with 6 controls per language it can only ever fire on 0 of 6
@@ -1015,7 +1015,7 @@ def capability_flag(k: int, n: int, k_ref: int, n_ref: int,
                     min_ratio: float = CAPABILITY_MIN_RATIO,
                     alpha: float = CAPABILITY_ALPHA) -> bool:
     """
-    The capability rule in force since 2026-10-07. A language is capability limited
+    The capability rule in force since 2026-10-09. A language is capability limited
     when BOTH hold:
       evidence : it follows significantly fewer benign controls than English
                  (one sided Fisher exact test, p < alpha), and
@@ -1143,7 +1143,7 @@ def capability_from_counts(counts: dict[str, dict], ref_lang: str = "en",
             "coarse": not partial,
             # SENSITIVITY CHECK: the rule as pre-registered on 2026-09-17, computed
             # on the same counts. Never used to exclude a language; reported so the
-            # effect of the 2026-10-07 change is always visible.
+            # effect of the 2026-10-09 change is always visible.
             "prereg_rule": {"rule": CAPABILITY_RULE_PREREG,
                             "capability_limited": sorted(limited_prereg),
                             "resolves": p_resolves,
@@ -1436,7 +1436,7 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
         judge_local=getattr(client, "provenance", None))
     out["capability"] = (capability_report(control_results)
                          if control_results else None)
-    # The 2026-10-07 capability rule beside the 2026-09-17 one (sensitivity).
+    # The 2026-10-09 capability rule beside the 2026-09-17 one (sensitivity).
     out["capability_sensitivity"] = (capability_sensitivity(out)
                                      if out["capability"] else None)
     # EXPLORATORY secondary analysis, labelled as such wherever it is shown.
@@ -1666,7 +1666,7 @@ def tier_rates(out: dict, exclude_capability_limited: bool = True,
 
 def capability_sensitivity(out: dict) -> dict:
     """
-    SENSITIVITY CHECK for the 2026-10-07 capability rule change: the primary test
+    SENSITIVITY CHECK for the 2026-10-09 capability rule change: the primary test
     (Mann-Whitney on per-language rates, low versus high) run three ways on the
     same scan, so a reader can see whether the exclusion rule moved the answer.
 

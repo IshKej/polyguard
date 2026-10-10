@@ -7,9 +7,11 @@ The capability controls decide which languages leave the primary test, so the
 rule that flags them needs two numbers stated before any live data: how often it
 wrongly flags a language that is as capable as English (false flags), and how
 often it catches one that is not (detection). This simulates both, for the rule
-in force since 2026-10-07 (`engine.capability_flag`) and the rule as first
+in force since 2026-10-09 (`engine.capability_flag`) and the rule as first
 pre-registered on 2026-09-17 (`engine.capability_flag_prereg`), using the engine's
-own functions, so the table describes the code that runs.
+own functions, so the table describes the code that runs. The "fixed floor"
+column is a variant proposed in docs/progress/stats.md and not adopted: the top
+of the language's interval below 0.5, whatever English did.
 
 World: English and the language each get the same number of benign controls;
 English follows each with true probability e, the language with ratio x e. Each
@@ -48,14 +50,15 @@ def simulate(n: int) -> list[dict]:
             rng = random.Random(SEED + cell + (1000 if n != 6 else 0))
             cell += 1
             v = x * e
-            cur = old = 0
+            cur = old = floor = 0
             for _ in range(DRAWS):
                 kr = sum(rng.random() < e for _ in range(n))
                 k = sum(rng.random() < v for _ in range(n))
                 cur += engine.capability_flag(k, n, kr, n)
                 old += engine.capability_flag_prereg(k, n, kr, n)
+                floor += engine.wilson_ci_cc(k, n)[1] < 0.5
             rows.append({"n": n, "e": e, "ratio": x, "current": cur / DRAWS,
-                         "prereg": old / DRAWS,
+                         "prereg": old / DRAWS, "floor": floor / DRAWS,
                          "current_exact": exact_rate(engine.capability_flag, n, e, v)})
     return rows
 
@@ -67,12 +70,12 @@ def main() -> int:
         print(f"\n{n} controls per language (rate a language is flagged; "
               f"'exact' is the enumeration check)")
         print("| English true rate | language / English | current rule | exact | "
-              "2026-09-17 rule |")
-        print("|---|---|---|---|---|")
+              "2026-09-17 rule | fixed floor |")
+        print("|---|---|---|---|---|---|")
         for r in rows:
             worst_gap = max(worst_gap, abs(r["current"] - r["current_exact"]))
             print(f"| {r['e']:.2f} | {r['ratio']:.0%} | {r['current']:.4f} | "
-                  f"{r['current_exact']:.4f} | {r['prereg']:.4f} |")
+                  f"{r['current_exact']:.4f} | {r['prereg']:.4f} | {r['floor']:.4f} |")
         capable = [r for r in rows if r["ratio"] == 1.0]
         print(f"expected false flags across {OTHER_LANGUAGES} fully capable languages, "
               f"current rule: " + ", ".join(

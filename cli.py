@@ -224,7 +224,7 @@ def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> 
         # the headline: rank trend of break rate against Common Crawl web share.
         "resource_trend_test": out.get("resource_trend_test"),
         "capability": out.get("capability"),
-        # SENSITIVITY CHECK (PREREGISTRATION.md, 2026-10-07): the primary test
+        # SENSITIVITY CHECK (PREREGISTRATION.md, 2026-10-09): the primary test
         # under the current capability rule, the 2026-09-17 rule, and no exclusion.
         "capability_sensitivity": out.get("capability_sensitivity"),
         "by_lang": {c: {**d, "tier": tier_of(c),
@@ -655,8 +655,8 @@ def cmd_replay(args) -> int:
                            cap["prereg_rule"].get("capability_limited"),
                            redo_cap["prereg_rule"]["capability_limited"]))
         else:
-            # A file written before 2026-10-07 was flagged by the old rule alone.
-            checks.append(("capability limited (file predates the 2026-10-07 rule)",
+            # A file written before 2026-10-09 was flagged by the old rule alone.
+            checks.append(("capability limited (file predates the 2026-10-09 rule)",
                            cap.get("capability_limited"),
                            redo_cap["prereg_rule"]["capability_limited"]))
     for name, stored, recomputed in checks:

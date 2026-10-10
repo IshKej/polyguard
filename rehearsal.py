@@ -20,7 +20,7 @@ model. It is a rehearsal of the machinery, with an answer key.
     python rehearsal.py                 # planted 20-point gap
     python rehearsal.py --gap 0         # no real gap: the app must NOT claim one
     python rehearsal.py --gap 35 --incapable am,km
-    python rehearsal.py --partial ps    # follows 1 of 6 controls: flagged since 2026-10-07
+    python rehearsal.py --partial ps    # follows 1 of 6 controls: flagged since 2026-10-09
 """
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ class ScriptedVictim:
     controls, which is the case that must NOT be read as safety. Languages listed
     in `partial` follow only the first of their six controls and break at a sixth
     of the usual rate: a partial capability limit, which the 2026-09-17 rule could
-    never confirm and the 2026-10-07 rule must.
+    never confirm and the 2026-10-09 rule must.
     """
 
     class _Spec:

@@ -243,7 +243,7 @@ def build_report(scan: dict) -> str:
                      f"languages, so a low break rate there reflects incapacity rather than "
                      f"defence and would hide a real gap.</div>")
 
-    # SENSITIVITY CHECK for the 2026-10-07 capability rule (PREREGISTRATION.md):
+    # SENSITIVITY CHECK for the 2026-10-09 capability rule (PREREGISTRATION.md):
     # the same primary test with the rule as first pre-registered.
     sens = scan.get("capability_sensitivity") or {}
     old_rule = sens.get("prereg_rule") or {}

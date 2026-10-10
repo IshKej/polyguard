@@ -994,7 +994,7 @@ if "out" in st.session_state:
             + ("" if cap["resolves_partial_limits"] else
                " A language that is partly but not wholly limited may show only as "
                "'needs a closer look' rather than being confirmed."))
-        # Rule changed 2026-10-07, before any paid live data (PREREGISTRATION.md).
+        # Rule changed 2026-10-09, before any paid live data (PREREGISTRATION.md).
         # The old rule is shown beside it as a sensitivity check, never hidden.
         _old = cap.get("prereg_rule") or {}
         _sens = out.get("capability_sensitivity") or {}

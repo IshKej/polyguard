@@ -265,7 +265,7 @@ for t in range(8):
 prop("trend test: tied ranks are handled exactly (p matches an exact fraction computation)",
      ok_t_exact)
 
-# --- capability rule (PREREGISTRATION.md deviation log, 2026-10-07) --------------------
+# --- capability rule (PREREGISTRATION.md deviation log, 2026-10-09) --------------------
 def _binom(n, p):
     import math
     return [math.comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n + 1)]

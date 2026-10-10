@@ -767,7 +767,7 @@ ck("77c. a capable language is not flagged, and resolving power is reported",
 # 77d. The sizing claim, derived from the rules, not hardcoded. Under the
 # 2026-09-17 rule 6 controls was the smallest design that could CONFIRM a
 # language the model cannot operate in, and only against a perfect English. The
-# 2026-10-07 rule (PREREGISTRATION.md deviation log) also confirms 1 of 6, and
+# 2026-10-09 rule (PREREGISTRATION.md deviation log) also confirms 1 of 6, and
 # still works when English misses one control.
 _c66 = engine.capability_report(_ctrl("en", 6, 6) + _ctrl("xx", 6, 0) + _ctrl("pp", 6, 1))
 _c56 = engine.capability_report(_ctrl("en", 6, 5) + _ctrl("xx", 6, 0) + _ctrl("pp", 6, 1))

@@ -453,7 +453,7 @@ check("the report states what its sample size can actually resolve",
 check("more controls per language resolve partial limits too",
       _cap["resolves_partial_limits"] is True)
 
-# The 2026-10-07 rule (PREREGISTRATION.md deviation log): significantly fewer
+# The 2026-10-09 rule (PREREGISTRATION.md deviation log): significantly fewer
 # controls followed than English (one sided Fisher exact, p < 0.05) AND an
 # observed rate under half of English's. The 2026-09-17 rule is kept beside it.
 def _counts(**kw):

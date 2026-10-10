@@ -108,3 +108,24 @@ random true rates and n from 2 to 15, English never flagged and order or names c
 38/38. mutation_check: the old capability mutant moved to the old rule's new code site, and
 three mutants added (Fisher summing the wrong tail, size condition dropped, wrong alpha):
 20/20 killed.
+
+## Step 6, documents (2026-10-09)
+
+- The rule is dated 2026-10-09 everywhere in code and documents: that is the day the deviation
+  row was written, so a reader looking for the row finds it under the date the code names.
+- PREREGISTRATION.md: one row appended at the end of the deviation table (after the 2026-10-07
+  pilot row), nothing above edited. States the new rule, the old rule kept as a sensitivity
+  check, counts from whichever control run is designated, the simulation numbers, why the log's
+  two variants were not taken, and that the local pilot control results were not consulted.
+- `capability_check.py` gained a "fixed floor" column so the variant comparison in the row is
+  reproducible (at 6 controls, English 95%: 0%, 30%, 50% languages flagged 100%, 13%, 2.1%).
+- README: the "six controls" sentence in How it works and the capability limit rewritten with
+  the numbers; files table gains `capability_check.py`.
+- STATE.md: date, a 2026-10-09 sprint note, the decision entry, suite counts (250, 233, 38, 20)
+  and the new script.
+- Scanned every added line on the branch for dash punctuation and assistant mentions: none.
+
+Suites: test_engine 250/250, test_stats_properties 38/38, api/test_api 92/92, verify_all
+233/233, consistency pass, rehearsal PASS (default and `--partial ps,tg --incapable gu`).
+mutation_check: first rerun crashed with a Windows paging file error (out of memory, not a
+test result); rerunning.
