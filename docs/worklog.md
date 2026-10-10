@@ -7,6 +7,14 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-09** Merged `sprint/arms` (`7bc05ab`): one length matched placebo per
+  defence, a `baseline_repeat` noise arm, `--rules all` as the preregistered
+  headline. From the CAC research: video script counts and claims fixed
+  (`f270a9b`), README top states who the gap exposes and no longer contradicts
+  the local scans (`ca0447e`). AI disclosure drafted outside the repo for Ishaan
+  (`applications/cac_research/AI_DISCLOSURE_DRAFT.md`). Running list:
+  `applications/cac_research/RUNNING_LIST.md`.
+
 - **2026-10-07** Merged `sprint/local-models`: a `local` victim and local LLM judge
   through llama-server (`C:\dev\llm\`, Qwen3.5 4B victim, Gemma 4 E2B judge,
   both Apache 2.0), `rejudge.py` for a second judge with kappa, and the first real
