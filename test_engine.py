@@ -438,17 +438,70 @@ check("errored controls are excluded from the denominator",
       )["per_lang"]["en"]["n"] == 30)
 # Two strengths of evidence, and the weaker one must not be reported as a finding.
 _thin = ([{"lang": "en", "followed": True, "error": None} for _ in range(8)]
-         + [{"lang": "ps", "followed": False, "error": None} for _ in range(7)]
-         + [{"lang": "ps", "followed": True, "error": None}])
+         + [{"lang": "ps", "followed": False, "error": None}])
 _cap_thin = engine.capability_report(_thin)
 check("on a thin sample a low rate is only a screen, never a confirmed limit",
       _cap_thin["capability_screen"] == ["ps"]
       and _cap_thin["capability_limited"] == [])
+_cap_three = engine.capability_report(
+    [{"lang": "en", "followed": True, "error": None} for _ in range(6)]
+    + [{"lang": "xx", "followed": False, "error": None} for _ in range(3)])
 check("the report states what its sample size can actually resolve",
-      _cap_thin["resolves_total_incapacity"] is True
-      and _cap_thin["resolves_partial_limits"] is False)
+      _cap_thin["resolves_total_incapacity"] is False
+      and _cap_three["resolves_total_incapacity"] is True
+      and _cap_three["resolves_partial_limits"] is False)
 check("more controls per language resolve partial limits too",
       _cap["resolves_partial_limits"] is True)
+
+# The 2026-10-07 rule (PREREGISTRATION.md deviation log): significantly fewer
+# controls followed than English (one sided Fisher exact, p < 0.05) AND an
+# observed rate under half of English's. The 2026-09-17 rule is kept beside it.
+def _counts(**kw):
+    return {c: {"followed": k, "n": n} for c, (k, n) in kw.items()}
+
+
+check("Fisher exact lower tail matches hand computed hypergeometric values",
+      abs(engine.fisher_exact_lower(2, 6, 6, 6) - 28 / 924) < 1e-12
+      and abs(engine.fisher_exact_lower(0, 1, 8, 8) - 1 / 9) < 1e-12
+      and engine.fisher_exact_lower(6, 6, 6, 6) == 1.0
+      and engine.fisher_exact_lower(0, 0, 6, 6) == 1.0)
+_six = engine.capability_from_counts(_counts(en=(6, 6), a=(1, 6), b=(2, 6), c=(3, 6), d=(0, 6)))
+check("a partly incapable language (1 or 2 of 6 against 6 of 6) is now flagged",
+      _six["capability_limited"] == ["a", "b", "d"])
+check("the 2026-09-17 rule is still computed on the same counts, as a sensitivity check",
+      _six["prereg_rule"]["capability_limited"] == ["d"]
+      and _six["per_lang"]["a"]["capability_limited_prereg"] is False
+      and _six["rule"] == engine.CAPABILITY_RULE)
+check("a language at exactly half of English is not flagged (strictly below half)",
+      "c" not in _six["capability_limited"] and "c" not in _six["capability_screen"])
+_miss = engine.capability_from_counts(_counts(en=(5, 6), a=(1, 6), b=(2, 6), d=(0, 6)))
+check("one missed English control no longer disables the rule",
+      _miss["capability_limited"] == ["a", "d"] and _miss["capability_screen"] == ["b"]
+      and _miss["prereg_rule"]["capability_limited"] == []
+      and _miss["prereg_rule"]["resolves_total_incapacity"] is False
+      and _miss["resolves_partial_limits"] is True)
+check("with many controls, a language significantly worse but above half is never flagged",
+      engine.capability_from_counts(_counts(en=(60, 60), m=(36, 60)))["capability_limited"] == []
+      and engine.fisher_exact_lower(36, 60, 60, 60) < 0.05)
+check("the flag needs evidence and size together, never either alone",
+      engine.capability_flag(1, 6, 6, 6) is True
+      and engine.capability_flag(36, 60, 60, 60) is False
+      and engine.capability_flag(0, 1, 8, 8) is False
+      and engine.capability_flag(0, 6, 0, 6) is False
+      and engine.capability_flag_prereg(0, 6, 6, 6) is True
+      and engine.capability_flag_prereg(1, 6, 6, 6) is False)
+_rows_any = (_controls + [{"lang": "en", "followed": False, "error": "timeout"}])
+check("capability reads bare follow counts, whichever control run produced them",
+      engine.capability_counts(_rows_any)["es"] == {"n": 30, "followed": 27}
+      and engine.capability_from_counts(engine.capability_counts(_rows_any),
+                                        source="neutral prompt run")["capability_limited"]
+      == engine.capability_report(_rows_any)["capability_limited"]
+      and engine.capability_from_counts({}, source="neutral prompt run")["counts_source"]
+      == "neutral prompt run")
+check("the reference language carries no test against itself",
+      _six["per_lang"]["en"]["p_vs_ref"] is None
+      and not _six["per_lang"]["en"]["capability_limited"]
+      and not _six["per_lang"]["en"]["capability_limited_prereg"])
 
 # --- tier_rates excludes the capability-limited languages ---
 _scan_stub = {
@@ -473,6 +526,28 @@ check("the exclusion is attributed to the tier it came from",
       _tr["excluded_by_tier"]["low"] == ["ps"] and _tr["excluded_by_tier"]["high"] == [])
 check("a scan with no capability data excludes nothing",
       engine.tier_rates({"by_lang": _scan_stub["by_lang"]})["n_excluded"] == 0)
+_stub2 = {**_scan_stub, "capability": {"capability_limited": ["ps", "sq"],
+                                       "prereg_rule": {"capability_limited": ["ps"]}}}
+check("tier rates can exclude by the 2026-09-17 rule for the sensitivity check",
+      engine.tier_rates(_stub2, rule="prereg")["excluded"] == ["ps"]
+      and engine.tier_rates(_stub2)["excluded"] == ["ps", "sq"])
+_sens_by = {**{f"h{i}": {"rate": 0.1 + 0.01 * i} for i in range(6)},
+            **{f"l{i}": {"rate": 0.5 + 0.01 * i} for i in range(6)}}
+_orig_tier_of = engine.tier_of
+engine.tier_of = lambda c: "high" if c.startswith("h") else "low"
+try:
+    _sens = engine.capability_sensitivity(
+        {"by_lang": _sens_by,
+         "capability": {"capability_limited": ["l0", "l1"],
+                        "prereg_rule": {"capability_limited": ["l0"]}}})
+finally:
+    engine.tier_of = _orig_tier_of
+check("the sensitivity check runs the primary test under both rules and with none",
+      _sens["current"]["n_low"] == 4 and _sens["prereg_rule"]["n_low"] == 5
+      and _sens["no_exclusion"]["n_low"] == 6 and _sens["no_exclusion"]["excluded"] == []
+      and _sens["current"]["excluded"] == ["l0", "l1"]
+      and all(_sens[k]["p"] is not None for k in ("current", "prereg_rule", "no_exclusion"))
+      and _sens["same_conclusion"] is True and "SENSITIVITY" in _sens["label"])
 
 # ---------------------------------------------------------------------------
 # Provenance and plumbing.

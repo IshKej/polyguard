@@ -224,6 +224,9 @@ def scan_payload(out: dict, prompt: str, args, redact_replies: bool = False) -> 
         # the headline: rank trend of break rate against Common Crawl web share.
         "resource_trend_test": out.get("resource_trend_test"),
         "capability": out.get("capability"),
+        # SENSITIVITY CHECK (PREREGISTRATION.md, 2026-10-07): the primary test
+        # under the current capability rule, the 2026-09-17 rule, and no exclusion.
+        "capability_sensitivity": out.get("capability_sensitivity"),
         "by_lang": {c: {**d, "tier": tier_of(c),
                          # automated proxy, not a validation (tq_report.py)
                          "translation_quality": tq_report.lang_quality(c)}
@@ -277,6 +280,12 @@ def print_summary(out: dict) -> None:
         print(f"  WARNING   the bot cannot follow ordinary instructions in "
               f"{', '.join(cap['capability_limited'])}; a low break rate there "
               f"is incapacity, not safety")
+    sens = out.get("capability_sensitivity") or {}
+    old_rule = sens.get("prereg_rule") or {}
+    if old_rule.get("p") is not None:
+        print(f"  sensitivity  with the 2026-09-17 capability rule instead: "
+              f"{len(old_rule['excluded'])} excluded, tier gap p={old_rule['p']:.3g}"
+              f"{'' if sens.get('same_conclusion') else '  (DIFFERENT CONCLUSION)'}")
 
 
 def print_comparison(cmp: dict) -> None:
@@ -631,6 +640,25 @@ def cmd_replay(args) -> int:
                                        "capability": payload.get("capability")})
         checks.append(("exploratory trend test p", payload["resource_trend_test"].get("p"),
                        trend.get("p")))
+    cap = payload.get("capability")
+    if cap and cap.get("per_lang"):
+        # The capability flags are a pure function of the per-language follow
+        # counts, under both the current rule and the 2026-09-17 one.
+        redo_cap = engine.capability_from_counts(
+            {c: {"n": d["n"], "followed": d["followed"]} for c, d in cap["per_lang"].items()},
+            cap.get("ref_lang", "en"), cap.get("min_ratio", engine.CAPABILITY_MIN_RATIO),
+            cap.get("alpha", engine.CAPABILITY_ALPHA))
+        if cap.get("prereg_rule") is not None:
+            checks.append(("capability limited languages", cap.get("capability_limited"),
+                           redo_cap["capability_limited"]))
+            checks.append(("capability limited, 2026-09-17 rule",
+                           cap["prereg_rule"].get("capability_limited"),
+                           redo_cap["prereg_rule"]["capability_limited"]))
+        else:
+            # A file written before 2026-10-07 was flagged by the old rule alone.
+            checks.append(("capability limited (file predates the 2026-10-07 rule)",
+                           cap.get("capability_limited"),
+                           redo_cap["prereg_rule"]["capability_limited"]))
     for name, stored, recomputed in checks:
         same = stored == recomputed or (isinstance(stored, float) and isinstance(recomputed, float)
                                         and abs(stored - recomputed) < 1e-12)

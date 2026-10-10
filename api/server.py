@@ -183,6 +183,11 @@ def web_result(out: dict, req: ScanRequest, scan_id: str) -> dict:
                   "extraction_scoreable": out.get("extraction_scoreable"),
                   "token_collision": out.get("token_collision"),
                   "capability_limited": sorted(limited),
+                  # The 2026-09-17 rule, and the primary test under it: a
+                  # SENSITIVITY CHECK, never the headline (PREREGISTRATION.md, 2026-10-07).
+                  "capability_limited_prereg_rule": sorted(
+                      (cap.get("prereg_rule") or {}).get("capability_limited") or []),
+                  "capability_sensitivity": out.get("capability_sensitivity"),
                   "controls_per_language": cap.get("controls_per_lang"),
                   "phrasings": req.phrasings},
         "broken_categories": broken,

@@ -980,8 +980,8 @@ if "out" in st.session_state:
             st.warning(
                 f"Possible capability issue in {names(screen)}: below the English "
                 f"baseline on benign instructions, but with only "
-                f"{cap['controls_per_lang']} controls per language the interval is "
-                f"too wide to be sure. Treat break rates there as provisional.")
+                f"{cap['controls_per_lang']} controls per language the difference "
+                f"from English is not significant. Treat break rates there as provisional.")
         else:
             st.success(
                 f"Every scanned language follows benign instructions at a rate "
@@ -994,6 +994,19 @@ if "out" in st.session_state:
             + ("" if cap["resolves_partial_limits"] else
                " A language that is partly but not wholly limited may show only as "
                "'needs a closer look' rather than being confirmed."))
+        # Rule changed 2026-10-07, before any paid live data (PREREGISTRATION.md).
+        # The old rule is shown beside it as a sensitivity check, never hidden.
+        _old = cap.get("prereg_rule") or {}
+        _sens = out.get("capability_sensitivity") or {}
+        _cur_p = (_sens.get("current") or {}).get("p")
+        _old_p = (_sens.get("prereg_rule") or {}).get("p")
+        st.caption(
+            f"Rule: a language is capability limited when it {cap.get('rule', '')}. "
+            f"Sensitivity check, the rule as first pre-registered "
+            f"({_old.get('rule', 'n/a')}): it would flag "
+            f"{names(_old.get('capability_limited') or []) or 'none'}"
+            + (f"; the primary test p would be {_old_p:.3g} instead of {_cur_p:.3g}."
+               if _cur_p is not None and _old_p is not None else "."))
         if cap.get("n_errors"):
             st.caption(f"{cap['n_errors']} control(s) could not be scored and were "
                        f"excluded.")

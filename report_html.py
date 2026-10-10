@@ -243,6 +243,21 @@ def build_report(scan: dict) -> str:
                      f"languages, so a low break rate there reflects incapacity rather than "
                      f"defence and would hide a real gap.</div>")
 
+    # SENSITIVITY CHECK for the 2026-10-07 capability rule (PREREGISTRATION.md):
+    # the same primary test with the rule as first pre-registered.
+    sens = scan.get("capability_sensitivity") or {}
+    old_rule = sens.get("prereg_rule") or {}
+    if cap and old_rule.get("p") is not None:
+        old_names = ", ".join(_e(by_lang.get(c, {}).get("name", c))
+                              for c in old_rule.get("excluded") or []) or "none"
+        parts.append(f'<p class="dim">Sensitivity check, not the headline: with the '
+                     f"capability rule as first pre-registered (which can only confirm a "
+                     f"language that follows no controls at all), the languages left out "
+                     f"would be {old_names} and the tier test p would be "
+                     f"{old_rule['p']:.3g}"
+                     f"{'' if sens.get('same_conclusion') else ', a different conclusion'}."
+                     f"</p>")
+
     # EXPLORATORY secondary analysis. Labelled every time it appears, placed after
     # the tier comparison, and never phrased as a finding: the pre-registered
     # headline is the tier test, and this was added later (PREREGISTRATION.md,
