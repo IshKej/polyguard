@@ -62,3 +62,49 @@ flags all three, the old rule flags only gu (primary p 0.0019 current, 0.027 old
 default rehearsal's p moved from 0.00044 to 0.00061 after the synthetic control text gained a
 variant marker (still deterministic run to run, still PASS).
 Suites: test_engine 250/250, api 92/92, verify_all 233/233, rehearsal PASS.
+
+## Step 4, the justifying simulation, committed as `capability_check.py` (2026-10-07)
+
+`python capability_check.py`: engine's own `capability_flag` and `capability_flag_prereg`,
+20,000 seeded draws per cell (seed 20261007 plus cell index), English and the language with
+the same control count, plus an exact enumeration column for the current rule (largest
+simulation minus exact difference 0.0054; the script fails above 0.015). 6 controls:
+
+| English true rate | language / English | current rule | exact | 2026-09-17 rule |
+|---|---|---|---|---|
+| 1.00 | 100% | 0.0000 | 0.0000 | 0.0000 |
+| 1.00 | 50% | 0.3437 | 0.3438 | 0.0144 |
+| 1.00 | 30% | 0.7470 | 0.7443 | 0.1181 |
+| 1.00 | 0% | 1.0000 | 1.0000 | 1.0000 |
+| 0.95 | 100% | 0.0001 | 0.0001 | 0.0000 |
+| 0.95 | 75% | 0.0454 | 0.0469 | 0.0003 |
+| 0.95 | 50% | 0.3176 | 0.3198 | 0.0150 |
+| 0.95 | 30% | 0.6805 | 0.6765 | 0.0972 |
+| 0.95 | 0% | 0.9978 | 0.9978 | 0.7355 |
+| 0.90 | 100% | 0.0008 | 0.0007 | 0.0000 |
+| 0.90 | 50% | 0.2910 | 0.2953 | 0.0159 |
+| 0.90 | 30% | 0.6148 | 0.6114 | 0.0814 |
+| 0.90 | 0% | 0.9841 | 0.9841 | 0.5331 |
+| 0.80 | 100% | 0.0052 | 0.0051 | 0.0000 |
+| 0.80 | 75% | 0.0635 | 0.0641 | 0.0014 |
+| 0.80 | 50% | 0.2415 | 0.2459 | 0.0112 |
+| 0.80 | 30% | 0.4929 | 0.4885 | 0.0512 |
+| 0.80 | 0% | 0.9016 | 0.9011 | 0.2603 |
+
+Expected false flags across the 86 non-English catalog languages, all fully capable: 0.000,
+0.005, 0.060 and 0.438 for English true rates 1.00, 0.95, 0.90, 0.80. A language at 75% of
+English (above the half line, so a wrong flag) is flagged 4% to 6%. At 12 controls the size
+condition keeps that at 1% to 8% while a 30% language is caught 82% to 89%.
+
+Honest reading: the rule now catches total collapse almost always and a language at 30% of
+English most of the time, but a language right at half of English only a quarter to a third of
+the time. With 6 controls nothing can do much better without many more false flags.
+
+## Step 5, property tests and mutants (2026-10-07)
+
+test_stats_properties gains 6 capability properties (size condition, monotone in follows,
+Fisher p range, superset of the old rule at equal counts, exact null flag rate at most alpha for
+random true rates and n from 2 to 15, English never flagged and order or names change nothing):
+38/38. mutation_check: the old capability mutant moved to the old rule's new code site, and
+three mutants added (Fisher summing the wrong tail, size condition dropped, wrong alpha):
+20/20 killed.

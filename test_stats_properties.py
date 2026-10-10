@@ -265,6 +265,58 @@ for t in range(8):
 prop("trend test: tied ranks are handled exactly (p matches an exact fraction computation)",
      ok_t_exact)
 
+# --- capability rule (PREREGISTRATION.md deviation log, 2026-10-07) --------------------
+def _binom(n, p):
+    import math
+    return [math.comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n + 1)]
+
+
+ok_c_size = ok_c_mono = ok_c_prange = ok_c_super = ok_c_null = ok_c_ref = True
+for _ in range(TRIALS):
+    n, m = RNG.randint(1, 30), RNG.randint(1, 30)
+    k, kr = RNG.randint(0, n), RNG.randint(0, m)
+    flagged = engine.capability_flag(k, n, kr, m)
+    # Size: a language at or above half of English's observed rate is never flagged,
+    # however many controls make the difference significant.
+    if k / n >= 0.5 * kr / m:
+        ok_c_size &= not flagged
+    # Fewer controls followed can never turn a flag off.
+    if flagged and k > 0:
+        ok_c_mono &= engine.capability_flag(k - 1, n, kr, m)
+    p = engine.fisher_exact_lower(k, n, kr, m)
+    ok_c_prange &= 0.0 < p <= 1.0 and engine.fisher_exact_lower(n, n, kr, m) == 1.0
+    # With equal control counts the current rule flags everything the old one did.
+    ok_c_super &= (not engine.capability_flag_prereg(k, n, kr, n)
+                   or engine.capability_flag(k, n, kr, n))
+for t in range(40):
+    # A language exactly as capable as English is flagged at most alpha of the time,
+    # computed exactly over every outcome, for any true rate and control count.
+    n, e = RNG.randint(2, 15), RNG.uniform(0.05, 1.0)
+    pe = _binom(n, e)
+    rate = sum(pe[kr] * pe[k] for kr in range(n + 1) for k in range(n + 1)
+               if engine.capability_flag(k, n, kr, n))
+    ok_c_null &= rate <= engine.CAPABILITY_ALPHA + 1e-12
+for t in range(60):
+    counts = {f"l{i}": {"n": (n := RNG.randint(1, 12)), "followed": RNG.randint(0, n)}
+              for i in range(RNG.randint(2, 9))}
+    counts["en"] = {"n": (n := RNG.randint(1, 12)), "followed": RNG.randint(0, n)}
+    rep = engine.capability_from_counts(counts)
+    shuffled = dict(RNG.sample(list(counts.items()), len(counts)))
+    names = {c: (c if c == "en" else f"z{RNG.random():.9f}") for c in counts}
+    ren = engine.capability_from_counts({names[c]: d for c, d in shuffled.items()})
+    ok_c_ref &= ("en" not in rep["capability_limited"]
+                 and rep["capability_limited"] == engine.capability_from_counts(shuffled)["capability_limited"]
+                 and sorted(names[c] for c in rep["capability_limited"]) == ren["capability_limited"]
+                 and set(rep["prereg_rule"]["capability_limited"]) <= set(counts) - {"en"})
+prop("capability: a language at or above half of English is never flagged", ok_c_size)
+prop("capability: following fewer controls never removes a flag", ok_c_mono)
+prop("capability: the Fisher p is a probability, and 1 when every control was followed", ok_c_prange)
+prop("capability: with equal control counts the current rule flags all the old rule did", ok_c_super)
+prop("capability: a language as capable as English is flagged at most alpha of the time (exact)",
+     ok_c_null)
+prop("capability: English is never flagged, and order or names of languages change nothing",
+     ok_c_ref)
+
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}")
