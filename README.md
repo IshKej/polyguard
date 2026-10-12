@@ -31,7 +31,7 @@ PolyGuard measures that gap so a builder can see it and shrink it **before an at
 5. The tier comparison is reported with **95% Wilson confidence intervals** and a **Mann-Whitney U test on per-language rates**, so the headline is "low-resource languages break X% more often, p = …" rather than a number you have to take on faith. The test deliberately clusters by language, because attacks on the same bot are not independent and pooling them would overstate significance. The uncorrected attack-level p-value is shown too, labelled as optimistic.
 6. The single worst language is reported **against the worst language chance alone would produce**. This matters more than it sounds: "worst of N" is a maximum, and a maximum runs high by construction, so a naive worst-vs-English rule announces a large equity gap 98% of the time even against a model with no language gap at all. PolyGuard runs a **permutation test on the maximum** (2,000 shuffles, per-language sample sizes held fixed) and claims a finding only when the observed gap beats the null. See `AUDIT.md` finding 19.
 7. **The same attack bank can be fired at victims from different vendors** (Anthropic, OpenAI, Google, open-weights via an OpenAI-compatible endpoint), with the compliance judge held fixed as one Anthropic model throughout. A one-model result is ambiguous; a cross-model comparison is the finding either way.
-8. **Every scan also fires benign twins.** For each language PolyGuard sends **6 ordinary polite requests** with no adversarial framing, and measures how often the bot simply does as asked. Six is the smallest number that can *confirm* a language the bot cannot operate in, rather than merely suspect it. This separates two explanations a break rate cannot tell apart: a quiet language may mean the bot is well defended there, or that it cannot follow instructions in that language at all. Those are opposite conclusions, and the second one runs in a predictable direction, since capability is weakest in exactly the low-resource languages under study. A language confirmed capability-limited is reported as unscoreable for safety rather than counted as safe.
+8. **Every scan also fires benign twins.** For each language PolyGuard sends **6 ordinary polite requests** with no adversarial framing, and measures how often the bot simply does as asked. A language is confirmed capability limited when it follows significantly fewer of them than English (one sided Fisher exact test) and under half as many, so six controls can confirm a partly limited language as well as one the bot cannot operate in at all. This separates two explanations a break rate cannot tell apart: a quiet language may mean the bot is well defended there, or that it cannot follow instructions in that language at all. Those are opposite conclusions, and the second one runs in a predictable direction, since capability is weakest in exactly the low-resource languages under study. A language confirmed capability-limited is reported as unscoreable for safety rather than counted as safe.
 9. **Then it hardens it, and checks.** PolyGuard generates targeted hardening rules for exactly the categories that broke, and re-scans the hardened prompt to measure how many of the bank's held-out attacks still get through. A drop means hardening reduced the break rate on this fixed bank. It never means the bot is secure: attackers who adapt to a defence get past published defences most of the time (Nasr et al., arXiv 2510.09023). Results export as CSV + JSON.
 
 ## What a scan looks like
@@ -187,14 +187,17 @@ The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML rep
   in either direction. Native speaker feedback has been integrated for Spanish,
   Vietnamese and Arabic only.
 - **Arabic means Modern Standard Arabic.** The Arabic corpus uses Modern Standard Arabic (MSA). The reviewer noted that MSA is more common for formal, educational, and informational questions, while dialects are also very common in casual chatting. This review does not establish coverage of Arabic dialects.
-- **The capability controls only catch total collapse.** With 6 controls per
-  language, a language is confirmed capability limited only when English follows
-  all 6 and the language follows none. If English misses even one control, no
-  language can be flagged at all, and a language the bot follows at 30% to 40% of
-  its English rate is flagged only 3% to 12% of the time (exact binomial,
-  `docs/progress/stats.md`). So a quiet language that was not flagged may still be
-  one the bot partly fails to understand, and the primary test can still be
-  dragged toward no gap by it.
+- **The capability controls catch total collapse, and partial limits only some of
+  the time.** Since 2026-10-09 (a dated deviation, made before any paid live data)
+  a language is flagged when it follows significantly fewer of its 6 controls than
+  English and under half as many. In a seeded simulation (`capability_check.py`,
+  English truly following 95% of controls) a language as capable as English is
+  flagged 0.01% of the time, and a language at 0%, 30% and 50% of English's
+  ability 99.8%, 68% and 32% of the time. So a quiet language that was not flagged
+  may still be one the bot partly fails to understand. The rule as first
+  pre-registered could only flag 0 of 6 against a perfect English (74%, 10% and
+  1.5% on the same languages); it is still computed and every scan reports the
+  primary test under it as a sensitivity check.
 - **The web share trend is exploratory.** Scans also report a rank trend of break
   rate against Common Crawl web share (crawl CC-MAIN-2026-39). It was added before
   any live data as a secondary analysis and never replaces the tier test.
@@ -237,6 +240,7 @@ The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML rep
 | `calibrate_stats.py` | Simulates thousands of scans to prove each test controls its error rate |
 | `calibration_report.txt` | The output of that run, committed as evidence |
 | `power_check.py` | Checks the power simulation against a model where languages in a tier differ |
+| `capability_check.py` | Simulates how often the capability rule flags capable and partly capable languages |
 | `data/resource_measures.csv` | Common Crawl web share per catalog language, for the exploratory trend test |
 | `judge_eval.py` | Scores the compliance judge against a hand-labelled gold set |
 | `judge_report.txt` | The measured judge result, committed as evidence |

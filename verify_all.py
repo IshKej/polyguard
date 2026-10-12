@@ -753,30 +753,37 @@ def _ctrl(lang, n, ok):
 
 
 _cap = engine.capability_report(
-    _ctrl("en", 8, 8) + _ctrl("xx", 8, 0) + _ctrl("yy", 8, 7) + _ctrl("zz", 2, 0))
+    _ctrl("en", 8, 8) + _ctrl("xx", 8, 0) + _ctrl("yy", 8, 7) + _ctrl("zz", 1, 0))
 ck("77. a language that fails every control is confirmed capability-limited",
    _cap["capability_limited"] == ["xx"])
-ck("77b. the same failure at tiny n is only a screen, not a confirmed finding",
+ck("77b. the same failure on a single control is only a screen, not a confirmed finding",
    "zz" in _cap["capability_screen"] and "zz" not in _cap["capability_limited"])
 ck("77c. a capable language is not flagged, and resolving power is reported",
    not _cap["per_lang"]["yy"]["capability_limited"]
    and not _cap["per_lang"]["yy"]["capability_screen"]
-   and _cap["controls_per_lang"] == 2
+   and _cap["controls_per_lang"] == 1
    and _cap["resolves_total_incapacity"] is False)
 
-# 77d. The sizing claim itself: 6 controls per language is the smallest design
-# that can CONFIRM a language the model cannot operate in. Derived from the
-# interval, not hardcoded, so this fails if the interval maths ever changes.
-ck("77d. n=6 confirms total incapacity, n=4 and below cannot",
-   engine.capability_report(_ctrl("en", 6, 6) + _ctrl("xx", 6, 0)
-                            )["resolves_total_incapacity"] is True
+# 77d. The sizing claim, derived from the rules, not hardcoded. Under the
+# 2026-09-17 rule 6 controls was the smallest design that could CONFIRM a
+# language the model cannot operate in, and only against a perfect English. The
+# 2026-10-09 rule (PREREGISTRATION.md deviation log) also confirms 1 of 6, and
+# still works when English misses one control.
+_c66 = engine.capability_report(_ctrl("en", 6, 6) + _ctrl("xx", 6, 0) + _ctrl("pp", 6, 1))
+_c56 = engine.capability_report(_ctrl("en", 6, 5) + _ctrl("xx", 6, 0) + _ctrl("pp", 6, 1))
+ck("77d. the pre-registered rule: n=6 confirms total incapacity only, n=4 cannot",
+   _c66["prereg_rule"]["capability_limited"] == ["xx"]
+   and _c66["prereg_rule"]["resolves_partial_limits"] is False
    and engine.capability_report(_ctrl("en", 4, 4) + _ctrl("xx", 4, 0)
-                                )["resolves_total_incapacity"] is False
-   and engine.capability_report(_ctrl("en", 6, 6) + _ctrl("xx", 6, 0)
-                                )["capability_limited"] == ["xx"])
+                                )["prereg_rule"]["resolves_total_incapacity"] is False
+   and _c56["prereg_rule"]["capability_limited"] == [])
+ck("77d2. the current rule at n=6 confirms partial limits, even after one English miss",
+   _c66["capability_limited"] == ["pp", "xx"] and _c56["capability_limited"] == ["pp", "xx"]
+   and _c66["resolves_partial_limits"] is True and _c56["resolves_partial_limits"] is True)
 ck("77e. resolving power is described, never silently assumed",
-   "cannot operate in at all" in
-   engine.capability_report(_ctrl("en", 6, 6) + _ctrl("xx", 6, 0))["resolves"])
+   "partial" in _c66["resolves"]
+   and "cannot operate in at all" in _c66["prereg_rule"]["resolves"]
+   and "nothing conclusively" in _c56["prereg_rule"]["resolves"])
 
 # 78. controls run end to end and never contaminate the attack rates.
 _sc = engine.scan(SP, langs=["en", "hi"], categories=["instruction_override"],
@@ -802,9 +809,10 @@ ck("78d. app tells the user a quiet language may be broken, not safe",
 # checked directly: every field the app reads must exist in the report.
 _cap_keys = {"ref_rate", "per_lang", "capability_limited", "capability_screen",
              "controls_per_lang", "coarse", "n_errors", "threshold", "min_ratio",
-             "ref_lang"}
+             "ref_lang", "rule", "prereg_rule", "resolves", "resolves_partial_limits"}
 _lang_keys = {"n", "followed", "rate", "ci_lo", "ci_hi", "ratio_to_ref",
-              "capability_limited", "capability_screen"}
+              "capability_limited", "capability_screen", "capability_limited_prereg",
+              "p_vs_ref"}
 _capr = engine.capability_report(_ctrl("en", 4, 4) + _ctrl("hi", 4, 1))
 ck("78e. capability report exposes every field the app renders",
    _cap_keys <= set(_capr)
