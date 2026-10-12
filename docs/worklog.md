@@ -7,6 +7,13 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-11** Merged `sprint/stats2` (`24a5fe6`): the capability flag now uses a
+  Fisher exact test against English plus a "below half of English" condition, so a
+  partly incapable language can be flagged; the old rule is still reported as a
+  sensitivity check (`capability_check.py` has the simulation). Suites: verify_all
+  234, test_engine 265, properties 38, API 92, mutation 23/23. Still running:
+  `sprint/judge-controls`, CAC winners 2021 to 2025 research.
+
 - **2026-10-09** Merged `sprint/arms` (`7bc05ab`): one length matched placebo per
   defence, a `baseline_repeat` noise arm, `--rules all` as the preregistered
   headline. From the CAC research: video script counts and claims fixed
