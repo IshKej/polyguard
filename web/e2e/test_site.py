@@ -202,6 +202,14 @@ def main() -> int:
             page.wait_for_timeout(1200)
             check("the back button returns to the previous screen", page.url.rstrip("/") == base)
 
+            # --- one press from the home page -------------------------------------------
+            page.goto(base + "/", wait_until="networkidle")
+            page.get_by_role("button", name="Try it on an example bot").click()
+            page.wait_for_url("**/scan/results", timeout=60000)
+            page.wait_for_timeout(800)
+            check("one press on the home page runs a simulated scan of an example bot to its results",
+                  page.get_by_text("Simulated scan").count() >= 1)
+
             check(f"no page errors anywhere{': ' + '; '.join(errors[:3]) if errors else ''}", not errors)
             browser.close()
     except Exception as e:

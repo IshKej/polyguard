@@ -126,7 +126,7 @@ const REASONS = [
   ['PolyGuard measures', 'the difference.', 'The same attack in every language, scored the same way, with statistics honest enough to say when there is no gap at all.'],
 ]
 
-export default function Landing({ meta, onStart, onMethod }) {
+export default function Landing({ meta, onStart, onTry, onMethod }) {
   const others = useMemo(() => (meta?.languages || []).filter((l) => l.code !== 'en'), [meta])
   const headline = useMemo(() => others.filter((l) => l.native.length <= 10), [others])
   const lines = useMemo(
@@ -186,6 +186,9 @@ export default function Landing({ meta, onStart, onMethod }) {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <button type="button" onClick={onStart} className="btn btn-solid">Scan a chatbot</button>
+              {onTry && meta?.examples?.length > 0 && (
+                <button type="button" onClick={onTry} className="btn btn-line">Try it on an example bot</button>
+              )}
               <a href="#how" className="btn btn-line">How it works</a>
             </div>
           </div>

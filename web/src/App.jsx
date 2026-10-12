@@ -3,6 +3,7 @@ import { getMeta, getSavedScan, runScan } from './api'
 import { Loader, Nav } from './components/Chrome'
 import { isMotionOff, useMotionOff } from './lib/motion'
 import { jumpToTop, startSmoothScroll, stopSmoothScroll } from './lib/smooth'
+import { representative } from './lib/languages'
 import Landing from './components/Landing'
 import LiveScan from './components/LiveScan'
 import Results from './components/Results'
@@ -124,6 +125,16 @@ export default function App() {
     })
   }, [go])
 
+  // One press from the home page: the first example bot, a spread of languages
+  // across every tier, one phrasing each. Runs simulated unless live scans are
+  // unlocked, exactly like a scan set up by hand.
+  const tryExample = useCallback(() => {
+    if (!meta?.examples?.length) return
+    const ex = meta.examples[0]
+    launch({ prompt: ex.prompt, exampleName: ex.name, langs: representative(meta.languages),
+             categories: meta.categories, phrasings: 1, model: meta.default_model })
+  }, [meta, launch])
+
   // The live board's state, derived from the rows that have arrived so far.
   const scanLanguages = useMemo(
     () => (meta && config ? meta.languages.filter((l) => config.langs.includes(l.code)) : []),
@@ -171,7 +182,7 @@ export default function App() {
       >
         <span className="font-serif text-[clamp(3rem,8vw,6rem)] leading-none">Poly<span className="display">Guard</span></span>
       </div>
-      {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} onMethod={() => go('method')} />}
+      {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} onTry={tryExample} onMethod={() => go('method')} />}
       {view === 'method' && meta && <Method meta={meta} onStart={() => go('setup')} onBack={() => go('landing')} />}
       {view === 'setup' && meta && (
         <Setup
