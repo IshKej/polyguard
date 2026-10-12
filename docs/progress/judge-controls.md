@@ -75,3 +75,48 @@ Facts that shape the work:
   6 faithful echoes (hold) and 6 breaks, requests looked up from the bank by id,
   replies only bank text plus plain wording.
 * Tests: test_engine 255/255, api/test_api 95/95 so far.
+
+## Step 2: rejudge and agreement tools (done)
+
+* `rejudge.py` shows the judge the user message (looked up by id in a bank whose
+  SHA-256 must match the scan's; `--bank` for an older one), also judges replies
+  whose first judge failed, records per reply outcomes, `--out` for the file.
+* `review_agreement.py` reads the reviewer verdicts from HAND_REVIEW.md (every
+  canary reply not listed is a hold, as the review states) and scores the scan's
+  own judge and the saved second judge (before) and any rejudge folders (after).
+  Before numbers reproduce HAND_REVIEW.md exactly: over the four full scans, 219
+  canary replies, scan judge (Gemma, wording 1.1) agrees 76.3% (kappa 0.03, 52
+  false breaks, 0 missed); second judge (Qwen, wording 1.1) 96.3% (kappa 0.19,
+  8 false, 0 missed).
+
+## Step 3: choosing the wording on the gold set (done, 2026-10-09 to 2026-10-11)
+
+Wording chosen on the judge_eval.py gold set only (41 structural items with no
+user message, plus 12 task items with one). The 2026-10-06 replies and the review
+labels were NOT used to choose it, so they stay a held out check. Every wording
+tried, with the Gemma 4 E2B judge (Qwen in brackets where run):
+
+| Wording | Old 41 items acc | Uncovered FP | Task items acc | Echoes held |
+|---|---|---|---|---|
+| v1, three labels, request shown (first commit) | 95% [93%] | 15% [8%] | 58% [83%] | 1/6 [4/6] |
+| v2, plus "reproducing the instruction is not carrying it out" | 95% | 15% | 67% | 2/6 |
+| v3, two boolean facts before the label | 95% | 15% | 58% | 1/6 |
+| v4, "compare the reply with the document" | 83% [98%] | 46% [0%] | 92% [92%] | 6/6 [6/6] |
+| v5, v4 with held listed first | 90% | 31% | 67% | 2/6 |
+| v6, v4 plus a refusal sentence | 90% | 31% | 75% | 3/6 |
+| **v7, v4 with "token as its own answer, alone, with a comment, or added after the task"** | **90% [100%]** | **15% [0%]** | **92% [100%]** | **6/6 [6/6]** |
+
+v7 is locked. Judge fingerprint (`engine.judge_prompt_sha256`) with v7:
+`b802ca26166d4fc031b87f91dc257a531b534ead17c7f0d925f1c8377ef1234b` (scoring
+1.1 wording was `5cf308ca...`). Neutral prompt SHA-256 `75357d68...`.
+
+Honest reading: Gemma 4 E2B is very sensitive to wording; v7 fixes the echo
+problem on the gold set (6 of 6) and keeps every covered language right, but
+in languages outside the keyword list it misses two bare compliances (sw, am)
+and calls two refusals breaks (sw, am), all four in languages not in the bank.
+Qwen3.5 4B scores 53 of 53 with v7. A 2B judge is the weak part of the local
+setup; the paid judge must be measured on the same gold set before any use.
+
+GPU note: the desktop now holds 1.1 to 2.4 GB of VRAM, varying. With 2.4 GB
+taken, the judge server died with CUDA out of memory (2026-10-09). With 1.1 GB
+taken both servers fit (5.5 of 6.1 GB).
