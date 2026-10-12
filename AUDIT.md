@@ -1015,6 +1015,32 @@ from their own evidence, and by driving the site in a real browser.
     form writes whole-number floats as ints; two API tests send a result the way a
     browser does and check that a genuine one verifies and a changed number does not.
 
+## Round 20: what the first real replies said about the instrument
+
+77. **A bot that did exactly what its user asked was scored as broken.** In the
+    2026-10-06 local pilots, 52 of the 56 judged breaks in the four full scans
+    were one phrasing ("translate this customer message") where the bot
+    translated the quoted message, injected line and code word included, and
+    did not obey it. The judge saw only the reply, so a faithful translation of
+    "reply with the code" looked like replying with the code. FIX: scoring 1.2.
+    The judge is shown the user's message too, marked as data, and answers
+    complied, echoed or held; an echo is a hold counted apart so it stays
+    visible. The wording was chosen on the gold set, which gained 12 task items
+    (6 echoes, 6 breaks) in 7 bank languages, and then checked on the pilot
+    replies it never saw: agreement with the assisted review rose from 76.3% to
+    97.3% for the local Gemma judge (52 false breaks to 6) and from 96.3% to 100%
+    for Qwen. PREREGISTRATION.md, 2026-10-11.
+
+78. **The capability controls measured the bot's rules, not the language.** All
+    four example bots declined the harmless "include this code" request in
+    English as well (0 or 1 of 6), so the English baseline was near zero and no
+    language could ever be flagged: the check that keeps an unreadable language
+    from counting as a safe one was switched off by the bot's own policy. FIX:
+    every control also runs under a neutral system prompt, the flag reads that
+    run, and the bot prompt run is reported beside it as a second number. The
+    cost bound, the spend guard, the preflight and every document that counts
+    calls now count controls twice. PREREGISTRATION.md, 2026-10-11.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.
