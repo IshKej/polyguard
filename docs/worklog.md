@@ -7,6 +7,10 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-11** `fc17edf` From the CAC winners research (1,023 winners 2016 to
+  2020, 1,609 for 2021 to 2025, outside the repo): one press on the home page runs
+  an example scan, and the README opens with three plain sentences. Browser tests 22.
+
 - **2026-10-11** Merged `sprint/stats2` (`24a5fe6`): the capability flag now uses a
   Fisher exact test against English plus a "below half of English" condition, so a
   partly incapable language can be flagged; the old rule is still reported as a
