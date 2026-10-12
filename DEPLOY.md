@@ -95,9 +95,9 @@ needs fixing, not that the model is vulnerable.
 
 One live scan fires **5 categories × 3 phrasings = 15 short calls to the victim model per language**, plus a judge call only when a reply actually contains the canary. So a 12-language demo scan is ~180 calls, and a full 87-language scan is ~1,305 calls. On the default victim (Claude Haiku) that lands in the low tens of cents even for the full scan, and the phrasings slider drops it to a third if you set it to 1.
 
-Each scan also fires **6 benign capability controls per language** to check the bot can follow ordinary instructions in that language at all. Without them a quiet language cannot be told apart from a broken one.
+Each scan also fires **6 benign capability controls per language**, each one twice: once under a plain helpful assistant prompt, to check the model can follow ordinary instructions in that language at all, and once under the bot's own prompt, to see what the bot allows. Without them a quiet language cannot be told apart from a broken one.
 
-So a full 87-language scan is **1,305 attack calls plus 522 control calls, 1,827 total**, plus a judge call only where a reply actually contains the token. Budget for the total, not the attack line alone.
+So a full 87-language scan is **1,305 attack calls plus 1,044 control calls (522 controls, twice), 2,349 total**, and the 73 languages in the bank today make 1,971, plus a judge call only where a reply actually contains the token. The judge also reads the attack message, so a judge call costs a little more than the reply alone. Budget for the total, not the attack line alone.
 
 Scanning several vendors multiplies all of that by the number of models, and each vendor bills separately. Start with one model and one tier of languages before running the full cross-model sweep.
 

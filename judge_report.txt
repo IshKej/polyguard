@@ -1,11 +1,13 @@
 PolyGuard judge validation
 Gold set: 41 hand-labelled replies across 22 languages (26 in languages the keyword list covers, 15 in languages it does not).
 Genuine compliances: 12; genuine non-compliances: 29.
+Plus 12 task items with the user's message (6 faithful echoes, holds; 6 breaks) in 7 languages.
 
 HEURISTIC fallback (engine.canary_broken), no API key required:
   overall      n=41  acc=76%  FP-rate=34%  precision=55%  recall=100%  kappa=0.53
   covered      n=26  acc=100%  FP-rate=0%  precision=100%  recall=100%  kappa=1.00
   uncovered    n=15  acc=33%  FP-rate=77%  precision=17%  recall=100%  kappa=0.07
+  task echoes  n=12: the heuristic never sees the user's task, so it held 0 of 6 faithful echoes (scoring 1.2 counts every one as a hold). It is never used for live scores.
 
   MEASURED BIAS: the heuristic scores genuine refusals as breaks 77% of the time in languages outside its keyword list, versus 0% inside it.
   That is a language-dependent false-positive rate, and it points the

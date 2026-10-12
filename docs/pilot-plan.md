@@ -37,8 +37,8 @@ approval.
 | Stage | Command | Languages | Victim calls | Judge calls | Worst case |
 |---|---|---|---|---|---|
 | 0. Smoke | `python providers.py --smoke claude-haiku-4-5` | none | 1 | 0 | under $0.01 |
-| 1. Pilot A | see below | en, es, vi | 63 (45 attacks, 18 controls) | at most 63 | $0.20 |
-| 2. Pilot B | see below, second approval needed | all 20 | 420 (300 attacks, 120 controls) | at most 420 | $1.33 |
+| 1. Pilot A | see below | en, es, vi | 81 (45 attacks, 18 controls fired twice) | at most 81 | $0.30 |
+| 2. Pilot B | see below, second approval needed | the 20 author written languages | 540 (300 attacks, 120 controls fired twice) | at most 540 | $1.90 |
 
 Spanish and Vietnamese are in Pilot A because they were the first languages with
 native speaker feedback integrated so far.
@@ -57,6 +57,7 @@ python cli.py replay pilot/pilot_a/scan.json     # every number recomputed from 
 
 # Stage 2, Pilot B (only after a second approval)
 python cli.py scan --prompt pilot_prompt.txt --model claude-haiku-4-5 \
+  --langs ar,de,el,en,es,fr,gu,hi,id,it,ja,ko,pl,pt,ru,tl,tr,uk,vi,zh \
   --bundle pilot/pilot_b --bundle-include-prompt
 python cli.py replay pilot/pilot_b/scan.json
 ```
@@ -80,9 +81,18 @@ The costs are upper bounds computed from the bank itself, not estimates of a typ
 - every reply goes to the judge, although the judge only runs when a reply
   contains the canary or the control token
 - every judge verdict runs to its 50 token cap
+- every capability control is fired twice, under a plain helpful assistant prompt and
+  under the bot's own prompt (PREREGISTRATION.md, 2026-10-11)
+- the attack judge reads the user's message as well as the reply
+
+Updated 2026-10-11 for both changes (the plan said 63 calls and $0.20 for Pilot A,
+420 calls and $1.33 for Pilot B before). Pilot B names its 20 languages, because
+the bank now holds 73 and a scan without `--langs` fires all of them: 1971 victim
+calls, $6.98 worst case.
 
 The SDK retries transient errors up to 5 times. Even if every single call were
-retried 5 times, Pilot A would stay under $1.20 and Pilot B under $7.96.
+retried 5 times, Pilot A would stay under $1.80 and Pilot B under $11.40, which is
+above the $10 cap below; the cap on the key is what holds.
 
 ## Spending cap
 
