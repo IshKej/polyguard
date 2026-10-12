@@ -69,6 +69,14 @@ python cli.py replay results/local/<date>/smoke/scan.json
 POLYGUARD_JUDGE_URL=http://127.0.0.1:8080 python rejudge.py results/local/<date>/smoke/scan.json   # second judge
 ```
 
+A local scan of the whole bank (73 languages) is 1095 attacks plus 438 harmless
+controls fired twice, once under a plain helpful assistant prompt and once under
+the bot's own, so 1971 victim calls. The judge sees the user's message as well as
+the reply; a reply that translated or quoted the injected line while doing the
+user's task is recorded as `echoed`, a hold. The desktop's own use of the GPU
+varies: if the judge server stops with `CUDA error: out of memory`, close other
+GPU programs and start it again.
+
 The judge is always an LLM. If the judge server is down or returns no verdict,
 the attack is recorded as an unscored error, never scored by keywords. Every
 scan's instrument record names both weights files with their SHA-256 and the

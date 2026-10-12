@@ -52,7 +52,8 @@ def ground_truth() -> dict:
         "variants": bank.get("variants_per_category", 3),
         "full_attack_calls": len(cat.CATALOG) * len(bank["categories"])
                              * bank.get("variants_per_category", 3),
-        "full_control_calls": len(cat.CATALOG)
+        # Every control runs twice: neutral prompt and the bot's own (2026-10-11).
+        "full_control_calls": 2 * len(cat.CATALOG)
                               * ((len(controls) // n_lang) if n_lang else 0),
     }
 
