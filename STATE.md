@@ -202,7 +202,8 @@ a deviation from the analysis plan, but the fingerprint must be updated.
   scores near-zero breaks, which looks like security. Measured, this turned a real
   planted gap from p=0.0023 into p=0.050. (37)
 - **Provenance, not "verified".** No language has been validated by a native
-  speaker. Spanish, Vietnamese and Arabic feedback has been received and integrated,
+  speaker. Spanish, Vietnamese and Arabic feedback has been received and integrated
+  (the Arabic is Modern Standard Arabic; dialect coverage is not established),
   which is not the same thing, and `native_reviewed` stays false. The old flag
   implied otherwise. (34)
 - **Nulls are reportable.** The pre-registration commits to it, and power is

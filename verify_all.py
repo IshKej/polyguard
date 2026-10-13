@@ -1525,6 +1525,14 @@ _api = _sp.run([sys.executable, str(HERE / "api" / "test_api.py")], cwd=str(HERE
                capture_output=True, text=True, encoding="utf-8", timeout=600)
 ck("114. the web API suite passes", _api.returncode == 0 and "API tests passed" in _api.stdout)
 
+# 125. The native speaker corrections (Spanish 2026-10-01, Arabic 2026-10-04) are
+# pinned by hash against the corrections themselves, with every unflagged row in
+# those languages; a reverted fix or a stray edit fails here and in CI.
+_nr = _sp.run([sys.executable, str(HERE / "test_native_review.py")], cwd=str(HERE),
+              capture_output=True, text=True, encoding="utf-8", timeout=300)
+ck("125. the native review regression suite passes",
+   _nr.returncode == 0 and "native review regression checks passed" in _nr.stdout)
+
 # 121. The exploratory trend test reads a frozen resource table, like the bank's
 # fingerprint: a changed measure would be a changed analysis.
 _rm = engine.load_resource_measures()

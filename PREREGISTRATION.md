@@ -45,7 +45,7 @@ bank after a scan has been run must be recorded in the deviation log below.
 Note the honest starting position: until 2026-10-05 the bank contained **zero
 low-resource languages**. It now holds 24, of which 23 are machine translated and
 not reviewed by a native speaker (Gujarati is the exception), so the central
-hypothesis is testable but still untested: no live scan has run.
+hypothesis is testable but still untested: no live scan of a production chatbot or paid API has run (the local pilot scans in the 2026-10-07 row are diagnostics, not the study).
 
 ## Hypotheses
 

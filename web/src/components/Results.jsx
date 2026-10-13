@@ -390,7 +390,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
             </Row>
           )}
           <Row k="Translations">
-            Only Spanish, Vietnamese and Arabic have had feedback from a native speaker so far. A badly worded attack fails for
+            Only Spanish, Vietnamese and Arabic have had feedback from a native speaker so far, and the Arabic is Modern Standard Arabic, not its dialects. A badly worded attack fails for
             reasons that have nothing to do with the bot’s defences.
           </Row>
           <Row k="How the worst language test works">
