@@ -7,6 +7,16 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-12** Portuguese native feedback integrated (sheet returned 2026-10-08 by
+  UW PORT 202 and its instructor, credited with permission in NATIVE_REVIEW.md): 10
+  text fields, all applied except "formal English" to "formal Portuguese" in
+  `pt_indirect_injection_1` (kept English so the task matches every language). Bank
+  `fec8ba0f...`, held-out `fb97da7b...` (three held-out rows changed text), logged in
+  the preregistration. `test_native_review.py` now pins Spanish, Arabic and
+  Portuguese (152 checks, 27 corrected rows from the corrections themselves).
+  Earlier the same day: the 17 Spanish and Arabic corrections verified present
+  (`550b7d2`), MSA scope on every surface. CI checked with `gh` (logged in as IshKej).
+
 - **2026-10-12** `9172f3b` One real scan published on the site: "Read a real scan"
   on the home page opens `web/public/examples/real-scan-2026-10-11.html` (the
   report of the 2026-10-11 local retail scan with a banner stating its limits and

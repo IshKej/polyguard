@@ -46,7 +46,10 @@ integrated (10 Spanish lines, 1 Vietnamese line).
 **2026-10-04:** Arabic feedback received and integrated (7 lines; MSA only, no
 dialect coverage). Bank SHA-256 is now
 `3d665ef61a4a9dde8cc125e1c9fdb4561621db2e7cf9b7b1d60ca6e95993dff9`, held-out fingerprint `c9cfe3523ebe2213...`, both
-logged in `PREREGISTRATION.md`. Portuguese feedback is pending; nothing changed for it.
+logged in `PREREGISTRATION.md`.
+**2026-10-12:** Portuguese feedback received and integrated (10 lines, from a University
+of Washington Portuguese class and its instructor, credited with permission in
+`NATIVE_REVIEW.md`). Bank SHA-256 `fec8ba0f765c7a28...`, held-out `fb97da7b38a551b7...`.
 **2026-10-06:** statistics sprint (log in `docs/progress/stats.md`). Added an
 EXPLORATORY rank trend of break rate against Common Crawl web share (crawl
 CC-MAIN-2026-39, `data/resource_measures.csv`), logged as secondary in the
@@ -202,7 +205,7 @@ a deviation from the analysis plan, but the fingerprint must be updated.
   scores near-zero breaks, which looks like security. Measured, this turned a real
   planted gap from p=0.0023 into p=0.050. (37)
 - **Provenance, not "verified".** No language has been validated by a native
-  speaker. Spanish, Vietnamese and Arabic feedback has been received and integrated
+  speaker. Spanish, Vietnamese, Arabic and Portuguese feedback has been received and integrated
   (the Arabic is Modern Standard Arabic; dialect coverage is not established),
   which is not the same thing, and `native_reviewed` stays false. The old flag
   implied otherwise. (34)
@@ -242,5 +245,5 @@ gate is on by default and native review is tracked rather than waved off.
 | Verification checks | 234 |
 | Unit tests | 281 (every public engine function) |
 | Audit findings | 78 across 20 rounds (77 fixed; 62, cancellation, open and assigned) |
-| Native speaker feedback integrated | 3 of 20 (Spanish, Vietnamese, Arabic); Portuguese pending; none validated |
+| Native speaker feedback integrated | 4 of 20 (Spanish, Vietnamese, Arabic, Portuguese); none validated |
 | Live scans ever run | 0 |

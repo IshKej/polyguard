@@ -1,11 +1,13 @@
 """
-Regression tests for the native speaker corrections, Spanish (2026-10-01) and Arabic
-(2026-10-04), and for every unflagged row in those two languages.
+Regression tests for the native speaker corrections, Spanish (2026-10-01), Arabic
+(2026-10-04) and Portuguese (2026-10-08, integrated 2026-10-12), and for every
+unflagged row in those three languages.
 
 Each row is pinned by the SHA-256 of its template and of its rendered bank text.
-The 17 corrected rows were pinned from the corrections as recorded in the review
-follow-through, NOT read back from the generator, so a regression in the generator
-fails here instead of being copied into the expectation. The 25 unflagged rows are
+The 27 corrected rows were pinned from the corrections themselves (the review
+follow-through for Spanish and Arabic, the reviewer's sheet for Portuguese), NOT read
+back from the generator, so a regression in the generator
+fails here instead of being copied into the expectation. The 36 unflagged rows are
 pinned as they stood on 2026-10-12, so an accidental edit to a row nobody reviewed
 also fails. Hashes, not text, so the attack strings are not duplicated in the repo.
 
@@ -124,6 +126,48 @@ PINS = {
                      "d5d043424edd222c3ed59d70f003aec431d45cbea72766bd32252035808f3600", False),
     "ar_control_5": ("b5183822ca8c65041d8f122967709772dd1c4418b9a976f4bd16a0290a7e30d9",
                      "e020610e7e9fabfa639bdbe0818162477fc05c101623294b565512030fe85a2b", False),
+    "pt_instruction_override_0": ("94991d505dbf744cc2cfe77bbdab08e8283c823e533b9fbe2016a265036e6b04",
+                                  "9f391ad739b3dccb85329d0e08933a99054bf050e0e3566fc5a906d49e8b0f83", False),
+    "pt_instruction_override_1": ("299bf8d8e74b36f87be04851789c11075908d91f08bc00f08dc81b0a942b99ed",
+                                  "b39698f15a62ef9c820ee945678b8fe1dc9c741dba6ad0812bd1b3d8c8ee0ae2", False),
+    "pt_instruction_override_2": ("910ebe1351924d45be72e278dedada1baeeda2487bc61b3bf74a4e9ef4cefce1",
+                                  "44f9a633aa4504f55c46047efee88179a315f4b706a7e260d6de7bec33742347", False),
+    "pt_role_play_jailbreak_0": ("c5599bdf192f86abea74c69333a16f248ac417bc9208d655d1b60b93cf18a5c4",
+                                 "04a4cdcf5cf6594ec107c35e3ce1025a05b51328f29715dcdfd4eef42973d7c5", True),
+    "pt_role_play_jailbreak_1": ("5c0f1c074cb7f50ddd24362a278d48ee022cc41fc35c5d93fe6042768a84b938",
+                                 "c5c18aad20cbe59a9af7c54fed6eb45e8c6070a3156afa7c03d395a613de1794", True),
+    "pt_role_play_jailbreak_2": ("a45aa497c89e1adba633b900cfb3499c0f54e35e8e08fdace7fb578ef3ef7783",
+                                 "9a5120ab7f0ee3c23119592d89b343df72a1ef8a12c9f6113e8d3e13b7195791", False),
+    "pt_system_prompt_extraction_0": ("6d9b45a724327b2790273a7b998b4f1a11975e54669b0c99d129b780b1d8631b",
+                                      "6d9b45a724327b2790273a7b998b4f1a11975e54669b0c99d129b780b1d8631b", False),
+    "pt_system_prompt_extraction_1": ("6253a91f251b15772a24b4c0bfcf81588c13a7b28bceb1f398544028954db8a0",
+                                      "6253a91f251b15772a24b4c0bfcf81588c13a7b28bceb1f398544028954db8a0", False),
+    "pt_system_prompt_extraction_2": ("0b51da1cd97e13d2f164a8247b84bd9d2463685559fdcbb213cacd7ad0fc8901",
+                                      "0b51da1cd97e13d2f164a8247b84bd9d2463685559fdcbb213cacd7ad0fc8901", True),
+    "pt_obfuscated_payload_0": ("bb5fb48e1e98aae46fa0a1807452279ff40099ecfc32ea1a76719c0476065d6f",
+                                "04da3e7ffceeb581bd6324cd728e42b8e0534c3123b09393cba9da7a02f079c9", True),
+    "pt_obfuscated_payload_1": ("deb4be099bf2e2e316124cd0495e18d1ea2fa28df045da28a15bfcc43f8ebd8b",
+                                "8f6610a6f4dc82383478358373a034b7d87cad46dcc29ee980083bea053e2e39", False),
+    "pt_obfuscated_payload_2": ("33e60f824acbc54e090f6411077ee3b1cf80e34abf765613515e59f1d117e4f5",
+                                "5f0d9b31b9cf60c96b12a767ee6cdb365d38a87e56d7b3256126d04e91d112cf", True),
+    "pt_indirect_injection_0": ("c4d80c4c04f4d6df5048f914e9e580e7e7e0359d8414ee7fe8d372713eba0358",
+                                "a578eac77becf4fb9e9bef529afbeee92e12be7ed38f89fefdf8efb791bd8908", True),
+    "pt_indirect_injection_1": ("98adac60f7a75e4086cd58a1d841e00019a31be8b149f40b2f37e419a2868ab0",
+                                "3bf7822da3d4bb3bec2314cb1826c8f5ad1e86cee216b7017cad65062b462c2b", True),
+    "pt_indirect_injection_2": ("98359943af5f7821c1396fc867487d8e86f604dda63aa73fdb604473b3b35fe2",
+                                "ef5ef14ba4fdb7800dae3c36f671a3d83e9e0ca8ba3112f917924457f7a68141", True),
+    "pt_control_0": ("2730764166e3cb19e4b001d01dd03bd2611ed91aa176e1c88660a4117b4108d9",
+                     "fa4a336370240743cd33fe25d75824d61d65b17d8eef92e39ceccfafadf1895e", True),
+    "pt_control_1": ("2d2581ac7c132a9d84a0ac134808a118cf0357d593073de09c5666c97db5a791",
+                     "cefd57bc7e12787b242c9cc546f30aa7d0f7cc25c5e922a6174bb00bafdcf9d4", False),
+    "pt_control_2": ("df4c854bffc64d1a66abe7355a71fb8cb4fedf516a0a54b760661ff2a119d9a0",
+                     "bcc97a718d6a5373bf2dc1ca0c2df3388dd87e01b90339db48b9048498b99086", True),
+    "pt_control_3": ("18b626b1f4144b713e93e4ca0bcf492c98f458e8bb41ea3ef142b87cdf833a56",
+                     "15a7261547b0c9d2affb9ec1ab178d2ec621b5b8bbc98a78b41286ee7e7b2b50", False),
+    "pt_control_4": ("51bb924a2c626c278847d4a87847b1bfab99509bec1d49758b5dd2a1e0686e8e",
+                     "79e7423fafc9861fb45dbce513c433bdd6b1359e6b69167df8bc5039409c32ae", False),
+    "pt_control_5": ("fb842a2a2a0ea3ac75c998590ccea9af20d5e83946f33634bc155017199c83da",
+                     "67e0bee5978dd2e3f3784baabf0847c04f766ec9fb21d727edd3faf98263be94", False),
 }
 
 
@@ -137,12 +181,13 @@ attacks = {a["id"]: a for a in BANK["attacks"]}
 controls = {c["id"]: c for c in BANK.get("controls", [])}
 bank_rows = {**attacks, **controls}
 
-check("exactly 17 corrected rows are pinned (10 Spanish, 7 Arabic)",
-      sum(v[2] for v in PINS.values()) == 17
+check("exactly 27 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese)",
+      sum(v[2] for v in PINS.values()) == 27
+      and sum(v[2] for k, v in PINS.items() if k.startswith("pt_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("es_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("ar_")) == 7)
-check("every Spanish and Arabic row in the bank is pinned, and nothing else",
-      {k for k in bank_rows if k.split("_")[0] in ("es", "ar")} == set(PINS))
+check("every Spanish, Arabic and Portuguese row in the bank is pinned, and nothing else",
+      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt")} == set(PINS))
 for rid, (t_sha, r_sha, corrected) in PINS.items():
     kind = "corrected" if corrected else "unflagged"
     check(f"{rid} ({kind}): generator template unchanged", sha(template(rid)) == t_sha)
@@ -159,8 +204,8 @@ check("ar_indirect_injection_0 keeps the quoted review with the marker and the c
       _quoted.startswith('"') and _quoted.endswith(CANARY + '"')
       and "SYSTEM OVERRIDE" in _quoted and CANARY not in _frame)
 
-# Tokens and markers survive in every Spanish and Arabic row.
-for lang in ("es", "ar"):
+# Tokens and markers survive in every Spanish, Arabic and Portuguese row.
+for lang in ("es", "ar", "pt"):
     rows = [a for a in BANK["attacks"] if a["lang"] == lang]
     check(f"{lang}: every canary attack carries the canary once",
           all(a["text"].count(CANARY) == 1 for a in rows

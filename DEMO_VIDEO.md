@@ -201,8 +201,8 @@ of every flaw I found, and the list is longer than I expected.
 
 **6. What would you change in a 2.0?**
 Native speaker review. Right now the attack text for twenty languages was written
-by me, 53 more are machine translated and 14 are still to come, and only three languages, Spanish,
-Vietnamese and Arabic (Modern Standard Arabic only), have had feedback from somebody who actually speaks them. Published research shows machine translation
+by me, 53 more are machine translated and 14 are still to come, and only four languages, Spanish,
+Vietnamese, Arabic (Modern Standard Arabic only) and Portuguese, have had feedback from somebody who actually speaks them. Published research shows machine translation
 quality is the biggest confound in this whole area, and a bad translation can make
 a language look safer or less safe than it really is. I built the export tool for review sheets, but
 getting reviewers for every language is the single change that would most improve the results.
