@@ -1410,6 +1410,62 @@ finally:
             _os.environ[_k] = _val
     _pv._DOTENV = _saved_dotenv
 
+# --- replay is version aware, and reanalyze never touches its source ---------------
+# A real saved scan made under the 2026-09-17 capability rule (no `prereg_rule` in
+# its capability block): replay must check it against that rule, both from the
+# per-language counts and from the saved control rows. Today's rule flags Yoruba
+# on the same rows; that is a rule change, not an error, so replay passes.
+import contextlib as _ctx2  # noqa: E402
+import io as _io2  # noqa: E402
+import shutil as _sh2  # noqa: E402
+import tempfile as _tf2  # noqa: E402
+from pathlib import Path as _P2  # noqa: E402
+
+_legacy = _P2(__file__).parent / "results/local/2026-10-11/full-retail-support-bot/scan.json"
+
+
+def _replay(path):
+    with _ctx2.redirect_stdout(_io2.StringIO()) as buf:
+        rc = _cli.main(["replay", str(path)])
+    return rc, buf.getvalue()
+
+
+if _legacy.exists():
+    _lp = json.loads(_legacy.read_text(encoding="utf-8"))
+    check("the saved 2026-10-11 scan was flagged by the old rule (no prereg_rule, nothing excluded)",
+          "prereg_rule" not in _lp["capability"] and _lp["capability"]["capability_limited"] == [])
+    _rc, _txt = _replay(_legacy)
+    _neutral_rows = [c for c in _lp["control_results"] if c.get("control_system") == "neutral"]
+    check("replay checks an old-rule scan against the old rule in both branches and passes, "
+          "although today's rule would flag Yoruba on the same rows",
+          _rc == 0 and engine.capability_report(_neutral_rows)["capability_limited"] == ["yo"])
+    with _tf2.TemporaryDirectory() as _d2:
+        _bad = _P2(_d2) / "scan.json"
+        _bad.write_text(json.dumps({**_lp, "capability": {**_lp["capability"], "capability_limited": ["yo"]}},
+                                   ensure_ascii=False), encoding="utf-8")
+        check("a tampered old-rule flag list is still caught (old rule says nothing is excluded)",
+              _replay(_bad)[0] == 4)
+        _before = _legacy.read_bytes()
+        with _ctx2.redirect_stdout(_io2.StringIO()) as _buf:
+            _rr = _cli.main(["reanalyze", str(_legacy), "--out", str(_P2(_d2) / "re")])
+        _new = json.loads((_P2(_d2) / "re" / "scan.json").read_text(encoding="utf-8"))
+        check("reanalyze leaves the source file byte for byte untouched and makes no model calls",
+              _rr == 0 and _legacy.read_bytes() == _before and _new["analysis"]["model_calls"] == 0
+              and _new["results"] == _lp["results"] and _new["control_results"] == _lp["control_results"])
+        check("reanalyze applies today's rule: Yoruba (1 of 6 neutral controls vs English 5 of 6) is excluded",
+              _new["capability"]["capability_limited"] == ["yo"]
+              and _new["capability"]["per_lang"]["yo"]["followed"] == 1
+              and _new["capability"]["per_lang"]["en"]["followed"] == 5
+              and "prereg_rule" in _new["capability"]
+              and _new["analysis"]["acquisition_commit"].startswith("08327d8"))
+        check("replay checks a reanalysed scan against today's rule and passes",
+              _replay(_P2(_d2) / "re" / "scan.json")[0] == 0)
+        _new_bad = {**_new, "capability": {**_new["capability"], "capability_limited": []}}
+        (_P2(_d2) / "re" / "scan.json").write_text(json.dumps(_new_bad, ensure_ascii=False), encoding="utf-8")
+        check("a current-rule file that drops a flagged language is caught",
+              _replay(_P2(_d2) / "re" / "scan.json")[0] == 4)
+        _sh2.rmtree(_P2(_d2) / "re", ignore_errors=True)
+
 passed = sum(1 for _, ok in CASES if ok)
 for name, ok in CASES:
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}")

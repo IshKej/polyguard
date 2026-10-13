@@ -709,11 +709,18 @@ def cmd_replay(args) -> int:
     if not rows:
         print("This scan file has no per-attack evidence (it predates evidence export).")
         return 4
-    problems = []
+    problems, notes = [], []
     inst = payload.get("instrument") or {}
     if inst.get("bank_sha256") and inst["bank_sha256"] != engine.bank_sha256():
-        problems.append("the attack bank in this checkout is not the one the scan used "
-                        f"({engine.bank_sha256()[:12]} here, {inst['bank_sha256'][:12]} in the scan)")
+        # Replay recomputes from the saved replies, never from the bank text, so a
+        # later wording change (a native speaker's correction, say) does not move
+        # any number here. What would is a language the bank no longer has.
+        notes.append("the attack bank in this checkout differs from the scan's "
+                     f"({engine.bank_sha256()[:12]} here, {inst['bank_sha256'][:12]} in the scan); "
+                     "the numbers below come from the saved replies, so text changes do not affect them")
+        missing = sorted({r["lang"] for r in rows} - set(engine.load_bank()["languages"]))
+        if missing:
+            problems.append(f"languages in the scan that this bank no longer has: {missing}")
     if inst.get("scoring_version") and inst["scoring_version"] != engine.SCORING_VERSION:
         problems.append(f"scoring version {engine.SCORING_VERSION} here, "
                         f"{inst['scoring_version']} in the scan")
@@ -752,7 +759,13 @@ def cmd_replay(args) -> int:
             checks.append(("capability limited (file predates the 2026-10-09 rule)",
                            cap.get("capability_limited"),
                            redo_cap["prereg_rule"]["capability_limited"]))
-    # The capability flag, recomputed from the control evidence when the file has it.
+    # The capability flag, recomputed from the control evidence when the file has it,
+    # under the rule the file was written with. A file without `prereg_rule` was
+    # flagged by the 2026-09-17 rule (it predates the 2026-10-09 change, or was
+    # made on a branch that did), so it is checked against that rule, exactly as
+    # the per-count branch above does. Applying today's rule to it would report a
+    # mismatch that is a rule change, not an error. `cli.py reanalyze` is the way
+    # to see an old scan under today's rule.
     ctl = payload.get("control_results")
     if ctl:
         for key, kind in (("capability", (payload.get("capability") or {}).get("control_system")),
@@ -762,8 +775,13 @@ def cmd_replay(args) -> int:
             if not stored or not crows:
                 continue
             again = engine.capability_report(crows)
-            checks.append((f"{key} languages flagged", stored.get("capability_limited"),
-                           again["capability_limited"]))
+            if "prereg_rule" in stored:
+                checks.append((f"{key} languages flagged", stored.get("capability_limited"),
+                               again["capability_limited"]))
+            else:
+                checks.append((f"{key} languages flagged (file predates the 2026-10-09 rule)",
+                               stored.get("capability_limited"),
+                               again["prereg_rule"]["capability_limited"]))
             checks.append((f"{key} English follow rate", stored.get("ref_rate"),
                            again["ref_rate"]))
     for name, stored, recomputed in checks:
@@ -772,11 +790,82 @@ def cmd_replay(args) -> int:
         if not same:
             problems.append(f"{name}: file says {stored!r}, evidence gives {recomputed!r}")
     print(f"\nReplayed {len(rows)} attacks from {args.scan} ({payload.get('mode')})")
+    for n in notes:
+        print(f"  NOTE      {n}")
+    if payload.get("analysis"):
+        a = payload["analysis"]
+        print(f"  NOTE      reanalysed on {a.get('analysed_on')} at {str(a.get('analysis_commit'))[:12]} "
+              f"from replies acquired at {str(a.get('acquisition_commit'))[:12]}")
     if problems:
         for p in problems:
             print(f"  MISMATCH  {p}")
         return 4
     print(f"  every number matches its evidence ({len(checks)} checks)")
+    return 0
+
+
+def cmd_reanalyze(args) -> int:
+    """A versioned reanalysis of a saved scan under the analysis rules in force now.
+
+    No model is called. Every saved reply and verdict is kept as it is; only the
+    analysis that sits on top of them is recomputed (the capability flags from the
+    saved control rows, the sensitivity check, the exploratory trend test). The
+    source file is never modified. The new file records where it came from, the
+    commit that acquired the replies and the commit that reanalysed them.
+    """
+    import hashlib
+    from datetime import date
+    src = Path(args.scan)
+    raw = src.read_bytes()
+    payload = json.loads(raw.decode("utf-8"))
+    ctl = payload.get("control_results") or []
+    neutral = [c for c in ctl if c.get("control_system") == "neutral"]
+    bot = [c for c in ctl if c.get("control_system") == "bot"]
+    if not (neutral or bot):
+        print("This scan file has no saved control rows, so its capability flags cannot be reanalysed.")
+        return 4
+    old_cap = payload.get("capability") or {}
+    old_sens = engine.capability_sensitivity({"by_lang": payload["by_lang"], "capability": old_cap})
+
+    new = dict(payload)
+    if bot:
+        new["capability_bot_prompt"] = {**engine.capability_report(bot), "control_system": "bot"}
+    new["capability"] = {**engine.capability_report(neutral or bot),
+                         "control_system": "neutral" if neutral else "bot"}
+    shaped = {"by_lang": payload["by_lang"], "capability": new["capability"]}
+    new["capability_sensitivity"] = engine.capability_sensitivity(shaped)
+    if payload.get("resource_trend_test") is not None:
+        new["resource_trend_test"] = engine.resource_trend(shaped)
+    new["analysis"] = {
+        "schema": "polyguard.reanalysis/1",
+        "analysed_on": date.today().isoformat(),
+        "analysis_commit": engine.git_commit(),
+        "acquisition_commit": (payload.get("instrument") or {}).get("git_commit"),
+        "derived_from": src.as_posix(),
+        "derived_from_sha256": hashlib.sha256(raw).hexdigest(),
+        "model_calls": 0,
+        "capability_rule": engine.CAPABILITY_RULE,
+        "what_changed": {
+            "capability_limited": {"before": old_cap.get("capability_limited"),
+                                   "after": new["capability"]["capability_limited"]},
+            "primary_tier_test_p": {"before": old_sens["current"]["p"],
+                                    "after": new["capability_sensitivity"]["current"]["p"]},
+            "n_low_languages": {"before": old_sens["current"]["n_low"],
+                                "after": new["capability_sensitivity"]["current"]["n_low"]},
+        },
+    }
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "scan.json").write_text(json.dumps(new, ensure_ascii=False, indent=2) + "\n",
+                                   encoding="utf-8", newline="\n")
+    from report_html import write_report
+    write_report(new, out / "report.html")
+    w = new["analysis"]["what_changed"]
+    print(f"reanalysed {src} -> {out} (no model calls)")
+    print(f"  capability limited: {w['capability_limited']['before']} -> {w['capability_limited']['after']}")
+    print(f"  low resource languages in the tier test: {w['n_low_languages']['before']} -> "
+          f"{w['n_low_languages']['after']}")
+    print(f"  primary tier test p: {w['primary_tier_test_p']['before']} -> {w['primary_tier_test_p']['after']}")
     return 0
 
 
@@ -886,6 +975,12 @@ def build_parser() -> argparse.ArgumentParser:
     rp = sub.add_parser("replay", help="recompute every number in a scan file from its evidence")
     rp.add_argument("scan")
     rp.set_defaults(func=cmd_replay)
+
+    ra = sub.add_parser("reanalyze", help="recompute a saved scan's analysis under today's rules, "
+                                          "no model calls, source file untouched")
+    ra.add_argument("scan")
+    ra.add_argument("--out", required=True, help="folder for the reanalysed scan.json and report.html")
+    ra.set_defaults(func=cmd_reanalyze)
 
     r = sub.add_parser("report", help="render a scan JSON as HTML")
     r.add_argument("scan")
