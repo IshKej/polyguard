@@ -210,6 +210,14 @@ def main() -> int:
             check("one press on the home page runs a simulated scan of an example bot to its results",
                   page.get_by_text("Simulated scan").count() >= 1)
 
+            # --- the published real scan ------------------------------------------------
+            page.goto(base + "/", wait_until="networkidle")
+            page.get_by_role("link", name="Read a real scan").click()
+            page.wait_for_load_state("networkidle")
+            check("the home page links to a real scan that says what it is and is not",
+                  page.get_by_text("A real scan, published as an example").count() == 1
+                  and page.get_by_text("not a production chatbot").count() >= 1)
+
             check(f"no page errors anywhere{': ' + '; '.join(errors[:3]) if errors else ''}", not errors)
             browser.close()
     except Exception as e:

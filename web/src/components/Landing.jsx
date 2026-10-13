@@ -191,6 +191,12 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
               )}
               <a href="#how" className="btn btn-line">How it works</a>
             </div>
+            <p className="caption mt-4 text-(--mute)">
+              <a href="/examples/real-scan-2026-10-11.html" className="underline underline-offset-4 hover:text-ink">
+                Read a real scan
+              </a>{' '}
+              of an example bot on a small open model, all 73 languages, with its limits stated.
+            </p>
           </div>
           <div className="relative -mx-5 lg:mx-0">
             <Suspense fallback={null}>
