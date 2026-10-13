@@ -1,7 +1,9 @@
 # Design brief: stop paying when the visitor leaves
 
-**Status: open. Owner: Ishaan.** Acceptance tests: `api/test_cancellation.py`
-(4 of 6 fail today, by design). This brief states the problem and the
+**Status: implemented 2026-10-13, written with AI assistance at Ishaan's request.**
+Acceptance tests: `api/test_cancellation.py` (9 of 9, in CI). Still open: the
+design note below, `docs/design/cancellation-note.md`, for the owner to write.
+Before the fix the tests measured the bug (2 of 6 passed by design). This brief states the problem and the
 constraints. The design and the code are the owner's, and so is the design note
 at the end.
 

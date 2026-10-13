@@ -37,6 +37,7 @@ jobs:
       - run: python test_engine.py
       - run: python test_stats_properties.py
       - run: python api/test_api.py
+      - run: python api/test_cancellation.py
       - run: python test_native_review.py
       - run: python verify_all.py
       - run: python consistency.py

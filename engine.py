@@ -1463,7 +1463,8 @@ def instrument(mock: bool, model: str | None, langs, categories, max_variants,
 def scan(system_prompt: str, langs=None, categories=None, client=None,
          mock=None, model=VICTIM_MODEL, progress=None, max_variants=None,
          victim=None, with_controls=True, extraction_reference=None,
-         on_result=None, heldout_only=False, neutral_controls=True) -> dict:
+         on_result=None, heldout_only=False, neutral_controls=True,
+         cancel=None) -> dict:
     """
     max_variants caps how many phrasings per (language, category) are fired. 3 gives
     the full statistical depth; 1 is a fast pass for very large scans. Fewer variants
@@ -1488,6 +1489,14 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     is what the capability flag reads. It does not depend on the bot's prompt, so
     a defence arm (same model, different prompt) skips it and the baseline's
     neutral run stands for all arms.
+
+    `cancel` is an optional threading.Event. Once it is set, no new paid call
+    starts: every attack checks it right before calling the model, attacks still
+    queued are cancelled, and the capability controls are skipped. Calls already
+    in flight cannot be taken back, so at most the MAX_WORKERS running at that
+    moment finish. The scan returns what it has, with `cancelled` True, and its
+    completeness says it is not complete. The web server sets it when the visitor
+    leaves (api/server.py); nothing else changes for a scan nobody stops.
     """
     if mock is None:
         mock = client is None and victim is None
@@ -1520,12 +1529,28 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
 
     total = len(attacks)
     results, done = [], 0
+    stopped = cancel.is_set if cancel is not None else (lambda: False)
+
+    def attack_unless_stopped(a):
+        # Checked right before the paid call, so an attack that was already
+        # dequeued when the stop arrived still does not spend anything.
+        if stopped():
+            return None
+        return run_attack(client, system_prompt, a, canary, mock, model, victim,
+                          extraction_reference or system_prompt)
+
     with ThreadPoolExecutor(max_workers=1 if mock else MAX_WORKERS) as pool:
-        futures = [pool.submit(run_attack, client, system_prompt, a, canary, mock,
-                               model, victim, extraction_reference or system_prompt)
-                   for a in attacks]
+        futures = [pool.submit(attack_unless_stopped, a) for a in attacks]
         for fut in as_completed(futures):
-            results.append(fut.result())
+            if stopped():
+                for f in futures:
+                    f.cancel()           # not started yet: never starts
+                if fut.cancelled():
+                    continue
+            row = None if fut.cancelled() else fut.result()
+            if row is None:
+                continue
+            results.append(row)
             done += 1
             if progress:
                 progress(done, total)
@@ -1541,7 +1566,7 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     # the bot allows; also the benign follow rate a defence is judged on) and
     # under a neutral prompt (what the model can do; the capability flag).
     control_results, neutral_results = [], []
-    if with_controls and bank.get("controls"):
+    if with_controls and bank.get("controls") and not stopped():
         ctrls = [c for c in bank["controls"] if not langs or c["lang"] in langs]
         runs = [("bot", system_prompt)]
         if neutral_controls:
@@ -1560,6 +1585,7 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     out["controls"] = control_results
     out["controls_neutral"] = neutral_results
     out["planned"] = total
+    out["cancelled"] = stopped()
     # Why attacks and controls went unscored, by kind (rate_limit, auth, model,
     # timeout, network, bad_request, provider, other), so a half-scored run says
     # what went wrong instead of only how much.

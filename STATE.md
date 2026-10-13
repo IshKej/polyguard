@@ -80,7 +80,7 @@ python test_stats_properties.py  # 38 properties of the statistics on random inp
 python mutation_check.py         # 23 planted bugs in the statistics, all must be caught -> 23/23
 python power_check.py            # power model against within-tier spread (about 3 min)
 python capability_check.py       # capability rule false flags and detection (about 15 s)
-python api/test_cancellation.py  # OPEN: 2/6 until server-side cancellation lands
+python api/test_cancellation.py  # closing the tab stops a live scan -> 9/9
 python cli.py replay scan.json   # recompute a saved scan from its evidence
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
@@ -94,9 +94,7 @@ streamlit run app.py             # the research console
 python cli.py scan --prompt f --mock   # headless, no key needed
 ```
 
-If any of those fail, something regressed. They all pass as of this writing except
-`api/test_cancellation.py`, which is open on purpose until server-side cancellation is
-built (Ishaan's piece).
+If any of those fail, something regressed. They all pass as of this writing.
 
 ## The blockers, in order
 
@@ -108,10 +106,11 @@ built (Ishaan's piece).
    (`machine_translations/`, checked by `python expand_languages.py --check-stored`).
    Missing: Pashto, Tajik, Mongolian, Armenian, Nepali, Sinhala, Khmer, Burmese, Javanese, Sundanese, Swahili, Amharic, Somali and Kinyarwanda. They need `python expand_languages.py --langs ...` with the
    key, or native speakers. The central hypothesis is testable now but untested.
-3. **Server-side cancellation (Ishaan's, in progress).** Closing the tab does not
-   stop a paid scan: 228 more calls after a visitor leaves, measured. Brief and
-   acceptance tests: `docs/design/cancellation.md`, `api/test_cancellation.py`.
-   The spend guard and the hosted size cap bound the cost meanwhile.
+3. **Server-side cancellation: done 2026-10-13.** Closing the tab now stops a
+   live scan: no new paid call starts after the visitor leaves (228 did before),
+   the slot comes back at once, and `scan_cancelled` is logged. Acceptance tests
+   `api/test_cancellation.py` 9/9, in CI. The design note the brief asks for,
+   `docs/design/cancellation-note.md`, is still to be written by Ishaan.
 
 Hosting is done, not a blocker: two Vercel Services in one project (the Vite site
 at `/`, FastAPI at `/api/*`), every push to main deploys, and CI
@@ -247,7 +246,7 @@ gate is on by default and native review is tracked rather than waved off.
 | Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
 | Verification checks | 234 |
 | Unit tests | 288 (every public engine function) |
-| Audit findings | 78 across 20 rounds (77 fixed; 62, cancellation, open and assigned) |
+| Audit findings | 78 across 20 rounds (all fixed; 62, cancellation, fixed 2026-10-13) |
 | Native speaker feedback integrated | 4 of 20 (Spanish, Vietnamese, Arabic, Portuguese); none validated |
 | Paid or production model study runs | 0 (no scan of a production chatbot or paid API has run) |
 | Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |

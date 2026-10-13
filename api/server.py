@@ -34,6 +34,7 @@ research console and CLI use; nothing is re-implemented here.
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import json
@@ -407,6 +408,20 @@ def run_scan(req: ScanRequest, request: Request,
     else:
         guard.limit(store, who, "simulated")
 
+    # Hand the slot back exactly once, whichever comes first: the scan ending, or
+    # the visitor leaving. A cancelled scan frees the slot at once rather than
+    # when its last in-flight call returns.
+    admitted, release_lock = release, threading.Lock()
+
+    def release_once():
+        nonlocal admitted
+        with release_lock:
+            fn, admitted = admitted, None
+        if fn:
+            fn()
+    release = release_once
+    cancel = threading.Event()
+
     scan_id = uuid.uuid4().hex[:12]
     started = time.time()
     guard.log("scan_start", scan_id=scan_id, mode="live" if live else "simulated",
@@ -421,7 +436,15 @@ def run_scan(req: ScanRequest, request: Request,
             victim = providers.build_victim(model) if live else None
             out = engine.scan(req.prompt, langs=req.langs, categories=req.categories,
                               mock=not live, victim=victim, max_variants=req.phrasings,
-                              extraction_reference=req.extraction_reference, on_result=on_result)
+                              extraction_reference=req.extraction_reference, on_result=on_result,
+                              cancel=cancel)
+            if out.get("cancelled"):
+                # Nobody is listening, so no report and no result: only the log
+                # line, which is how the host sees the calls that were not made.
+                guard.log("scan_cancelled", scan_id=scan_id, mode="live" if live else "simulated",
+                          attacks=out["n_attacks"], planned_calls=calls,
+                          duration_ms=round((time.time() - started) * 1000))
+                return
             report = report_html.build_report(cli.scan_payload(out, req.prompt, None))
             guard.log("scan_done", scan_id=scan_id, mode="live" if live else "simulated",
                       attacks=out["n_attacks"], broke=out["n_broke"],
@@ -438,23 +461,41 @@ def run_scan(req: ScanRequest, request: Request,
 
     threading.Thread(target=work, daemon=True).start()
 
-    def events():
-        yield _sse("start", {"id": scan_id, "live": live})
-        while True:
-            try:
-                kind, data = inbox.get(timeout=KEEPALIVE_SECONDS)
-            except queue.Empty:
-                # A live attack can take a while. A comment line keeps the
-                # connection from looking idle to proxies along the way.
-                yield ": still scanning\n\n"
-                continue
-            yield _sse(kind, data)
-            if kind == "done":
-                return
-            if not live:
-                # A simulation finishes instantly. Pace the replay so the board
-                # can be watched; the pacing is labelled as simulated.
-                time.sleep(min(0.05, 7.0 / max(data["total"], 1)))
+    async def events():
+        # Async on purpose. When the visitor closes the tab, Starlette cancels the
+        # task iterating this generator, so the `finally` below runs right away
+        # and the stop reaches the worker before its next paid call. A sync
+        # generator runs in a thread pool and is not interrupted that way.
+        finished = False
+        try:
+            yield _sse("start", {"id": scan_id, "live": live})
+            idle = 0.0
+            while True:
+                try:
+                    kind, data = await asyncio.to_thread(inbox.get, True, 0.5)
+                except queue.Empty:
+                    if await request.is_disconnected():
+                        return
+                    idle += 0.5
+                    if idle >= KEEPALIVE_SECONDS:
+                        # A live attack can take a while. A comment line keeps
+                        # the connection from looking idle to proxies.
+                        idle = 0.0
+                        yield ": still scanning\n\n"
+                    continue
+                idle = 0.0
+                yield _sse(kind, data)
+                if kind == "done":
+                    finished = True
+                    return
+                if not live:
+                    # A simulation finishes instantly. Pace the replay so the
+                    # board can be watched; the pacing is labelled as simulated.
+                    await asyncio.sleep(min(0.05, 7.0 / max(data["total"], 1)))
+        finally:
+            if not finished:
+                cancel.set()
+                release_once()
 
     return StreamingResponse(events(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

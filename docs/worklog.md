@@ -310,10 +310,10 @@ the web app and hosting.
   PolyGuard adds). Next: read all seven, pick the innovations, log each here as it
   is built.
 
-- **Server-side cancellation: Ishaan's own piece** (for the CAC "not entirely AI"
-  rule and to be able to defend it). Brief `docs/design/cancellation.md`, tests
-  `api/test_cancellation.py` (2 of 6 pass today by design). Do not implement it
-  for him; review and explain only.
+- **Server-side cancellation: implemented 2026-10-13** at Ishaan's request ("forget
+  about the AI rule, I have an idea for that"); written with AI assistance and
+  recorded as such in the private contribution ledger. Tests 9/9 in CI. The design
+  note `docs/design/cancellation-note.md` is still his to write.
 
 ## Next
 

@@ -883,10 +883,16 @@ from their own evidence, and by driving the site in a real browser.
     idempotency keys so a retried request cannot start and pay for a scan twice.
     If the guard is missing or unreachable, live scans are refused.
 
-62. **Closing the tab does not stop a paid scan. OPEN.** Measured by
+62. **Closing the tab does not stop a paid scan.** Measured by
     `api/test_cancellation.py`: a visitor leaves after 24 calls and the server
-    starts 228 more. Assigned with a design brief (docs/design/cancellation.md);
-    the guard's budget and the hosted size cap bound the cost until it is fixed.
+    starts 228 more. The guard's budget and the hosted size cap bounded the cost
+    meanwhile. FIXED 2026-10-13 (written with AI assistance at Ishaan's request; see
+    docs/design/cancellation.md): `engine.scan` takes a cancel event that every
+    attack checks right before its paid call, queued attacks are cancelled and the
+    capability controls skipped; the server's event stream is async, so a closed
+    tab interrupts it and its `finally` sets the event and hands the slot back
+    exactly once; the worker logs `scan_cancelled`. Now 0 calls start after the
+    visitor leaves (at most the ones in flight finish), 9 of 9 acceptance tests, in CI.
 
 63. **The "reproducible" worst-language p changed with the order rows arrived.**
     Found by `cli.py replay`, which recomputes a saved scan from its rows: the
