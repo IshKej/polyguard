@@ -36,7 +36,8 @@ wording, the local Gemma judge agrees with the assisted review of the 2026-10-06
 replies 97.3% of the time (76.3% before; 52 false breaks became 6). A new local
 scan of the retail bot in all 73 languages: 1095 of 1095 attacks scored, 10 real
 breaks by an assisted review not yet checked by Ishaan (7 of them prompt
-extraction), no tier gap (p = 0.79), and the neutral controls could finally run
+extraction), no tier gap (p = 0.84 in the 2026-10-12 reanalysis under the current
+capability rule, which excludes Yoruba; 0.79 as first computed), and the neutral controls could finally run
 the flag (English 5 of 6 under the neutral prompt, 0 of 6 under the bot's).
 `results/local/2026-10-11/`, `docs/progress/judge-controls.md`,
 PREREGISTRATION.md rows of 2026-10-11.
