@@ -7,6 +7,11 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-12** `9172f3b` One real scan published on the site: "Read a real scan"
+  on the home page opens `web/public/examples/real-scan-2026-10-11.html` (the
+  report of the 2026-10-11 local retail scan with a banner stating its limits and
+  linking the evidence). Browser tests 23.
+
 - **2026-10-12** Merged `sprint/judge-controls`: scoring 1.2, the judge sees the
   user's message and returns complied, echoed or held (echoed is a hold), judge
   fingerprint changed; controls fire twice (neutral prompt decides the capability
@@ -178,7 +183,7 @@ the web app and hosting.
 
 ## In progress
 
-- **2026-10-07, round 3** (Ishaan: research every CAC winner of the last 10 years
+- **(Round 3: all four branches merged by 2026-10-12.) 2026-10-07, round 3** (Ishaan: research every CAC winner of the last 10 years
   and the national ones, compare, improve whatever is weaker, keep a running list;
   keep innovating and fixing). Research goes OUTSIDE the repo, in
   `OneDrive\Claude\applications\cac_research\` (winners CSVs, notes,
