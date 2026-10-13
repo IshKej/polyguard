@@ -3,7 +3,8 @@ The spend guard: what has to be true before the server spends money, and the
 limits on everything else.
 
 A live scan is up to two paid model calls per attack and per capability control
-(the bot, then the judge). On serverless hosting every request may land on a
+(the bot, then the judge), and every control runs twice, under a neutral system
+prompt and under the bot's own. On serverless hosting every request may land on a
 different copy of the server, so an in-memory limit protects nothing. These
 limits live in the shared store (api/store.py) instead, and they FAIL CLOSED: if
 the store is missing or cannot be reached, a live scan is refused. Free actions
@@ -67,9 +68,13 @@ def visitor(headers, client_host: str | None) -> str:
     return hashlib.sha256((_salt() + ip).encode()).hexdigest()[:16]
 
 
-def planned_calls(n_attacks: int, n_controls: int) -> int:
-    """Upper bound on paid calls: the bot and the judge, for every attack and control."""
-    return 2 * (n_attacks + n_controls)
+CONTROL_RUNS = 2          # engine.CONTROL_RUNS: the neutral run and the bot prompt run
+
+
+def planned_calls(n_attacks: int, n_controls: int, control_runs: int = CONTROL_RUNS) -> int:
+    """Upper bound on paid calls: the bot and the judge, for every attack and for
+    every control in each of its runs."""
+    return 2 * (n_attacks + control_runs * n_controls)
 
 
 def _hour() -> str:

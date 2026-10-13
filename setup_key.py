@@ -156,7 +156,7 @@ Before any paid call:
 Then, and only then:
   python providers.py --smoke claude-haiku-4-5                    # stage 0, one call
   python cli.py scan --prompt pilot_prompt.txt --model claude-haiku-4-5 --langs en,es,vi \\
-      --bundle pilot/pilot_a                                       # stage 1, 63 + up to 63 calls
+      --bundle pilot/pilot_a                                       # stage 1, 81 + up to 81 calls
 """)
     return 0
 

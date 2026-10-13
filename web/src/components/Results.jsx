@@ -288,9 +288,15 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
         {st.capability_limited.length > 0 && (
           <p className="mt-5 border-l-4 border-hi pl-4">
             <span className="font-semibold">Read with care.</span>{' '}
-            The bot could not follow ordinary, harmless instructions in{' '}
+            {st.capability_control_system === 'neutral' ? 'The model' : 'The bot'} could not follow ordinary, harmless instructions in{' '}
             {st.capability_limited.map((c) => result.languages.find((l) => l.code === c)?.name || c).join(', ')},
             so a low rate there means it did not understand, not that it is safe.
+          </p>
+        )}
+        {result.totals?.echoed > 0 && (
+          <p className="mt-5 text-(--mute)">
+            {result.totals.echoed} {result.totals.echoed === 1 ? 'reply' : 'replies'} did what the user asked, such as
+            translating a message, and the code word came back inside that text. Those count as held, not broken.
           </p>
         )}
       </section>

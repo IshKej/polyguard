@@ -94,8 +94,10 @@ def check_files() -> None:
             ok = bool(bank.get("attacks")) and bool(bank.get("languages"))
             check("attack_bank.json is present and parses",
                   ok, f"{len(bank.get('attacks', []))} attacks, "
-                      f"{len(bank.get('controls', []))} controls, "
-                      f"{len(bank.get('languages', {}))} languages")
+                      f"{len(bank.get('controls', []))} controls (each fired twice, neutral "
+                      f"and bot prompt), {len(bank.get('languages', {}))} languages; a full "
+                      f"live scan is {len(bank.get('attacks', [])) + 2 * len(bank.get('controls', []))} "
+                      f"victim calls")
         except Exception as e:
             check("attack_bank.json is present and parses", False, str(e))
     else:

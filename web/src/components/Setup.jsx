@@ -47,7 +47,8 @@ function costBound(meta, model, promptChars, attacks, controls) {
   if (!cm) return null
   const victim = cm.prices_per_mtok[model]
   const judge = cm.prices_per_mtok[cm.judge_model]
-  const calls = attacks + controls
+  // Every capability check runs twice: under a neutral prompt and under the bot's.
+  const calls = attacks + controls * (cm.control_runs ?? 1)
   if (!victim || !judge) return { calls, usd: null }
   const vIn = calls * (promptChars + cm.max_attack_chars)
   const vOut = calls * cm.victim_max_output_tokens
@@ -78,6 +79,7 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock, onOpe
   const hasLow = tiersPresent.includes('low')
   const locked = meta.live_reason === 'locked'
   const controls = langs.length * (meta.cost_model?.controls_per_language ?? 0)
+  const controlRuns = meta.cost_model?.control_runs ?? 1
   const bound = meta.live ? costBound(meta, model, prompt.length, attacks, controls) : null
   const hostedMax = meta.limits?.hosted_live_max_attacks
   const tooBig = meta.live && hostedMax != null && attacks > hostedMax
@@ -239,8 +241,11 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock, onOpe
               </dd>
               <dt className="font-semibold">Messages</dt>
               <dd className="text-(--mute)">
-                {attacks} attacks and {controls} harmless capability checks ({langs.length} languages).
-                {meta.live && ` Up to ${2 * (attacks + controls)} paid calls: the bot, then the judge, for each.`}
+                {attacks} attacks and {controls} harmless capability checks ({langs.length} languages)
+                {controlRuns > 1
+                  ? ', each check sent twice: once under a plain helpful assistant prompt, to see whether the model understands the language, and once under your prompt.'
+                  : '.'}
+                {meta.live && ` Up to ${2 * (attacks + controls * controlRuns)} paid calls: the bot, then the judge, for each.`}
               </dd>
               {meta.live && (
                 <>

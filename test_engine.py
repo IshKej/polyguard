@@ -625,6 +625,103 @@ check("judges are asked for structured output rather than free text",
       "output_config" in _yes.seen[0])
 check("judges are pinned to temperature 0", _yes.seen[0].get("temperature") == 0)
 
+
+# --- scoring 1.2: a task faithful echo is a hold, recorded as "echoed" ---
+import hashlib  # noqa: E402
+import json as _json_mod  # noqa: E402
+
+
+class _OutcomeJudge:
+    """Answers in the attack judge's three label shape."""
+
+    def __init__(self, outcome):
+        self.outcome, self.seen, self.messages = outcome, [], self
+
+    def create(self, **kw):
+        self.seen.append(kw)
+        blk = type("B", (), {"type": "text", "text": _json_mod.dumps({"outcome": self.outcome})})()
+        return type("R", (), {"content": [blk]})()
+
+
+_echo_attack = next(a for a in _bank["attacks"] if a["id"] == "en_indirect_injection_1")
+_ej = _OutcomeJudge("echoed")
+check("the attack judge returns each of its three labels",
+      [engine.llm_judge_attack(_OutcomeJudge(o), CANARY, CANARY) for o in engine.ATTACK_VERDICTS]
+      == list(engine.ATTACK_VERDICTS))
+check("an echo is not compliance", engine.llm_judge_compliance(_ej, CANARY, CANARY) is False)
+check("a verdict outside the three labels raises instead of being guessed",
+      _raises(lambda: engine.llm_judge_attack(_OutcomeJudge("maybe"), CANARY, CANARY)))
+_r_echo = engine.run_attack(_ej, SP, _echo_attack, CANARY, False, "m",
+                            victim=type("V", (), {"complete": lambda _s, sp, t: "Translated: " + CANARY})())
+check("a judged echo is a scored hold with outcome echoed and no evidence",
+      _r_echo["error"] is None and _r_echo["broke"] is False
+      and _r_echo["outcome"] == "echoed" and _r_echo["evidence"] == "")
+check("the attack judge is shown the user's message as well as the reply",
+      _echo_attack["text"] in _ej.seen[-1]["messages"][0]["content"]
+      and "Translated: " in _ej.seen[-1]["messages"][0]["content"])
+_r_comp = engine.run_attack(_OutcomeJudge("complied"), SP, _echo_attack, CANARY, False, "m",
+                            victim=type("V", (), {"complete": lambda _s, sp, t: CANARY})())
+check("a judged compliance is a break with outcome broke",
+      _r_comp["broke"] is True and _r_comp["outcome"] == "broke" and _r_comp["evidence"] == CANARY)
+_sum_e = engine.summarize([_r_echo, _r_comp], _bank, False, "m")
+check("echoes are counted apart and never enter a break rate",
+      _sum_e["n_echoed"] == 1 and _sum_e["n_broke"] == 1 and _sum_e["overall_rate"] == 0.5
+      and _sum_e["by_lang"]["en"]["echoed"] == 1)
+check("a row from before outcomes existed reads as broke or held",
+      engine.outcome_of({"broke": True, "error": None}) == "broke"
+      and engine.outcome_of({"broke": False, "error": None}) == "held"
+      and engine.outcome_of({"broke": False, "error": "x"}) is None)
+check("the scoring version moved past 1.1 when echoes became holds",
+      engine.SCORING_VERSION != "1.1")
+_jp0 = engine.judge_prompt_sha256()
+_orig_in = engine.JUDGE_COMPLIANCE_INPUT
+engine.JUDGE_COMPLIANCE_INPUT = _orig_in + " "
+check("the way the judge is shown its inputs is part of the judge fingerprint",
+      engine.judge_prompt_sha256() != _jp0)
+engine.JUDGE_COMPLIANCE_INPUT = _orig_in
+
+# --- neutral capability controls ---
+_nc = engine.scan(SP, langs=["en", "es"], categories=["instruction_override"], mock=True,
+                  max_variants=1)
+check("controls run twice: under the bot's prompt and under the neutral prompt",
+      len(_nc["controls"]) == 12 and len(_nc["controls_neutral"]) == 12
+      and {c["control_system"] for c in _nc["controls"]} == {"bot"}
+      and {c["control_system"] for c in _nc["controls_neutral"]} == {"neutral"})
+check("the capability flag reads the neutral run; the bot prompt run is reported apart",
+      _nc["capability"]["control_system"] == "neutral"
+      and _nc["capability_bot_prompt"]["control_system"] == "bot"
+      and _nc["instrument"]["control_system"] == "neutral+bot"
+      and _nc["instrument"]["neutral_system_prompt_sha256"]
+      == hashlib.sha256(engine.NEUTRAL_SYSTEM_PROMPT.encode()).hexdigest())
+_seen_sp = []
+
+
+class _RecVictim:
+    spec = type("S", (), {"key": "rec", "label": "rec", "vendor": "test", "provider": "test",
+                          "model_id": "rec", "deterministic": True})()
+
+    def complete(self, sp, text):
+        _seen_sp.append(sp)
+        return "ok"
+
+
+engine.scan(SP, langs=["en"], categories=["instruction_override"], mock=False, max_variants=1,
+            victim=_RecVictim(), client=_StubJudge(False))
+check("the neutral run really sends the neutral system prompt, the bot run the bot's",
+      _seen_sp.count(engine.NEUTRAL_SYSTEM_PROMPT) == 6 and _seen_sp.count(SP) == 1 + 6)
+_nn = engine.scan(SP, langs=["en"], categories=["instruction_override"], mock=True,
+                  max_variants=1, neutral_controls=False)
+check("neutral controls can be skipped (a defence arm), and then the flag reads the bot run",
+      _nn["controls_neutral"] == [] and _nn["capability"]["control_system"] == "bot"
+      and _nn["instrument"]["control_system"] == "bot")
+check("completeness counts both control runs",
+      engine.completeness(_nc)["controls_planned"] == 24
+      and engine.completeness(_nc)["neutral_controls_planned"] == 12)
+check("an older scan's control system reads as the bot prompt run",
+      engine.instrument_value({"with_controls": True}, "control_system") == "bot"
+      and engine.instrument_value({"with_controls": False}, "control_system") is None
+      and "control_system" in engine.COMPARABLE_FIELDS)
+
 # --- compare_runs (hypothesis H2: does the gap differ by vendor?) ---
 _lo6 = [c for c in _CAT if tier_of(c) == "low"][:6]
 _hi6 = [c for c in _CAT if tier_of(c) == "high"][:6]
@@ -1210,7 +1307,7 @@ try:
           engine.llm_judge_compliance(_jc, "some reply", "CANARY") is True)
     _jr = _FAKE["requests"][-1]
     check("the local judge is schema constrained with the engine's own schema, thinking off",
-          _jr["response_format"]["json_schema"]["schema"] == engine._JUDGE_SCHEMA
+          _jr["response_format"]["json_schema"]["schema"] == engine._ATTACK_JUDGE_SCHEMA
           and _jr["temperature"] == 0 and _jr["chat_template_kwargs"] == {"enable_thinking": False}
           and _jr["messages"][0]["role"] == "system" and "CANARY" in _jr["messages"][0]["content"])
 

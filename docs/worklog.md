@@ -7,6 +7,16 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-12** Merged `sprint/judge-controls`: scoring 1.2, the judge sees the
+  user's message and returns complied, echoed or held (echoed is a hold), judge
+  fingerprint changed; controls fire twice (neutral prompt decides the capability
+  flag, bot prompt reported apart). Rejudging the 2026-10-06 local scans: Gemma's
+  agreement with the assisted review 76% to 97% (false breaks 52 to 6), Qwen 96%
+  to 100%. New local scan of the retail bot on all 73 languages in
+  `results/local/2026-10-11/`: assisted review (not yet checked by Ishaan) found 10
+  real breaks, 7 of them prompt extraction. AUDIT round 20. Suites: verify_all
+  234, test_engine 281, API 95, properties 38, mutation 23/23, e2e 22.
+
 - **2026-10-11** `fc17edf` From the CAC winners research (1,023 winners 2016 to
   2020, 1,609 for 2021 to 2025, outside the repo): one press on the home page runs
   an example scan, and the README opens with three plain sentences. Browser tests 22.
