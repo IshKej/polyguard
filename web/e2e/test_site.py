@@ -12,7 +12,8 @@ the game, the How we know page and the back button. Every screen is also checked
 with axe-core, and any serious or critical accessibility violation fails the run.
 
 The browser reports reduced motion, the way Windows does with Animation effects
-off, because that is the setting that once froze the whole site.
+off. The site follows it by default (a still page) and the Motion switch is the
+explicit way to turn motion on, remembered across reloads.
 """
 from __future__ import annotations
 
@@ -103,18 +104,29 @@ def main() -> int:
             # --- landing --------------------------------------------------------------
             page.goto(base + "/", wait_until="networkidle")
             page.wait_for_timeout(1800)
-            check("the landing page plays its motion even with reduced motion reported",
-                  page.evaluate("document.documentElement.dataset.motion") == "on")
-            first = page.locator("text=Now testing").locator("xpath=..").inner_text()
+            check("with reduced motion reported, the landing page is still by default",
+                  page.evaluate("document.documentElement.dataset.motion") == "off")
+            still = page.locator("text=Now testing").locator("xpath=..").inner_text()
             page.wait_for_timeout(2900)
-            check("the hero changes language on its own",
-                  page.locator("text=Now testing").locator("xpath=..").inner_text() != first)
+            check("and the hero does not change language on its own",
+                  page.locator("text=Now testing").locator("xpath=..").inner_text() == still)
             axe(page, "the landing page")
 
             # --- the Motion switch ----------------------------------------------------
+            page.get_by_role("button", name="Motion off").first.click()
+            page.wait_for_timeout(300)
+            check("the Motion switch turns motion on even though the system asks for less",
+                  page.evaluate("document.documentElement.dataset.motion") == "on")
+            first = page.locator("text=Now testing").locator("xpath=..").inner_text()
+            page.wait_for_timeout(2900)
+            check("with motion turned on, the hero changes language on its own",
+                  page.locator("text=Now testing").locator("xpath=..").inner_text() != first)
+            page.reload(wait_until="networkidle")
+            check("that choice is remembered across a reload",
+                  page.evaluate("document.documentElement.dataset.motion") == "on")
             page.get_by_role("button", name="Motion on").first.click()
             page.reload(wait_until="networkidle")
-            check("switching motion off is remembered across a reload",
+            check("switching motion off again is remembered too",
                   page.evaluate("document.documentElement.dataset.motion") == "off")
             page.get_by_role("button", name="Motion off").first.click()
 

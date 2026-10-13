@@ -306,6 +306,12 @@ Plan for v2, in order of impact:
   about 840 pixels tall the column tightens and the compact board is used (the
   full board ran over the progress ruler at 1366x650 and 1536x730), and under
   640 (a zoomed in browser) only the step on show keeps its description.
+- 2026-10-13, v5 (Ishaan changed his mind after the Oct 12 audit): **the system's
+  reduced motion setting is followed again by default.** A visitor whose system asks
+  for less motion gets a still page; the Motion switch overrides that either way and
+  is remembered, so turning motion on is an explicit opt in. On a PC with Windows
+  Animation effects off, press Motion once and it stays on. The browser test reports
+  reduced motion and checks both states.
 - v4 checks, with reduced motion forced on at 1536x730, 1366x650, 1229x584,
   1440x900 and a 390 phone: motion on, Lenis on, the 3D bubble renders and spins,
   the hero cycles, the story pins and steps through all four scenes with the

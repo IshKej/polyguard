@@ -934,7 +934,11 @@ from their own evidence, and by driving the site in a real browser.
     setting, so the freeze was invisible until the live site was opened on a real
     machine. FIX (Ishaan's call): motion plays for everyone, and a Motion on/off
     switch, remembered per device, turns it off and serves as the pause control
-    for what moves on its own.
+    for what moves on its own. REVISED 2026-10-13 (Ishaan's call, from the Oct 12
+    audit): the system setting is followed again by default, so a visitor who asked
+    for less motion gets a still page; the switch now overrides it either way and is
+    remembered, so motion on is an explicit choice. The browser test runs with reduced
+    motion reported and checks both: still by default, moving after one press.
 
 70. **Three bugs in the statistics would have passed every test.** Found by
     `mutation_check.py`, which plants known mistakes in copies of the code and

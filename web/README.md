@@ -46,7 +46,7 @@ server can run both locally. On Vercel the two deploy as Services of one project
 | `src/components/Results.jsx` | Verdict, languages, fixes, and the detail for researchers |
 | `src/components/Drawer.jsx` | Every attack in one language, with its English original |
 | `src/lib/smooth.js` | Weighted smooth scrolling (Lenis), off when the visitor turns Motion off |
-| `src/lib/motion.js` | The Motion switch: motion plays for everyone unless switched off; the system setting is not read |
+| `src/lib/motion.js` | Motion follows the system's reduced motion setting by default; the Motion switch overrides it either way and is remembered on the device |
 | `src/index.css` | The grounds, the type, the highlighter stroke and the buttons |
 
 The look is the test sheet: paper and ink grounds, one highlighter colour for

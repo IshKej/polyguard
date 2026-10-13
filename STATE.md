@@ -75,7 +75,7 @@ python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, a few seconds -> 288/288
 python verify_all.py             # full battery        -> 234/234
 python api/test_api.py           # web API             -> 95/95
-python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 23/23
+python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 26/26
 python test_stats_properties.py  # 38 properties of the statistics on random inputs -> 38/38
 python mutation_check.py         # 23 planted bugs in the statistics, all must be caught -> 23/23
 python power_check.py            # power model against within-tier spread (about 3 min)
