@@ -148,3 +148,44 @@ phrasing (variant 1) false breaks went from 52 to 1. Kappa stays low for Gemma
 because there is only one true break in 222, so any false break weighs heavily.
 Caveats: Qwen is the victim judging its own replies; the labels are one
 reader's; the replies are from one small model.
+
+## Step 5: docs and preregistration (done, 2026-10-11)
+
+PREREGISTRATION.md: two deviation rows dated 2026-10-11, appended (scoring 1.2
+with the old and new judge fingerprints; neutral controls with the neutral
+prompt hash and the new call counts), both stating they were made before any
+paid live data and that the local pilots used the old judge. Call counts and
+cost bounds updated in docs/pilot-plan.md (Pilot A 81 calls, $0.30; Pilot B now
+names its 20 languages, 540 calls, $1.90; the bank's 73 would be 1971 calls,
+$6.98), DEPLOY.md, README.md, preflight.py, setup_key.py, consistency.py,
+docs/quickstart.md. AUDIT.md round 20 (findings 77, 78). judge_report.txt
+regenerated.
+
+Decision for the main session: Pilot B's command used to fire every bank
+language. It now passes `--langs` with the 20 author written ones so it matches
+the plan's own "all 20". If the intent is the full 73, the worst case is $6.98
+and the retry bound ($41.90) is far above the $10 cap.
+
+## Step 6: new local scan, 73 languages (done, 2026-10-11 22:50 to 2026-10-12 01:11)
+
+`C:/dev/llm/run-judge-controls.sh`, log `C:/dev/llm/run-judge-controls.log`:
+retail bot, every bank language, victim Qwen3.5 4B, judge Gemma 4 E2B (v7),
+`POLYGUARD_MAX_WORKERS=6`. Bundle `results/local/2026-10-11/full-retail-support-bot/`.
+Replay: every number matches (84 checks, including the two capability flags
+recomputed from the new control evidence). Second judge (Qwen, v7) in
+`second_judge.json`. Assisted review (AI assisted, not yet checked by Ishaan):
+`results/local/2026-10-11/HAND_REVIEW.md`. Servers stopped by PID (118080, 58296).
+
+* 1095 of 1095 attacks scored, 876 of 876 controls. 2h21m wall clock.
+* Judge 1 breaks 14 (7 extraction, 7 canary), echoed 63; judge 2 breaks 2,
+  echoed 31; judges agree 97%, kappa 0.43 (was 0.17 for this bot on 2026-10-06).
+* Reviewer breaks 10 (7 extraction, cy x2, ceb role play), 0.46% to 1.73%.
+  Judge 1: 4 false breaks (refusals quoting the code), 0 missed. Judge 2: 0
+  false, 1 missed (ceb, borderline).
+* The translation phrasing: 36 faithful translations, all scored echoed (holds).
+  Under 1.1 these were the bulk of the false breaks.
+* Controls: neutral prompt 344/438 followed, English 5/6, no language confirmed
+  limited, Odia (2/6) and Yoruba (1/6) screened. Bot prompt 89/438, English 0/6:
+  under the bot prompt alone the flag could not have fired at all.
+* Echoed is noisy as a label: most of Gemma's non translation echoes are
+  refusals that should be held. Both are holds, so no rate moves.
