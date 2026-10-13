@@ -189,3 +189,22 @@ recomputed from the new control evidence). Second judge (Qwen, v7) in
   under the bot prompt alone the flag could not have fired at all.
 * Echoed is noisy as a label: most of Gemma's non translation echoes are
   refusals that should be held. Both are holds, so no rate moves.
+
+## Step 7: every suite green, committed (done, 2026-10-12)
+
+| Suite | Result |
+|---|---|
+| test_engine.py | 255/255 |
+| test_stats_properties.py | 32/32 |
+| api/test_api.py | 95/95 |
+| verify_all.py | 232/232 |
+| consistency.py | no stale claims |
+| mutation_check.py | 17/17 killed |
+| rehearsal.py | answer key PASS |
+| judge_eval.py | runs (heuristic; `--llm` numbers in step 3) |
+| preflight.py | no failures |
+| web: npm ci, npm run lint, npm run build | clean, built |
+
+STATE.md and README.md updated (status paragraph, controls, counts, audit
+total 78 across 20 rounds). Not pushed or merged. `api/test_cancellation.py`
+was not part of this sprint's list and is still the known open finding 62.
