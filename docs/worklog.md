@@ -7,6 +7,22 @@ the web app and hosting.
 
 ## Done (newest first)
 
+- **2026-10-13** Oct 12 audit list worked through. Done: (1) versioned reanalysis of
+  the 2026-10-11 bundle (`results/local/2026-10-11/reanalysis-2026-10-12/`, no model
+  calls, Yoruba excluded, tier p 0.792 to 0.840, original untouched, acquired 08327d8,
+  analysed 10ec9e9) with the public example page, HAND_REVIEW and STATE updated;
+  (2) replay version aware plus `cli.py reanalyze`, fixtures for both branches;
+  (3) language floor 73 (the exact-text pins already existed); (5) STATE: paid study
+  runs 0 and local scans counted apart, current bank hash, cancellation called out
+  as open; (6) appended correction to the preregistration; (7) landing, scroll story
+  and How we know no longer claim English is strongest or that the judge reads any
+  language; (8) "echoed" shown as an automated, noisy label; (10) preflight points at
+  Vercel; (11) already done. (4): only the test half (totals from the bank, bounded
+  waits, a test-only budget so the full scan is not refused); the implementation stays
+  Ishaan's. NOT done, pushed back: (9) OS reduced motion by default (Ishaan's
+  2026-10-02 decision; it froze the site on his PC). (12) as corrected: only the
+  Portuguese credit is named, already in place.
+
 - **2026-10-12** Portuguese native feedback integrated (sheet returned 2026-10-08 by
   UW PORT 202 and its instructor, credited with permission in NATIVE_REVIEW.md): 10
   text fields, all applied except "formal English" to "formal Portuguese" in

@@ -1,6 +1,6 @@
 # PolyGuard: current state and handoff
 
-**Last updated 2026-10-09.** Read this first if you are picking the project up
+**Last updated 2026-10-12.** Read this first if you are picking the project up
 cold. Everything below is reconstructable from the repo, but this is the short
 version and the reasoning behind the decisions.
 
@@ -45,7 +45,7 @@ PREREGISTRATION.md rows of 2026-10-11.
 **2026-10-02:** Spanish and Vietnamese native speaker feedback received and
 integrated (10 Spanish lines, 1 Vietnamese line).
 **2026-10-04:** Arabic feedback received and integrated (7 lines; MSA only, no
-dialect coverage). Bank SHA-256 is now
+dialect coverage). Bank SHA-256 then became
 `3d665ef61a4a9dde8cc125e1c9fdb4561621db2e7cf9b7b1d60ca6e95993dff9`, held-out fingerprint `c9cfe3523ebe2213...`, both
 logged in `PREREGISTRATION.md`.
 **2026-10-12:** Portuguese feedback received and integrated (10 lines, from a University
@@ -72,12 +72,12 @@ primary test p under it (`engine.capability_sensitivity`).
 python generate_attack_bank.py   # rebuild corpus       -> 1095 attacks + 438 controls
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
-python test_engine.py            # unit, a few seconds -> 281/281
+python test_engine.py            # unit, a few seconds -> 288/288
 python verify_all.py             # full battery        -> 234/234
 python api/test_api.py           # web API             -> 95/95
-python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 21/21
+python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 23/23
 python test_stats_properties.py  # 38 properties of the statistics on random inputs -> 38/38
-python mutation_check.py         # 20 planted bugs in the statistics, all must be caught -> 20/20
+python mutation_check.py         # 23 planted bugs in the statistics, all must be caught -> 23/23
 python power_check.py            # power model against within-tier spread (about 3 min)
 python capability_check.py       # capability rule false flags and detection (about 15 s)
 python api/test_cancellation.py  # OPEN: 2/6 until server-side cancellation lands
@@ -94,7 +94,9 @@ streamlit run app.py             # the research console
 python cli.py scan --prompt f --mock   # headless, no key needed
 ```
 
-If any of those fail, something regressed. They all pass as of this writing.
+If any of those fail, something regressed. They all pass as of this writing except
+`api/test_cancellation.py`, which is open on purpose until server-side cancellation is
+built (Ishaan's piece).
 
 ## The blockers, in order
 
@@ -244,7 +246,9 @@ gate is on by default and native review is tracked rather than waved off.
 | Capability controls | 438 (6 per language), each fired twice: neutral prompt and bot prompt |
 | Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
 | Verification checks | 234 |
-| Unit tests | 281 (every public engine function) |
+| Unit tests | 288 (every public engine function) |
 | Audit findings | 78 across 20 rounds (77 fixed; 62, cancellation, open and assigned) |
 | Native speaker feedback integrated | 4 of 20 (Spanish, Vietnamese, Arabic, Portuguese); none validated |
-| Live scans ever run | 0 |
+| Paid or production model study runs | 0 (no scan of a production chatbot or paid API has run) |
+| Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |
+| Bank fingerprint | `fec8ba0f765c7a28a7b043822aea310b1bdb2c14d29ab946d19ca3a1da1cb8ab` since 2026-10-12 |

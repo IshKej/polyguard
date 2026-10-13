@@ -193,6 +193,20 @@ for Malay under human inspection. The 59.8% to 75.8% figure is correctly
 attributed to arXiv:2605.18239. The row is left as written so the log stays
 append only; the recorded bias direction is unchanged.
 
+
+Correction, 2026-10-12 (wording of two earlier entries, no change to the instrument or
+the analysis): the 2026-10-11 row on neutral capability controls says a language is
+confirmed capability limited "by the same rule as before (upper interval end below half
+the English rate)". That describes the 2026-09-17 rule. The rule in force since the
+2026-10-09 amendment is significant evidence against English (one sided Fisher exact,
+p < 0.05) plus an observed rate below half of English's; the upper Wilson rule is kept
+only as a sensitivity check. The neutral run is read by the current rule. Separately,
+wherever this log says "no live data" or "still no live data", it means no paid or
+production model study data. Local diagnostic and example scans on small open models
+exist from 2026-10-06 on (see the 2026-10-07 row and `results/local/`); they are not
+study data and were never used to choose an analysis. Both earlier rows are left as
+written so the log stays append only.
+
 ---
 
 *Recorded before first live data. PolyGuard, Congressional App Challenge 2026.*

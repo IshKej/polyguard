@@ -121,7 +121,7 @@ function Specimen({ lang, text }) {
 }
 
 const REASONS = [
-  ['Safety gets tested', 'in English first.', 'Most testing of AI guardrails happens in English, so English is where they are strongest.'],
+  ['Safety gets tested', 'in English first.', 'Most testing of AI guardrails happens in English. Do they hold as well in every other language? That is the question.'],
   ['Real people write', 'in every language.', 'A school, a clinic or a bank serves families who type in Hindi, Tagalog, Vietnamese and Spanish. The same bot answers all of them.'],
   ['PolyGuard measures', 'the difference.', 'The same attack in every language, scored the same way, with statistics honest enough to say when there is no gap at all.'],
 ]

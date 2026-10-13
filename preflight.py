@@ -220,9 +220,9 @@ def main() -> int:
     if failed:
         print(f"{failed} problem(s) would break the deployment. Fix before pushing.")
     else:
-        print("Ready to deploy. Remaining steps are the two account actions in")
-        print("DEPLOY.md: create the GitHub repo, then point Streamlit Cloud at it")
-        print("and paste ANTHROPIC_API_KEY into its Secrets box.")
+        print("Ready to deploy. The repo is github.com/IshKej/polyguard and the app is on")
+        print("Vercel (DEPLOY.md): a push to main deploys it. Live scans also need the key")
+        print("and the passcode as Vercel environment variables (python setup_key.py).")
     return 1 if failed else 0
 
 

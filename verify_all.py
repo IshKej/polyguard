@@ -52,7 +52,7 @@ B64_RE = re.compile(r"[A-Za-z0-9+/]{16,}={0,2}")
 
 # 2. bank shape
 ck("2. bank has 15 attacks per language (5 categories x 3 variants), all from the catalog",
-   len(bank["attacks"]) == 15 * len(bank["languages"]) and len(bank["languages"]) >= 20
+   len(bank["attacks"]) == 15 * len(bank["languages"]) and len(bank["languages"]) >= 73
    and set(bank["languages"]) <= set(cat.CATALOG))
 
 # 3. ids unique

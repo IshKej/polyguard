@@ -176,8 +176,9 @@ def build_report(scan: dict) -> str:
     parts.append(_spec("English break rate", _pct(scan.get("english_break_rate")),
                        "The baseline"))
     if scan.get("attacks_echoed"):
-        parts.append(_spec("Echoed, held", scan["attacks_echoed"],
-                           "Did the user's task; the code came back inside the text"))
+        parts.append(_spec("Labelled echoed (held)", scan["attacks_echoed"],
+                           "Automated, noisy label: the judge thought the bot did the user's task and the "
+                           "code came back inside the text; it also catches refusals that quote the code"))
     parts.append("</div>")
 
     # Provenance: what was actually tested, and how trustworthy it is.

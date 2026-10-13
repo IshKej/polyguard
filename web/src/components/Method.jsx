@@ -232,7 +232,7 @@ function NullChart({ bins, observed, total }) {
 
 const SAFEGUARDS = [
   ['One rate per language', 'Statistics count languages, not attacks, so one language with many attacks cannot pass for a pattern.'],
-  ['A judge that reads every language', 'A second model decides whether the bot gave in. Keyword lists miss refusals in languages they were not written for.'],
+  ['A judge for the bank\'s languages', 'A second model tries to decide, in each language of the bank, whether the bot gave in. Keyword lists miss refusals in languages they were not written for, and how reliable the judge is in each language is not established yet.'],
   ['Can the bot even work here?', 'Six ordinary requests per language check that the bot can operate in it. A bot that cannot follow anything is not safe, it is confused.'],
   ['Decided before the data', 'The tests and thresholds were written down before any real scan, so they cannot be tuned to get an answer.'],
 ]
