@@ -110,7 +110,7 @@ def stale_claims(truth: dict) -> list[str]:
              "no language has been generated yet; the bank holds only the authored ones"),
         ]
     out = []
-    for path in sorted(HERE.glob("*.md")) + sorted(HERE.glob("*.py")):
+    for path in sorted(HERE.glob("*.md")) + sorted((HERE / "docs").glob("*.md")) + sorted(HERE.glob("*.py")):
         if path.name == Path(__file__).name:
             continue                      # this file names the patterns on purpose
         text = path.read_text(encoding="utf-8")
@@ -132,10 +132,10 @@ def missing_truths(truth: dict) -> list[str]:
         ("README.md", str(truth["catalog"]), "catalog size"),
         ("README.md", str(truth["high"]), "high-resource count"),
         ("README.md", str(truth["low"]), "low-resource count"),
-        ("PREREGISTRATION.md", str(truth["attacks"]), "attack count"),
-        ("PREREGISTRATION.md", str(truth["controls"]), "control count"),
-        ("STATE.md", str(truth["attacks"]), "attack count"),
-        ("STATE.md", str(truth["controls"]), "control count"),
+        ("docs/PREREGISTRATION.md", str(truth["attacks"]), "attack count"),
+        ("docs/PREREGISTRATION.md", str(truth["controls"]), "control count"),
+        ("docs/STATE.md", str(truth["attacks"]), "attack count"),
+        ("docs/STATE.md", str(truth["controls"]), "control count"),
     ]
     out = []
     for fname, value, label in checks:

@@ -455,7 +455,7 @@ for _field in ("worst_language_test", "temperature_pinned", "extraction_scoreabl
 # away from the implementation is worse than none, because it looks like a
 # commitment while no longer constraining anything.
 import hashlib
-_prereg = HERE / "PREREGISTRATION.md"
+_prereg = HERE / "docs" / "PREREGISTRATION.md"
 ck("59. pre-registration exists", _prereg.exists())
 if _prereg.exists():
     _pre = _prereg.read_text(encoding="utf-8")
@@ -667,7 +667,7 @@ ck("71c. a calibration report has been generated and recorded",
 
 # 72. Related-work honesty: the project must not claim to have discovered what
 # the literature already established.
-_rw = HERE / "RELATED_WORK.md"
+_rw = HERE / "docs" / "RELATED_WORK.md"
 ck("72. related work documented with prior art", _rw.exists())
 if _rw.exists():
     _rwt = _rw.read_text(encoding="utf-8")
@@ -921,7 +921,7 @@ _missing_script = [c for c in cat.CATALOG if c not in lg.EXPECTED]
 ck("83. every catalog language has a declared expected script",
    not _missing_script)
 ck("83b. native review is tracked in a document, not just asserted",
-   (HERE / "NATIVE_REVIEW.md").exists())
+   (HERE / "docs" / "NATIVE_REVIEW.md").exists())
 
 # 84. The semantic gate. Translation quality is the dominant confound in this
 # area, so this must sample widely and must be the default path.
@@ -1165,7 +1165,7 @@ ck("95c. both bank writers force LF",
    and 'newline="\\n"' in (HERE / "expand_languages.py").read_text(encoding="utf-8"))
 ck("95d. the pre-registered fingerprint matches the shipped bank",
    __import__("hashlib").sha256(_bank_bytes).hexdigest()
-   in (HERE / "PREREGISTRATION.md").read_text(encoding="utf-8"))
+   in (HERE / "docs" / "PREREGISTRATION.md").read_text(encoding="utf-8"))
 
 # 96. Git itself must not undo finding 43. core.autocrlf rewrites LF to CRLF on
 # checkout on Windows, so without .gitattributes a fresh clone produces a bank
@@ -1356,7 +1356,7 @@ ck("120. every attack type carries an OWASP and a MITRE ATLAS tag, in the report
 ck("117. defenses and engine agree on which phrasing is held out",
    _defs.HELDOUT_VARIANT == engine.HELDOUT_VARIANT)
 ck("117b. the held-out fingerprint is the one pre-registered",
-   engine.heldout_sha256() in (HERE / "PREREGISTRATION.md").read_text(encoding="utf-8"))
+   engine.heldout_sha256() in (HERE / "docs" / "PREREGISTRATION.md").read_text(encoding="utf-8"))
 
 # 118. No defence may quote the test. A block that contained the canary, the
 # control token, the indirect attacks' marker, or six words in a row from any
@@ -1539,7 +1539,7 @@ _rm = engine.load_resource_measures()
 ck("121. the web share table is the pinned file, from one crawl, covering the catalog",
    _rm["sha256"] == engine.RESOURCE_SHA256 and _rm["crawl_id"] == "CC-MAIN-2026-39"
    and set(_rm["share"]) == set(cat.CATALOG) and all(v > 0 for v in _rm["share"].values())
-   and engine.RESOURCE_SHA256 in (HERE / "PREREGISTRATION.md").read_text(encoding="utf-8"))
+   and engine.RESOURCE_SHA256 in (HERE / "docs" / "PREREGISTRATION.md").read_text(encoding="utf-8"))
 
 # 122. Wherever the trend test appears it is labelled exploratory, never a finding.
 _trend_html = report_html.build_report(

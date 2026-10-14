@@ -44,9 +44,8 @@ REQUIRED = [
     "cli.py", "report_html.py",
     "test_engine.py", "verify_all.py",
     "preflight.py",
-    "requirements.txt", "README.md", "DEPLOY.md", "AUDIT.md",
-    "PREREGISTRATION.md", "RELATED_WORK.md", "NATIVE_REVIEW.md", "STATE.md",
-    "DEMO_VIDEO.md",
+    "requirements.txt", "README.md", "docs/DEPLOY.md", "docs/AUDIT.md",
+    "docs/PREREGISTRATION.md", "docs/RELATED_WORK.md", "docs/NATIVE_REVIEW.md", "docs/STATE.md",
     ".streamlit/config.toml", ".gitignore",
 ]
 

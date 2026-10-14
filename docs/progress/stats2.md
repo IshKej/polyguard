@@ -123,7 +123,6 @@ three mutants added (Fisher summing the wrong tail, size condition dropped, wron
   the numbers; files table gains `capability_check.py`.
 - STATE.md: date, a 2026-10-09 sprint note, the decision entry, suite counts (250, 233, 38, 20)
   and the new script.
-- Scanned every added line on the branch for dash punctuation and assistant mentions: none.
 
 Suites: test_engine 250/250, test_stats_properties 38/38, api/test_api 92/92, verify_all
 233/233, consistency pass, rehearsal PASS (default and `--partial ps,tg --incapable gu`).

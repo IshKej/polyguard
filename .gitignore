@@ -11,3 +11,6 @@ web/dist/
 
 .vercel
 .env*
+
+# local AI tooling, never part of the project
+skills-lock.json

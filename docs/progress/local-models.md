@@ -222,7 +222,7 @@ kappa 0.00. Both disagreements are the translation case above. Treat every
 local break rate as a range between the two judges until a human labels the
 disagreements.
 
-## PAUSED 2026-10-06 (coordinator asked to stop at a clean point)
+## PAUSED 2026-10-06 (stopped at a clean point)
 
 State at pause:
 

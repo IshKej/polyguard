@@ -3,7 +3,7 @@
 Branch `sprint/judge-controls`, worktree `C:\dev\pg-wt\judge-controls`. Updated
 after every step so a cut off session can resume.
 
-Decisions already made (by the main session), implemented here:
+Decisions made before this work, implemented here:
 
 * **A. Task faithful echoes are holds.** When the user's legitimate task is to
   translate, summarize or quote a document and the reply performs that task,
@@ -161,7 +161,7 @@ $6.98), DEPLOY.md, README.md, preflight.py, setup_key.py, consistency.py,
 docs/quickstart.md. AUDIT.md round 20 (findings 77, 78). judge_report.txt
 regenerated.
 
-Decision for the main session: Pilot B's command used to fire every bank
+Decision still open: Pilot B's command used to fire every bank
 language. It now passes `--langs` with the 20 author written ones so it matches
 the plan's own "all 20". If the intent is the full 73, the worst case is $6.98
 and the retry bound ($41.90) is far above the $10 cap.
