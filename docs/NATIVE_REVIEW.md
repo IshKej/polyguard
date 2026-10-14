@@ -174,7 +174,7 @@ The Arabic corpus uses Modern Standard Arabic (MSA). The reviewer noted that MSA
 
 The correct phrasing anywhere this project is described is:
 
-> Attack strings for 20 languages were written by the author and validated
+> Attack strings for 20 languages were written by the author and checked
 > automatically for script, encoding, length and uniqueness. Native speaker
 > feedback has been received and integrated for four of them, Spanish,
 > Vietnamese, Arabic and Portuguese (Brazilian); the other 16 have had no native

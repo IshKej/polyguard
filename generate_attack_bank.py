@@ -877,6 +877,14 @@ def build():
     with open("attack_bank.json", "w", encoding="utf-8", newline="\n") as f:
         json.dump(bank, f, ensure_ascii=False, indent=2)
 
+    # The web app's cold-load counts, so the first paint never shows a stale
+    # number before /api/meta arrives. A few bytes, not the bank itself, which is
+    # megabytes. verify_all.py checks it matches this bank.
+    counts = {"languages": len(ALL_LANGUAGES), "attacks": len(attacks),
+              "controls": len(controls)}
+    Path(__file__).with_name("web").joinpath("src", "bank-counts.json").write_text(
+        json.dumps(counts, indent=2) + "\n", encoding="utf-8", newline="\n")
+
     n_variants = sum(len(TEXT[l][c]) for l in ALL_LANGUAGES for c in CATEGORIES)
     print(f"wrote attack_bank.json: {len(attacks)} attacks "
           f"({len(ALL_LANGUAGES)} languages, {len(LANGUAGES)} author written and "

@@ -131,7 +131,7 @@ def main() -> int:
             page.get_by_role("button", name="Motion off").first.click()
 
             # --- setup and the preflight ------------------------------------------------
-            page.get_by_role("button", name="Scan a chatbot").first.click()
+            page.get_by_role("button", name="Scan your own chatbot").first.click()
             page.wait_for_url("**/scan")
             page.wait_for_timeout(1300)          # the highlighter wipe between screens takes 820 ms
             check("the preflight says nothing leaves the server on a simulated scan",
@@ -216,7 +216,15 @@ def main() -> int:
 
             # --- one press from the home page -------------------------------------------
             page.goto(base + "/", wait_until="networkidle")
-            page.get_by_role("button", name="Try it on an example bot").click()
+            status = page.get_by_test_id("hero-status").inner_text()
+            check("the hero says, next to its buttons, that the demo is simulated and the report is local",
+                  "simulated" in status.lower() and "no model is attacked" in status
+                  and "not a production chatbot" in status)
+            ev = page.locator("#local-evidence").locator("xpath=ancestor::section").inner_text()
+            check("the home page shows the local scan's evidence with judged and reviewed breaks kept apart",
+                  "14" in ev and "kept 10" in ev and "not yet checked by the author" in ev
+                  and "no paid or production chatbot scan has run yet" in ev)
+            page.get_by_role("button", name="Try the illustrative demo").click()
             page.wait_for_url("**/scan/results", timeout=60000)
             page.wait_for_timeout(800)
             check("one press on the home page runs a simulated scan of an example bot to its results",
@@ -224,11 +232,77 @@ def main() -> int:
 
             # --- the published real scan ------------------------------------------------
             page.goto(base + "/", wait_until="networkidle")
-            page.get_by_role("link", name="Read a real scan").click()
+            page.get_by_role("link", name="Read the local-model report").first.click()
             page.wait_for_load_state("networkidle")
             check("the home page links to a real scan that says what it is and is not",
                   page.get_by_text("A real scan, published as an example").count() == 1
                   and page.get_by_text("not a production chatbot").count() >= 1)
+
+            # --- the language count before, without and after /api/meta -------------------
+            want = json.loads((ROOT / "web" / "src" / "bank-counts.json").read_text(encoding="utf-8"))["languages"]
+
+            def hero_counts(p2):
+                text = p2.locator("main").inner_text()
+                return re.findall(r"(\d+) languages", text)
+
+            for label in ("delayed", "failed"):
+                c2 = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
+                p2 = c2.new_page()
+                p2_errors, held = [], []
+                p2.on("pageerror", lambda e: p2_errors.append(str(e)))
+                # Hold the request without blocking the browser connection; release it
+                # (delayed) or fail it (failed) only after the cold page is checked.
+                p2.route("**/api/meta", lambda route: held.append(route))
+                p2.goto(base + "/", wait_until="domcontentloaded")
+                p2.wait_for_timeout(600)
+                early = hero_counts(p2)
+                check(f"{label} metadata: every language count on the page is {want} before it arrives",
+                      bool(held) and early and all(n == str(want) for n in early))
+                for r in held:
+                    r.continue_() if label == "delayed" else r.abort()
+                p2.wait_for_timeout(1500)
+                late = hero_counts(p2)
+                if label == "delayed":
+                    check(f"{label} metadata: still {want} afterwards, with no page error",
+                          late and all(n == str(want) for n in late) and not p2_errors)
+                else:
+                    body = p2.locator("body").inner_text()
+                    check("failed metadata: the server error screen with a retry, no stale count, no page error",
+                          "reach its server" in body.lower() and "try again" in body.lower()
+                          and all(n == str(want) for n in late) and not p2_errors)
+                c2.close()
+            page.goto(base + "/", wait_until="networkidle")
+            settled = hero_counts(page)
+            check(f"settled metadata: every language count on the page is {want}",
+                  settled and all(n == str(want) for n in settled))
+
+            # --- a phone: badge, menu, pause ------------------------------------------------
+            c3 = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
+            m = c3.new_page()
+            m.goto(base + "/", wait_until="networkidle")
+            check("on a phone the Simulated badge is in the header",
+                  m.locator("header").get_by_text("Simulated", exact=True).is_visible())
+            menu = m.get_by_role("button", name="Menu")
+            box = menu.bounding_box()
+            check("the phone menu button is a 44 pixel touch target", box and box["height"] >= 43.5)
+            menu.focus()
+            m.keyboard.press("Enter")
+            check("the menu opens with the keyboard and says so",
+                  m.locator('[aria-controls="site-menu"]').get_attribute("aria-expanded") == "true"
+                  and m.locator("#site-menu").is_visible())
+            check("the menu holds How we know, own bot setup, the Motion switch and GitHub",
+                  all(m.locator("#site-menu").get_by_text(x).count() for x in
+                      ("How we know", "Scan your own chatbot", "Motion", "GitHub")))
+            m.locator("#site-menu").get_by_role("button", name="Motion off").click()
+            check("pausing is one tap away: the Motion switch in the menu works",
+                  m.evaluate("document.documentElement.dataset.motion") == "on")
+            m.locator("#site-menu").get_by_role("button", name="Motion on").click()
+            m.keyboard.press("Escape")
+            check("Escape closes the menu and focus goes back to its button",
+                  not m.locator("#site-menu").count()
+                  and m.evaluate("document.activeElement.textContent") == "Menu")
+            axe(m, "the phone home page with its menu")
+            c3.close()
 
             check(f"no page errors anywhere{': ' + '; '.join(errors[:3]) if errors else ''}", not errors)
             browser.close()

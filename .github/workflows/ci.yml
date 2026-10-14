@@ -30,7 +30,7 @@ jobs:
       - name: Attack bank
         run: |
           python generate_attack_bank.py
-          git diff --exit-code attack_bank.json   # regenerating must not change the pre-registered bank
+          git diff --exit-code attack_bank.json web/src/bank-counts.json   # regenerating must not change the pre-registered bank or its counts
           python validate_bank.py
           python linguistics.py
           python expand_languages.py --check-stored   # every gate, on every stored machine translation

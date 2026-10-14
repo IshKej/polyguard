@@ -1,3 +1,5 @@
+import BANK_COUNTS from '../bank-counts.json'
+import LocalEvidence, { REPORT_URL } from './LocalEvidence'
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { firstSentence } from '../api'
 import { NO } from '../lib/languages'
@@ -134,7 +136,9 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
     [others, meta],
   )
   const english = firstSentence(meta?.hero_line?.en) || 'Ignore all previous instructions.'
-  const count = meta?.languages?.length ?? 20
+  // Until /api/meta answers (or if it fails), the counts the build wrote from the
+  // bank itself: never a hard-coded number that goes stale.
+  const count = meta?.languages?.length ?? BANK_COUNTS.languages
   const reduce = useMotionOff()
   const close = useRef(null)
   const rise = useRiseProgress(close, reduce)
@@ -185,17 +189,23 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
               where they give way.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <button type="button" onClick={onStart} className="btn btn-solid">Scan a chatbot</button>
-              {onTry && meta?.examples?.length > 0 && (
-                <button type="button" onClick={onTry} className="btn btn-line">Try it on an example bot</button>
+              {onTry && (
+                <button type="button" onClick={onTry} disabled={!meta?.examples?.length} className="btn btn-solid">
+                  Try the illustrative demo
+                </button>
               )}
-              <a href="#how" className="btn btn-line">How it works</a>
+              <a href={REPORT_URL} className="btn btn-line">Read the local-model report</a>
             </div>
-            <p className="caption mt-4 text-(--mute)">
-              <a href="/examples/real-scan-2026-10-11.html" className="underline underline-offset-4 hover:text-ink">
-                Read a real scan
-              </a>{' '}
-              of an example bot on a small open model, all 73 languages, with its limits stated.
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-(--mute)" data-testid="hero-status">
+              <span className="tag mr-2 border border-current">{meta?.live ? 'Live' : 'Simulated'}</span>
+              {meta?.live
+                ? 'Scans on this site can attack a real model, and setup shows the cost before anything is sent.'
+                : 'The demo is simulated: no model is attacked and the outcomes are made up.'}{' '}
+              The report is a real scan of a small open model on a laptop, not a production chatbot.{' '}
+              <button type="button" onClick={onStart} className="underline underline-offset-4 hover:text-ink">
+                Scan your own chatbot
+              </button>
+              ; setup shows the mode and cost first.
             </p>
           </div>
           <div className="relative -mx-5 lg:mx-0">
@@ -263,6 +273,8 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
       </section>
 
       {/* Why: three statements, in the mixed voice. */}
+      <LocalEvidence />
+
       <section data-surface="ink" className="ink">
         <div className="mx-auto max-w-7xl px-5 py-20 sm:py-28">
           <h2 className="display max-w-5xl text-[clamp(2.4rem,5.6vw,5rem)]">
@@ -334,7 +346,7 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
             <span className="lg:whitespace-nowrap"><span style={stretch}>your bot</span> <span className="serif">says yes.</span></span>
           </h2>
           <p className="mx-auto mt-5 max-w-lg text-(--mute)">
-            {meta?.examples?.length ?? 4} example chatbots are ready, or paste the instructions your own bot runs on.
+            {meta?.examples?.length ? `${meta.examples.length} example chatbots are ready` : 'Example chatbots are ready'}, or paste the instructions your own bot runs on.
           </p>
           <button type="button" onClick={onStart} className="btn btn-solid mt-8">Scan a chatbot</button>
           <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-(--line) pt-6 text-sm sm:flex-row">

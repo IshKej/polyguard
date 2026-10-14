@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NO } from '../lib/languages'
 import { isMotionOff, setMotionOff, useMotionOff } from '../lib/motion'
 
@@ -73,8 +73,10 @@ export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) 
         </button>
         <div className="flex items-center gap-3 sm:gap-5">
           {loaded && (
+            // Always shown, phones included, so a cropped screenshot of a demo can
+            // never pass for a real measurement.
             <span
-              className="tag hidden border border-current sm:inline-block"
+              className="tag inline-block border border-current"
               title={live ? 'Scans attack a real model.' : 'No model is attacked. Outcomes are made up.'}
             >
               {live ? 'Live' : 'Simulated'}
@@ -85,18 +87,63 @@ export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) 
               <span className="hl">How we know</span>
             </button>
           )}
-          <MotionSwitch className="hidden text-[.8rem] lg:inline" />
-          <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption hidden text-[.8rem] sm:inline">
+          <MotionSwitch className="hidden text-[.8rem] md:inline" />
+          <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption hidden text-[.8rem] md:inline">
             <span className="hl">GitHub</span>
           </a>
           {showScan && (
-            <button type="button" onClick={onScan} className={`btn btn-sm ${surface === 'on-hi' ? 'btn-solid' : 'nav-hi'}`}>
-              Scan a chatbot
+            <button type="button" onClick={onScan} className={`btn btn-sm hidden md:inline-flex ${surface === 'on-hi' ? 'btn-solid' : 'nav-hi'}`}>
+              Scan your own chatbot
             </button>
           )}
+          <MobileMenu onMethod={view !== 'method' ? onMethod : null} onScan={showScan ? onScan : null} />
         </div>
       </div>
     </header>
+  )
+}
+
+// Below tablet width the nav keeps only the badge and this button. The panel holds
+// everything the wide nav shows, with touch sized targets, and the Motion switch is
+// in it so pausing is one tap away rather than at the bottom of the page.
+function MobileMenu({ onMethod, onScan }) {
+  const [open, setOpen] = useState(false)
+  const button = useRef(null)
+  const panel = useRef(null)
+  useEffect(() => {
+    if (!open) return undefined
+    panel.current?.querySelector('a, button')?.focus()
+    const onKey = (e) => {
+      if (e.key === 'Escape') { setOpen(false); button.current?.focus() }
+    }
+    const onAway = (e) => {
+      if (!panel.current?.contains(e.target) && !button.current?.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('pointerdown', onAway)
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('pointerdown', onAway) }
+  }, [open])
+  const go = (fn) => () => { setOpen(false); fn?.() }
+  const item = 'flex min-h-11 w-full items-center px-4 text-left text-base'
+  return (
+    <div className="relative md:hidden">
+      <button
+        ref={button} type="button" aria-expanded={open} aria-controls="site-menu"
+        onClick={() => setOpen((o) => !o)}
+        className="btn btn-sm min-h-11 min-w-11 nav-hi"
+      >
+        {open ? 'Close' : 'Menu'}
+      </button>
+      {open && (
+        <nav id="site-menu" ref={panel} aria-label="Site"
+             className="paper absolute right-0 top-full mt-2 w-64 border-2 border-ink py-2 shadow-[4px_4px_0_var(--ink)]">
+          {onMethod && <button type="button" onClick={go(onMethod)} className={item}>How we know</button>}
+          {onScan && <button type="button" onClick={go(onScan)} className={item}>Scan your own chatbot</button>}
+          <div className={item}><MotionSwitch className="text-base" /></div>
+          <a href={REPO} target="_blank" rel="noopener" className={item}>GitHub</a>
+        </nav>
+      )}
+    </div>
   )
 }
 

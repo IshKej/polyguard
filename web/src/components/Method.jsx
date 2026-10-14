@@ -1,3 +1,4 @@
+import LocalEvidence from './LocalEvidence'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMotionOff } from '../lib/motion'
 
@@ -315,12 +316,14 @@ export default function Method({ meta, onStart, onBack }) {
             <span className="serif">Some language always comes out worst.</span>
           </h1>
           <p className="mt-7 max-w-2xl text-lg text-(--mute)">
-            Scan twenty languages and one of them will look worst every time, even if the bot treats every language
+            Scan {languages.length} languages and one of them will look worst every time, even if the bot treats every language
             exactly the same. Below you can watch that happen, then see the test PolyGuard uses so that luck is never
             reported as a finding.
           </p>
         </div>
       </section>
+
+      <LocalEvidence />
 
       <section data-surface="paper" className="paper">
         <div className="ruler" />

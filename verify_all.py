@@ -55,6 +55,12 @@ ck("2. bank has 15 attacks per language (5 categories x 3 variants), all from th
    len(bank["attacks"]) == 15 * len(bank["languages"]) and len(bank["languages"]) >= 73
    and set(bank["languages"]) <= set(cat.CATALOG))
 
+# 2b. The web app's cold-load counts come from the bank, never a stale literal.
+_bc = json.loads((HERE / "web" / "src" / "bank-counts.json").read_text(encoding="utf-8"))
+ck("2b. web/src/bank-counts.json matches the bank (languages, attacks, controls)",
+   _bc == {"languages": len(bank["languages"]), "attacks": len(bank["attacks"]),
+           "controls": len(bank.get("controls", []))})
+
 # 3. ids unique
 ids = [a["id"] for a in bank["attacks"]]
 ck("3. attack ids unique", len(ids) == len(set(ids)))
