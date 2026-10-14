@@ -235,8 +235,11 @@ def main() -> int:
             page.get_by_role("link", name="Read the local-model report").first.click()
             page.wait_for_load_state("networkidle")
             check("the home page links to a real scan that says what it is and is not",
-                  page.get_by_text("A real scan, published as an example").count() == 1
+                  page.get_by_text("A real local diagnostic, published as an example").count() == 1
                   and page.get_by_text("not a production chatbot").count() >= 1)
+            check("the report has a way back to the site and says what kind of evidence it is",
+                  page.get_by_role("link", name="Back to PolyGuard").count() == 1
+                  and page.get_by_text("Real local diagnostic", exact=True).count() == 1)
 
             # --- the language count before, without and after /api/meta -------------------
             want = json.loads((ROOT / "web" / "src" / "bank-counts.json").read_text(encoding="utf-8"))["languages"]

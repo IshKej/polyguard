@@ -61,6 +61,12 @@ ck("2b. web/src/bank-counts.json matches the bank (languages, attacks, controls)
    _bc == {"languages": len(bank["languages"]), "attacks": len(bank["attacks"]),
            "controls": len(bank.get("controls", []))})
 
+# 2c. The published example report is exactly what publish_example.py builds from
+# the reanalysed scan, so no number on it was typed by hand.
+import publish_example as _pe
+ck("2c. the published example report is reproducible from the saved scan",
+   _pe.OUT.read_text(encoding="utf-8") == _pe.build())
+
 # 3. ids unique
 ids = [a["id"] for a in bank["attacks"]]
 ck("3. attack ids unique", len(ids) == len(set(ids)))

@@ -3,9 +3,11 @@ Render a scan into one self-contained HTML file.
 
 A JSON report is for machines. This is the thing you send to a person: a single
 file with no external assets, no network calls, and no build step, that opens in
-any browser and still works in a year. It uses the system font of whatever
-machine opens it, follows that machine's light or dark setting, and prints on
-white.
+any browser and still works in a year. It wears the site's look (paper, ink,
+highlighter, red pen) so a reader who follows a link from the site does not land
+on what looks like a different website. It asks for Mona Sans, the site's face,
+and falls back to the system font when it is not installed, so it still loads
+nothing from the network. It prints on white.
 
 Every caveat the scan carried travels with it. A simulated run says so at the top
 before any number, a scan whose prompt collided with PolyGuard's own token refuses
@@ -22,28 +24,26 @@ from pathlib import Path
 REPO_URL = "https://github.com/IshKej/polyguard"
 
 CSS = """
-:root{color-scheme:dark;--bg:#000;--tile:#1d1d1f;--raised:#2c2c2e;--ink:#f5f5f7;
---quiet:#86868b;--line:#424245;--red:#ff453a;--green:#30d158;--yellow:#ffd60a;
---blue:#2997ff;--base:#86868b}
-@media (prefers-color-scheme:light){:root{color-scheme:light;--bg:#fff;--tile:#f5f5f7;
---raised:#e8e8ed;--ink:#1d1d1f;--quiet:#6e6e73;--line:#d2d2d7;--red:#d70015;
---green:#248a3d;--yellow:#b25000;--blue:#0066cc;--base:#86868b}}
+:root{color-scheme:light;--bg:#eeede5;--tile:#e4e2d6;--raised:#d9d6c7;--ink:#1a1c15;
+--quiet:#5c5f51;--line:#c9c6b6;--red:#c22a10;--pen:#ff5a3d;--green:#2f5d1e;--hi:#e6ff2e;
+--base:#8a8c7f}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
-font:17px/1.47 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text",
-"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;
+font:17px/1.5 "Mona Sans","Mona Sans Variable",ui-sans-serif,system-ui,-apple-system,
+"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;
 padding:3.5rem 1.25rem 4rem}
+a{color:var(--ink)}
 .wrap{max-width:880px;margin:0 auto}
 .mark{font-weight:600;font-size:1.0625rem;letter-spacing:-.01em;margin:0}
 h1{font-size:clamp(2.25rem,6vw,3.5rem);line-height:1.05;letter-spacing:-.03em;
 font-weight:600;margin:2.5rem 0 .6rem}
 .sub{color:var(--quiet);margin:0 0 2.5rem;font-size:1.0625rem}
 h2{font-size:1.75rem;letter-spacing:-.022em;font-weight:600;margin:4rem 0 1.1rem}
-.note{background:var(--tile);border-radius:18px;padding:1.1rem 1.3rem;margin:.9rem 0;
+.note{background:var(--tile);border-left:4px solid var(--ink);padding:1rem 1.2rem;margin:.9rem 0;
 font-size:.9375rem;line-height:1.55}
 .note b{font-weight:600}
-.n-mock b{color:var(--yellow)}.n-bad b{color:var(--red)}.n-ok b{color:var(--green)}
-.n-info b{color:var(--blue)}
+.n-mock{background:var(--hi)}.n-bad b{color:var(--red)}.n-ok b{color:var(--green)}
+.n-info{border-left-color:var(--hi)}
 .specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0 2rem}
 .spec{border-top:1px solid var(--line);padding:1rem 0 1.25rem}
 .spec .k{color:var(--quiet);font-size:.875rem}
@@ -61,8 +61,8 @@ td{padding:.55rem .75rem .55rem 0;border-top:1px solid var(--line);vertical-alig
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nat{color:var(--quiet);font-size:.8125rem;margin-left:.4rem}
 .dim{color:var(--quiet)}
-.bar{height:.5rem;border-radius:99px;background:var(--raised);overflow:hidden;min-width:5rem}
-.bar span{display:block;height:100%;border-radius:99px;background:var(--red)}
+.bar{height:.5rem;background:var(--raised);overflow:hidden;min-width:5rem}
+.bar span{display:block;height:100%;background:var(--pen)}
 .bar.base span{background:var(--base)}
 ul.fix{padding-left:1.1rem;margin:0}
 ul.fix li{margin:.45rem 0;font-size:.9375rem}
@@ -71,8 +71,8 @@ color:var(--quiet);font-size:.8125rem;line-height:1.6}
 footer a{color:var(--quiet)}
 @media (max-width:560px){dl{grid-template-columns:1fr}dd{border-top:none;padding-top:0}
 .hide-sm{display:none}}
-@media print{:root{color-scheme:light;--bg:#fff;--tile:#f5f5f7;--raised:#e8e8ed;
---ink:#000;--quiet:#555;--line:#ccc}body{padding:0}h2{break-after:avoid}
+@media print{:root{color-scheme:light;--bg:#fff;--tile:#f2f2f2;--raised:#e5e5e5;
+--ink:#000;--quiet:#555;--line:#ccc;--hi:#fff}body{padding:0}h2{break-after:avoid}
 tr,.note,.spec{break-inside:avoid}}
 """
 

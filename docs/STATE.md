@@ -110,7 +110,8 @@ If any of those fail, something regressed. They all pass as of this writing.
    live scan: no new paid call starts after the visitor leaves (228 did before),
    the slot comes back at once, and `scan_cancelled` is logged. Acceptance tests
    `api/test_cancellation.py` 9/9, in CI. The design note the brief asks for,
-   `docs/design/cancellation-note.md`, is still to be written by Ishaan.
+   `docs/design/cancellation-note.md`, is a draft (drafted with AI) for Ishaan to
+   review and add his own reasoning to.
 
 Hosting is done, not a blocker: two Vercel Services in one project (the Vite site
 at `/`, FastAPI at `/api/*`), every push to main deploys, and CI
