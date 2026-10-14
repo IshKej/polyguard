@@ -154,7 +154,7 @@ export default function App() {
       <>
         <Nav loaded={false} onHome={() => {}} showScan={false} view="error" />
         <main data-surface="paper" className="paper mx-auto min-h-screen max-w-2xl px-5 pb-24 pt-36">
-          <h1 className="display text-5xl">PolyGuard can’t reach <span className="serif">its server.</span></h1>
+          <h1 className="display text-5xl">PolyGuard can’t reach its server.</h1>
           <p className="mt-4 max-w-lg text-(--mute)">
             The scan server isn’t answering. If you are running PolyGuard yourself, start it with{' '}
             <code className="rounded bg-paper-2 px-1.5 py-0.5 text-ink">python -m uvicorn api.server:app --port 8000</code>{' '}
@@ -183,7 +183,7 @@ export default function App() {
           wipe === 'idle' ? 'invisible translate-y-full' : wipe === 'in' ? 'translate-y-0 transition-transform duration-[380ms] ease-[cubic-bezier(.7,0,.3,1)]' : '-translate-y-full transition-transform duration-[440ms] ease-[cubic-bezier(.7,0,.3,1)]'
         }`}
       >
-        <span className="font-serif text-[clamp(3rem,8vw,6rem)] leading-none">Poly<span className="display">Guard</span></span>
+        <span className="font-serif text-[clamp(3rem,8vw,6rem)] leading-none">Poly<span className="display display-caps">Guard</span></span>
       </div>
       {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} onTry={tryExample} onMethod={() => go('method')} />}
       {view === 'landing' && metaError && !meta && (
@@ -226,7 +226,7 @@ export default function App() {
           <div className="mx-auto max-w-2xl">
             {sharedError ? (
               <>
-                <h1 className="display text-5xl">That link <span className="serif">has nothing behind it.</span></h1>
+                <h1 className="display text-5xl">That link has nothing behind it.</h1>
                 <p className="mt-4 text-(--mute)">{sharedError} Saved scans are removed after 30 days, or sooner if whoever saved one deleted it.</p>
                 <button type="button" onClick={() => go('landing')} className="btn btn-solid mt-8">Go to PolyGuard</button>
               </>

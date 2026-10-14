@@ -239,7 +239,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
 
       {baseline && fixCheck && (
         <section className="card mt-10 p-7">
-          <h2 className="display text-4xl">Before and after <span className="serif">the fix.</span><ModeTag mock={result.mock} /></h2>
+          <h2 className="display text-4xl">Before and after the fix<ModeTag mock={result.mock} /></h2>
           {fixCheck.held ? (
             <p className="mt-2 max-w-3xl text-(--mute)">
               Judged on held-out attacks only: the third phrasing of every attack, which never helped choose these rules.
@@ -278,7 +278,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
       )}
 
       <section className="mt-16">
-        <h2 className="display text-[clamp(2.2rem,4.6vw,3.8rem)]">By <span className="serif">language.</span><ModeTag mock={result.mock} /></h2>
+        <h2 className="display text-[clamp(1.8rem,3.4vw,2.8rem)]">Results by language<ModeTag mock={result.mock} /></h2>
         <p className="mt-2 max-w-2xl text-(--mute)">
           Most broken first. Open a language to read every attack, in English too, and what the bot said back.
         </p>
@@ -304,7 +304,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
       </section>
 
       <section className="mt-16">
-        <h2 className="display text-[clamp(2.2rem,4.6vw,3.8rem)]">By kind <span className="serif">of attack.</span><ModeTag mock={result.mock} /></h2>
+        <h2 className="display text-[clamp(1.8rem,3.4vw,2.8rem)]">Results by kind of attack<ModeTag mock={result.mock} /></h2>
         <div ref={bars} className="mt-6 border-b border-(--line)">
           {result.categories.map((c, n) => (
             <div key={c.category} className="grid items-center gap-x-5 gap-y-1 border-t border-(--line) py-3.5 sm:grid-cols-[16rem_1fr_4.5rem]">
@@ -323,7 +323,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
 
       {result.broken_categories.length > 0 && (
         <section data-surface="paper" className="paper mt-16 rounded-[28px] p-7 sm:p-10">
-          <h2 className="display text-[clamp(2.2rem,4.6vw,3.8rem)]">Fix <span className="serif">it.</span></h2>
+          <h2 className="display text-[clamp(1.8rem,3.4vw,2.8rem)]">How to fix it</h2>
           <p className="mt-2 text-(--mute)">
             Rules written for exactly the {result.broken_categories.length === 1 ? 'kind of attack' : 'kinds of attack'} that got through.
             They can lower the break rate on this test. They cannot make the bot secure, so retest, and keep testing.
@@ -352,7 +352,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
       )}
 
       <details className="card mt-16 p-7 sm:p-9">
-        <summary className="display cursor-pointer text-[2rem]">For <span className="serif">researchers.</span></summary>
+        <summary className="display cursor-pointer text-[2rem]">For researchers</summary>
         <dl className="mt-6">
           <Row k="How the verdict was reached">{v.basis}</Row>
           <Row k="Low versus high resource">
@@ -424,7 +424,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
 
       {canShare && !source && (
         <section className="card mt-10 p-6">
-          <h2 className="display text-[1.8rem]">Share <span className="serif">this scan.</span></h2>
+          <h2 className="display text-[1.8rem]">Share this scan</h2>
           <p className="mt-1 text-(--mute)">
             Makes a private link: only someone you send it to can open it, the bot’s replies are left out, and it is
             removed after 30 days. You can delete it sooner from this browser.

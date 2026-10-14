@@ -112,8 +112,8 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock, onOpe
       <div className="ruler" />
       <div className="mx-auto max-w-5xl px-5 pb-48 pt-28">
         <button type="button" onClick={onBack} className="hl-hover caption mb-6 text-[.8rem]"><span className="hl">Back</span></button>
-        <h1 className="display text-[clamp(2.8rem,7vw,5.6rem)]">
-          Set up <span className="serif">the scan.</span>
+        <h1 className="display text-[clamp(2.2rem,4.6vw,3.6rem)]">
+          Set up the scan.
         </h1>
         <p className="mt-4 text-(--mute)">
           Have a scan saved from this site?{' '}
@@ -294,9 +294,8 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock, onOpe
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-5 py-4">
           <div>
             <div className="display text-[1.7rem]">
-              <span className="tabular-nums">{attacks}</span> attacks, <span className="serif">
-                <span className="tabular-nums">{langs.length}</span> language{langs.length === 1 ? '' : 's'}
-              </span>
+              <span className="tabular-nums">{attacks}</span> attacks,{' '}
+              <span className="tabular-nums">{langs.length}</span> language{langs.length === 1 ? '' : 's'}
             </div>
             <div className="text-sm text-(--mute)">
               {meta.live ? 'Live: real attacks on a real model.' : 'Simulated: no model is attacked, so the outcomes are made up.'}

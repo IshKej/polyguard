@@ -316,3 +316,17 @@ Plan for v2, in order of impact:
   1440x900 and a 390 phone: motion on, Lenis on, the 3D bubble renders and spins,
   the hero cycles, the story pins and steps through all four scenes with the
   ruler on screen, the switch works both ways and persists, no page errors.
+- 2026-10-13, v6 (Ishaan picked mockup A of two static variations, with the graded
+  sheet of mockup B as the evidence section): **the hero shows the mechanism.** One
+  real attack from the 2026-10-11 local scan, English beside Welsh, goes through four
+  steps: the attack as a customer message, the trust boundary between the bot's rules
+  and the customer's text, both real replies, and how each was judged. The replies and
+  numbers come from `web/src/local-example.json`, which `publish_example.py` writes
+  from the saved scan and `verify_all.py` (2d) checks. Removed: the attack text tiled
+  behind the hero, the 3D bubble and Three.js, the Now testing card, the language
+  cycling and its strip, the highlighter cursor, the marquee, the tilting cards and the
+  stretching closing line. Lime and red now mean held and got through only; the
+  language name in the headline is underlined, not highlighted. Type: display headings
+  are sentence case and written as plain sentences, eyebrows and buttons are no
+  longer in capitals, and the capitals with the serif survive in two places only, the
+  wordmark and the closing line.

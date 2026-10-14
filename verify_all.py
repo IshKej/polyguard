@@ -66,6 +66,8 @@ ck("2b. web/src/bank-counts.json matches the bank (languages, attacks, controls)
 import publish_example as _pe
 ck("2c. the published example report is reproducible from the saved scan",
    _pe.OUT.read_text(encoding="utf-8") == _pe.build())
+ck("2d. the home page's local example (hero replies, graded sheet) is reproducible from the saved scan",
+   _pe.SITE_DATA.read_text(encoding="utf-8") == _pe.site_json())
 
 # 3. ids unique
 ids = [a["id"] for a in bank["attacks"]]

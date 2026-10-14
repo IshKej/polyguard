@@ -140,7 +140,7 @@ function Fix({ local }) {
       className="paper absolute bottom-0 right-0 w-[min(100%,25rem)] rounded-[18px] p-5 shadow-[0_18px_40px_-12px_rgba(0,0,0,.6)] ring-2 ring-ink"
       style={{ transform: `translateY(${(1 - rise) * 115}%)`, opacity: rise }}
     >
-      <div className="display text-[1.6rem]">Fix <span className="serif">it.</span></div>
+      <div className="display text-[1.5rem]">How to fix it</div>
       <ul className="mt-3 space-y-2.5 text-[.95rem] leading-snug">
         {RULES.map((rule, n) => (
           <li key={rule} className="flex gap-2.5">
@@ -226,7 +226,7 @@ export default function ScrollStory({ languages, lines, prompt }) {
       <section id="how" data-surface="ink" className="ink scroll-mt-16">
         <div className="mx-auto grid max-w-7xl items-start gap-14 px-5 py-20 sm:py-28 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
           <div>
-            <h2 className="display text-[clamp(2.4rem,5.6vw,5rem)]">How it <span className="serif">works.</span></h2>
+            <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">How a scan works</h2>
             <div className="mt-10">{steps}</div>
           </div>
           <Board languages={board} outcomes={outcomes} expected={EXPECTED} compact caption="An illustration with made up outcomes. Highlighter held. Red got through." />
@@ -240,7 +240,7 @@ export default function ScrollStory({ languages, lines, prompt }) {
       <div className="sticky top-0 flex h-[100svh] flex-col overflow-hidden">
         <div className="story-grid mx-auto grid w-full max-w-7xl flex-1 items-center gap-6 px-5 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] lg:gap-14">
           <div>
-            <h2 className="display story-title">How it <span className="serif">works.</span></h2>
+            <h2 className="display story-title">How a scan works</h2>
             <div className="story-steps hidden lg:block">{steps}</div>
             {/* On a phone only the step being shown is written out. */}
             <div className="mt-4 lg:hidden">

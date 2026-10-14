@@ -29,6 +29,11 @@ capped at 60 attacks so it ends inside the 300 second function limit.
 | The 3D bubble (`Bubble3D-*.js`, Three.js), loaded after the page is readable | 511.3 kB | 127.8 kB |
 | Styles (`index-*.css`) | 44.1 kB | 9.5 kB |
 
+Since 2026-10-13 the hero no longer has the 3D bubble, so Three.js is gone from the
+site. A local build of that change measures the app at 354.2 kB raw and 107.2 kB
+gzipped, the styles at 43.9 kB and 9.5 kB, and there is no second chunk. The API
+numbers above are from before that change and were not rerun.
+
 ## The API function
 
 Installed from `uv.lock` with only `anthropic` and `fastapi` and what they need.

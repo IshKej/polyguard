@@ -106,10 +106,9 @@ def main() -> int:
             page.wait_for_timeout(1800)
             check("with reduced motion reported, the landing page is still by default",
                   page.evaluate("document.documentElement.dataset.motion") == "off")
-            still = page.locator("text=Now testing").locator("xpath=..").inner_text()
-            page.wait_for_timeout(2900)
-            check("and the hero does not change language on its own",
-                  page.locator("text=Now testing").locator("xpath=..").inner_text() == still)
+            check("and nothing on it animates on its own: no running animations, the How it works story is not pinned",
+                  page.evaluate("document.getAnimations().filter(a => a.playState === 'running').length") == 0
+                  and page.locator("#how").get_attribute("style") is None)
             axe(page, "the landing page")
 
             # --- the Motion switch ----------------------------------------------------
@@ -117,10 +116,9 @@ def main() -> int:
             page.wait_for_timeout(300)
             check("the Motion switch turns motion on even though the system asks for less",
                   page.evaluate("document.documentElement.dataset.motion") == "on")
-            first = page.locator("text=Now testing").locator("xpath=..").inner_text()
-            page.wait_for_timeout(2900)
-            check("with motion turned on, the hero changes language on its own",
-                  page.locator("text=Now testing").locator("xpath=..").inner_text() != first)
+            page.wait_for_timeout(400)
+            check("with motion turned on, the How it works story becomes the pinned, scroll played version",
+                  "height" in (page.locator("#how").get_attribute("style") or ""))
             page.reload(wait_until="networkidle")
             check("that choice is remembered across a reload",
                   page.evaluate("document.documentElement.dataset.motion") == "on")
@@ -222,8 +220,18 @@ def main() -> int:
                   and "not a production chatbot" in status)
             ev = page.locator("#local-evidence").locator("xpath=ancestor::section").inner_text()
             check("the home page shows the local scan's evidence with judged and reviewed breaks kept apart",
-                  "14" in ev and "kept 10" in ev and "not yet checked by the author" in ev
+                  "flagged 14" in ev and "kept 10" in ev and "not yet checked by the author" in ev
                   and "no paid or production chatbot scan has run yet" in ev)
+            sheet = page.locator("#local-evidence").locator("xpath=ancestor::section").locator("figure li[class*='rounded']")
+            check("the graded sheet has a cell for every language in the scan",
+                  sheet.count() == len(json.loads((ROOT / "web" / "src" / "local-example.json").read_text(encoding="utf-8"))["languages"]))
+            fig = page.locator("figure[aria-labelledby='mechanism-caption']")
+            check("the hero works one real attack through four steps, with the real Welsh reply and its outcome",
+                  fig.locator("ol > li").count() == 4 and "PWNED_7F3A" in fig.inner_text()
+                  and fig.get_by_text("Got through", exact=True).count() == 1 and fig.get_by_text("Held", exact=True).count() == 1
+                  and "not a production chatbot" in fig.inner_text())
+            check("no attack text sits behind the hero heading, copy or buttons",
+                  page.locator("h1").first.evaluate("e => !e.closest('section').querySelector('[aria-hidden=true] [lang]')"))
             page.get_by_role("button", name="Try the illustrative demo").click()
             page.wait_for_url("**/scan/results", timeout=60000)
             page.wait_for_timeout(800)

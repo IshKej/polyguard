@@ -93,11 +93,7 @@ export default function SpotTheAttack({ languages, onStart }) {
     <section ref={section} data-surface="paper" className="paper relative" onKeyDown={onKey}>
       <div className="mx-auto grid max-w-7xl items-start gap-12 px-5 py-20 sm:py-28 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
         <div>
-          <h2 className="display text-[clamp(2.4rem,5.6vw,5rem)]">
-            Your turn.
-            <br />
-            <span className="serif">Spot the attack.</span>
-          </h2>
+          <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">Your turn: spot the attack.</h2>
           <p className="mt-6 max-w-md text-(--mute)">
             Six messages, each in a different language. Some are attacks, some are ordinary requests. A chatbot has to
             tell them apart every time, in every language.
@@ -125,7 +121,7 @@ export default function SpotTheAttack({ languages, onStart }) {
               <div>
                 <div className="caption text-(--mute)">Your score</div>
                 <div className="display mt-2 text-[clamp(4rem,10vw,7rem)] tabular-nums">
-                  {score}<span className="serif text-[.6em] text-(--mute)"> of {deck.length}</span>
+                  {score}<span className="text-[.5em] text-(--mute)"> of {deck.length}</span>
                 </div>
                 <p className="mt-4 max-w-md text-lg">{VERDICT.find(([min]) => score >= min)[1]}</p>
                 {crowd && (

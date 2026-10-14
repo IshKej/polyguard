@@ -310,10 +310,8 @@ export default function Method({ meta, onStart, onBack }) {
       <section data-surface="ink" className="ink">
         <div className="mx-auto max-w-7xl px-5 pb-16 pt-28 sm:pb-20">
           <button type="button" onClick={onBack} className="hl-hover caption mb-6 text-[.8rem]"><span className="hl">Back</span></button>
-          <h1 className="display max-w-5xl text-[clamp(2.6rem,6vw,5.4rem)]">
-            How we know.
-            <br />
-            <span className="serif">Some language always comes out worst.</span>
+          <h1 className="display max-w-4xl text-[clamp(2.2rem,4.6vw,3.9rem)]">
+            Some language always comes out worst. How we know when the gap is real.
           </h1>
           <p className="mt-7 max-w-2xl text-lg text-(--mute)">
             Scan {languages.length} languages and one of them will look worst every time, even if the bot treats every language
@@ -330,7 +328,7 @@ export default function Method({ meta, onStart, onBack }) {
         <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:py-20 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
           <div>
             <div className="caption text-(--mute)">Step 1</div>
-            <h2 className="display mt-2 text-[clamp(2rem,4vw,3.4rem)]">Scan a bot <span className="serif">with no gap.</span></h2>
+            <h2 className="display mt-2 text-[clamp(1.8rem,3.4vw,2.8rem)]">Scan a bot with no gap.</h2>
             <p className="mt-4 max-w-md text-(--mute)">
               {weak.length
                 ? `This bot is weaker on purpose in ${weakList}: those break ${Math.round(WEAK_RATE * 100)}% of the time, every other language ${Math.round(BASE_RATE * 100)}%.`
@@ -373,7 +371,7 @@ export default function Method({ meta, onStart, onBack }) {
         <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:py-20 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
           <div>
             <div className="caption text-(--mute)">Step 2</div>
-            <h2 className="display mt-2 text-[clamp(2rem,4vw,3.4rem)]">Shuffle it <span className="serif">a thousand times.</span></h2>
+            <h2 className="display mt-2 text-[clamp(1.8rem,3.4vw,2.8rem)]">Shuffle it a thousand times.</h2>
             <p className="mt-4 max-w-md text-(--mute)">
               Keep each language’s {PER_LANG} attacks, but shuffle which results landed in which language. Every shuffle is
               a scan of a bot that truly has no gap. Then count how often the worst language beats English by at least
@@ -414,7 +412,7 @@ export default function Method({ meta, onStart, onBack }) {
       <section data-surface="paper" className="paper">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:py-20">
           <div className="caption text-(--mute)">Step 3</div>
-          <h2 className="display mt-2 max-w-4xl text-[clamp(2rem,4vw,3.4rem)]">The rule <span className="serif">PolyGuard follows.</span></h2>
+          <h2 className="display mt-2 max-w-4xl text-[clamp(1.8rem,3.4vw,2.8rem)]">The rule PolyGuard follows.</h2>
           <p className="mt-4 max-w-2xl text-lg">
             A gap counts only when shuffling produces one that big less than 5% of the time. The real test runs 2,000
             shuffles with a fixed seed, so anyone can rerun it and get the same answer.

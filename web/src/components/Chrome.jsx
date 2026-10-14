@@ -24,7 +24,7 @@ export function Wordmark() {
   return (
     <span className="flex flex-col leading-[.82]">
       <span className="font-serif text-[1.45rem] tracking-[-.01em]">Poly</span>
-      <span className="display text-[1.45rem] tracking-[-.01em]">Guard</span>
+      <span className="display display-caps text-[1.45rem] tracking-[-.01em]">Guard</span>
     </span>
   )
 }

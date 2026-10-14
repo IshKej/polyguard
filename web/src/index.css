@@ -34,7 +34,6 @@
   --font-sans: "Mona Sans", system-ui, sans-serif;
 
   --animate-flap: flap .34s cubic-bezier(.3, .7, .3, 1) both;
-  --animate-marquee: marquee 60s linear infinite;
 
   @keyframes flap {
     from { transform: perspective(240px) rotateX(-92deg); }
@@ -54,10 +53,6 @@
   @keyframes pen {
     from { stroke-dashoffset: 1; }
     to { stroke-dashoffset: 0; }
-  }
-  @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
   }
 }
 
@@ -99,16 +94,24 @@ body {
     background: var(--bg); color: var(--fg);
   }
 
-  /* Display type: Mona Sans, heavy, in capitals. */
+  /* Display type: Mona Sans, heavy, in sentence case. Headings are written as
+     plain sentences; the capitals are kept for one place (.display-caps). */
   .display {
     font-family: var(--font-display);
+    font-weight: 760;
+    font-stretch: 100%;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+  }
+  /* The heavy capitals: the wordmark and the closing line only. */
+  .display-caps {
     font-weight: 800;
     font-stretch: 104%;
     text-transform: uppercase;
     line-height: .92;
     letter-spacing: -0.012em;
   }
-  /* The second voice inside a display line: a sharp serif, lower case. */
+  /* The serif voice (Gloock): the wordmark and the closing line, nowhere else. */
   .serif {
     font-family: var(--font-serif);
     font-weight: 400;
@@ -119,11 +122,9 @@ body {
   /* Small data captions, the way a photo caption carries a place and a year. */
   .caption {
     font-family: var(--font-display);
-    font-weight: 700;
-    font-size: .75rem;
-    line-height: 1.2;
-    text-transform: uppercase;
-    letter-spacing: .01em;
+    font-weight: 600;
+    font-size: .8125rem;
+    line-height: 1.25;
   }
 
   /* A highlighter stroke behind a word. It draws in from the left when the
@@ -143,11 +144,11 @@ body {
   .hl.drawn, .hl-hover:hover .hl, .hl-hover:focus-visible .hl { background-size: 100% 82%; }
   .ink .hl.drawn, .ink .hl-hover:hover .hl { color: var(--color-ink); }
 
-  /* Buttons: square shouldered, capitals, the colour comes from the ground. */
+  /* Buttons: square shouldered, sentence case, the colour comes from the ground. */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
-    font-family: var(--font-display); font-weight: 800; font-stretch: 108%; font-size: 1rem;
-    text-transform: uppercase; letter-spacing: .01em; line-height: 1; white-space: nowrap;
+    font-family: var(--font-display); font-weight: 700; font-size: 1rem;
+    line-height: 1; white-space: nowrap;
     padding: 1rem 1.35rem; border-radius: 6px; border: 2px solid var(--btn);
     transition: background-color .14s ease, color .14s ease, transform .08s ease;
   }
@@ -181,7 +182,7 @@ body {
      off the bottom. Shorter still (a zoomed in browser), only the step on show
      keeps its description. */
   .story-grid { padding-top: 5rem; padding-bottom: 4rem; }
-  .story-title { font-size: clamp(2.2rem, 5vw, 4.6rem); }
+  .story-title { font-size: clamp(1.9rem, 3.6vw, 3rem); }
   .story-steps { margin-top: 2rem; }
   .story-desc { display: block; }
   @media (min-width: 1024px) {
@@ -189,7 +190,7 @@ body {
   }
   @media (min-width: 1024px) and (max-height: 840px) {
     .story-grid { padding-top: 4rem; padding-bottom: 1rem; }
-    .story-title { font-size: clamp(2rem, 4vw, 3.4rem); }
+    .story-title { font-size: clamp(1.8rem, 3.2vw, 2.6rem); }
     .story-steps { margin-top: 1.25rem; }
   }
   @media (min-width: 1024px) and (max-height: 640px) {

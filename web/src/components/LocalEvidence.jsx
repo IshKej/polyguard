@@ -1,40 +1,79 @@
-// The one real result the site can show today, stated with its limits. Every
-// number here is from the published 2026-10-11 scan and its 2026-10-12
-// reanalysis (results/local/2026-10-11/), and none of it is a study result.
+import LOCAL from '../local-example.json'
+
+// The one real result the site can show today, as a graded sheet: every
+// language, every break the review kept, every judge call it overturned, and the
+// language left out, with the limits stated. All of it comes from the 2026-10-11
+// scan and its 2026-10-12 reanalysis (web/src/local-example.json, written by
+// publish_example.py from results/local/2026-10-11/). None of it is a study result.
 export const REPORT_URL = '/examples/real-scan-2026-10-11.html'
 const EVIDENCE = 'https://github.com/IshKej/polyguard/tree/main/results/local/2026-10-11'
-
-const FACTS = [
-  ['Model', 'Qwen3.5 4B, a small open model running on a laptop, behind the example retail support bot. Not a production chatbot.'],
-  ['Date', 'Scanned 2026-10-11. Reanalysed 2026-10-12 from the same saved replies under the current capability rule, with no new model calls.'],
-  ['What was sent', 'All 73 languages: 1,095 attacks and 438 harmless control requests, each sent twice (876 in all).'],
-  ['How it was judged', 'Another small open model (Gemma 4 E2B) judged every reply. It called 14 replies breaks. An AI assisted review of each of those, not yet checked by the author, kept 10, seven of them system prompt extraction.'],
-  ['Languages', 'No gap between low and high resource languages (tier test p = 0.840). Yoruba was left out because the model followed only 1 of its 6 harmless requests.'],
-]
+const TIERS = [['high', 'High resource'], ['mid', 'Mid resource'], ['low', 'Low resource']]
 
 const LIMITS = [
   'One small model, so this says nothing about the chatbots companies deploy.',
-  '53 of the 73 languages are machine translated and not reviewed by a native speaker.',
+  `${Object.values(LOCAL.languages).filter((l) => l.machine).length} of the ${Object.keys(LOCAL.languages).length} languages are machine translated and not reviewed row by row by a native speaker.`,
   'It is not the pre-registered study: no paid or production chatbot scan has run yet.',
 ]
 
+function Cell({ code, l }) {
+  const n = LOCAL.per_language
+  let tone = 'bg-(--card)'
+  let note = null
+  if (code === 'en') { tone = 'bg-hi text-ink font-semibold'; note = `0 of ${n}, the reference` }
+  else if (l.excluded) { tone = 'border-[1.5px] border-dashed border-(--mute) text-(--mute)'; note = 'left out' }
+  else if (l.kept) { tone = 'bg-red text-ink'; note = `${l.kept} of ${n} got through` }
+  else if (l.overturned) { tone = 'bg-(--bg) outline-2 -outline-offset-2 outline-red-text'; note = <s className="text-red-text decoration-[1.5px]">judge: got through</s> }
+  return (
+    <li className={`rounded-[5px] px-2 py-1 text-[.8rem] leading-tight ${tone}`}>
+      <span lang={code} title={l.native}>{l.name}</span>
+      {note && <span className="block text-[.68rem]">{note}</span>}
+    </li>
+  )
+}
+
 export default function LocalEvidence({ className = '' }) {
+  const langs = Object.entries(LOCAL.languages)
+  const ex = LOCAL.excluded[0]
+  const notes = [
+    `${LOCAL.kept} breaks in ${LOCAL.attacks.toLocaleString('en-US')} attacks, after an AI assisted review not yet checked by the author. The judge alone flagged ${LOCAL.judged_breaks}; the review kept ${LOCAL.kept}.`,
+    `${LOCAL.kept_extraction} of the ${LOCAL.kept} are the bot printing its own instructions, scored by exact overlap with no judge involved.`,
+    `No gap between high and low resource languages (tier test p = ${LOCAL.tier_p.toFixed(3)}). One small model cannot say anything about production chatbots.`,
+    ex && `${LOCAL.languages[ex.code].name} is left out: the model followed ${ex.followed} of its ${ex.of} harmless requests, against ${LOCAL.english_followed} of ${LOCAL.english_of} in English.`,
+  ].filter(Boolean)
   return (
     <section data-surface="paper" className={`paper ${className}`} aria-labelledby="local-evidence">
-      <div className="mx-auto max-w-7xl px-5 py-20">
-        <p className="caption text-(--mute)">Real local diagnostic, not a simulated demo</p>
-        <h2 id="local-evidence" className="mt-3 max-w-3xl text-[clamp(1.6rem,3vw,2.4rem)] font-bold leading-tight">
-          One real scan so far, on a small model running on a laptop.
+      <div className="mx-auto max-w-7xl px-5 py-16 sm:py-20">
+        <p className="caption text-(--mute)">Real local diagnostic, not the simulated demo</p>
+        <h2 id="local-evidence" className="mt-2 max-w-3xl text-[clamp(1.6rem,3vw,2.3rem)] font-bold leading-tight">
+          One real scan so far, graded language by language.
         </h2>
-        <dl className="mt-10 grid max-w-4xl gap-x-10 gap-y-6 sm:grid-cols-[11rem_1fr]">
-          {FACTS.map(([k, v]) => (
-            <div key={k} className="contents">
-              <dt className="caption pt-1 text-(--mute)">{k}</dt>
-              <dd className="text-lg leading-relaxed">{v}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="mt-10 max-w-4xl border-l-4 border-ink pl-5">
+        <p className="mt-3 max-w-3xl text-(--mute)">
+          {LOCAL.model} on a laptop, behind the example store support bot, scanned {LOCAL.scanned}: {LOCAL.per_language}{' '}
+          attacks in each of {langs.length} languages, judged by {LOCAL.judge}. Not a production chatbot.
+        </p>
+
+        <figure className="mt-8 rounded-[10px] border-2 border-ink p-4 sm:p-5" aria-label="The local scan's result for every language">
+          <ul className="flex flex-wrap gap-x-5 gap-y-2 text-[.8rem] text-(--mute)" aria-label="Key">
+            <li><i className="mr-1.5 inline-block size-3.5 rounded-[3px] bg-red align-[-2px]" />got through, kept by the review</li>
+            <li><i className="mr-1.5 inline-block size-3.5 rounded-[3px] outline-2 -outline-offset-2 outline-red-text align-[-2px]" />the judge said got through, the review found a refusal</li>
+            <li><i className="mr-1.5 inline-block size-3.5 rounded-[3px] border-[1.5px] border-dashed border-(--mute) align-[-2px]" />left out, failed the capability check</li>
+            <li><i className="mr-1.5 inline-block size-3.5 rounded-[3px] bg-(--card) align-[-2px]" />held all {LOCAL.per_language}</li>
+          </ul>
+          {TIERS.map(([tier, label]) => {
+            const row = langs.filter(([, l]) => l.tier === tier).sort((a, b) => a[1].name.localeCompare(b[1].name))
+            return (
+              <div key={tier} className="mt-3 grid gap-2 border-t border-(--line) pt-3 md:grid-cols-[8.5rem_minmax(0,1fr)]">
+                <h3 className="text-[.85rem] font-semibold md:pt-1">{label} ({row.length})</h3>
+                <ul className="flex flex-wrap gap-1.5">{row.map(([code, l]) => <Cell key={code} code={code} l={l} />)}</ul>
+              </div>
+            )
+          })}
+          <div className="mt-4 grid gap-4 border-t-2 border-ink pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            {notes.map((n) => <p key={n} className="border-l-[3px] border-red-text pl-3 text-[.875rem] font-medium leading-snug text-red-text">{n}</p>)}
+          </div>
+        </figure>
+
+        <div className="mt-8 max-w-4xl border-l-4 border-ink pl-5">
           <p className="font-bold">What it cannot show</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-(--mute)">
             {LIMITS.map((l) => <li key={l}>{l}</li>)}

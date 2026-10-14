@@ -49,8 +49,8 @@ export default function LiveScan({ languages, outcomes, expected, done, total, b
         <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
           <div>
             <span className="tag border border-current text-(--mute)">{live ? 'Live scan' : 'Simulated scan'}</span>
-            <h1 className="display mt-4 text-[clamp(2.4rem,5vw,4.4rem)]">
-              Attacking <span className="serif">{title}.</span>
+            <h1 className="display mt-4 text-[clamp(2rem,4vw,3.4rem)]">
+              Attacking {title}.
             </h1>
             <p className="caption mt-3 text-(--mute)">
               {languages.length} language{languages.length === 1 ? '' : 's'}, {expected} attack{expected === 1 ? '' : 's'} each
