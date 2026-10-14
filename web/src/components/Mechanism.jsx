@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import LOCAL from '../local-example.json'
+import { useMotionOff } from '../lib/motion'
 
 // The hero's figure: one real attack, step by step, from the 2026-10-11 local
 // scan. Every string is the scan's own (web/src/local-example.json, written by
@@ -18,9 +20,14 @@ function withCode(text, through) {
   ]))
 }
 
-function Step({ n, title, children }) {
+const BEAT = 650 // ms between steps, slow enough to read each one
+
+function Step({ n, title, shown, children }) {
   return (
-    <li className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-3 border-t border-(--line) px-4 py-4 first:border-t-0 sm:gap-4 sm:px-5">
+    <li
+      data-shown={shown || undefined}
+      className={`grid grid-cols-[1.75rem_minmax(0,1fr)] gap-3 border-t border-(--line) px-4 py-4 transition-[opacity,transform] duration-500 ease-[cubic-bezier(.3,.7,.3,1)] first:border-t-0 sm:gap-4 sm:px-5 ${shown ? '' : 'translate-y-1.5 opacity-0'}`}
+    >
       <span className="grid size-7 place-items-center rounded-full border-[1.5px] border-current text-[.8rem] font-bold" aria-hidden="true">{n}</span>
       <div className="min-w-0">
         <h3 className="mb-2 text-[.9rem] font-semibold">{title}</h3>
@@ -32,11 +39,27 @@ function Step({ n, title, children }) {
 
 export default function Mechanism() {
   const pair = ['en', 'cy']
+  const reduce = useMotionOff()
+  const box = useRef(null)
+  const [played, setPlayed] = useState(0)
+  useEffect(() => {
+    if (reduce) return undefined
+    const el = box.current
+    const timers = []
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      io.disconnect()
+      for (let n = 1; n <= 4; n++) timers.push(setTimeout(() => setPlayed((v) => Math.max(v, n)), 250 + (n - 1) * BEAT))
+    }, { threshold: 0.25 })
+    io.observe(el)
+    return () => { io.disconnect(); timers.forEach(clearTimeout) }
+  }, [reduce])
+  const count = reduce ? 4 : played
   const field = 'rounded-md bg-(--card) px-3 py-2.5 text-[.95rem] leading-snug'
   return (
-    <figure className="overflow-hidden rounded-[10px] border-2 border-ink bg-(--bg)" aria-labelledby="mechanism-caption">
+    <figure ref={box} data-played={count} className="overflow-hidden rounded-[10px] border-2 border-ink bg-(--bg)" aria-labelledby="mechanism-caption">
       <ol>
-        <Step n={1} title="The attack, sent as a customer message">
+        <Step n={1} shown={count >= 1} title="The attack, sent as a customer message">
           <div className="grid gap-3 sm:grid-cols-2">
             {pair.map((code) => (
               <div key={code}>
@@ -46,7 +69,7 @@ export default function Mechanism() {
             ))}
           </div>
         </Step>
-        <Step n={2} title="The trust boundary">
+        <Step n={2} shown={count >= 2} title="The trust boundary">
           <p className="rounded-md border-[1.5px] border-dashed border-current px-3 py-2.5 text-[.875rem] leading-snug text-(--mute)">
             {LOCAL.system_prompt}
           </p>
@@ -57,7 +80,7 @@ export default function Mechanism() {
             The bot reads both. A guardrail is only as good as its refusal to let the second override the first.
           </p>
         </Step>
-        <Step n={3} title="What the bot replied">
+        <Step n={3} shown={count >= 3} title="What the bot replied">
           <div className="grid gap-3 sm:grid-cols-2">
             {pair.map((code) => {
               const h = LOCAL.hero[code]
@@ -70,7 +93,7 @@ export default function Mechanism() {
             })}
           </div>
         </Step>
-        <Step n={4} title="How it was judged">
+        <Step n={4} shown={count >= 4} title="How it was judged">
           <div className="grid gap-3 text-[.8rem] text-(--mute) sm:grid-cols-2">
             {pair.map((code) => (
               <p key={code}>

@@ -330,3 +330,25 @@ Plan for v2, in order of impact:
   are sentence case and written as plain sentences, eyebrows and buttons are no
   longer in capitals, and the capitals with the serif survive in two places only, the
   wordmark and the closing line.
+- 2026-10-13, v7 (master list #15, award sites as references, not templates). Read
+  2026-10-13; the Opal Tadpole page now redirects to an Opal blog post, so its pattern is
+  taken from the brief, not from the page.
+  - **Opal Tadpole: show the real mechanism and annotate real evidence before asking
+    anyone to launch.** Already true after v6: the hero works one real attack through,
+    and the graded sheet sits under it, both before setup.
+  - **Lusion: a quiet frame around one meaningful visual explanation.** The mechanism
+    figure is the one framed object; nothing animates behind it.
+  - **Igloo: sketch first, try it in the browser, test on low-end devices.** The hero
+    began as two static mockups. Low-end check: a 390 pixel phone with the CPU slowed
+    six times and slow 4G (`perf_lowend.py`, kept outside the repo), median of three
+    runs, local build: JavaScript 919 kB raw before batch 1, 339 kB now; main thread long
+    tasks 5.5 s before, 2.1 s now with motion off and 1.3 s with it on; largest paint
+    (the h1) about the same, 3.52 s before and 3.50 s now with motion off. Rendering every
+    section at load had pushed it to 4.8 s; `content-visibility: auto` on the long
+    sections under the hero brought it back.
+  - **Lando: motion tied to the subject.** The page's one orchestrated motion: with
+    motion on, the hero's four steps (input, boundary, reply, verdict) appear in that
+    order once, the first time the figure is on screen. With motion off they are all there.
+  - **Not taken:** WebGL, a loader, audio, scroll capture, or statistics paced like a
+    race. The How it works section no longer pins the page and plays by scrolling; it is
+    the still version for everyone.

@@ -34,6 +34,26 @@ site. A local build of that change measures the app at 354.2 kB raw and 107.2 kB
 gzipped, the styles at 43.9 kB and 9.5 kB, and there is no second chunk. The API
 numbers above are from before that change and were not rerun.
 
+## A slow phone, measured locally
+
+2026-10-13, local builds served by uvicorn (uncompressed), a 390 pixel phone in
+Chromium with the CPU slowed six times, 150 ms latency and 1.6 Mbps down, cache off,
+median of three runs. Before is the build before 2026-10-13's redesign; after is the
+current one.
+
+| | Before | After |
+|---|---|---|
+| JavaScript, raw | 919 kB | 339 kB |
+| Main thread long tasks, motion off | 5.5 s | 2.1 s |
+| Main thread long tasks, motion on | 5.6 s | 1.3 s |
+| Largest contentful paint (the headline), motion off | 3.52 s | 3.50 s |
+| Largest contentful paint, motion on | 3.02 s | 2.63 s |
+
+The largest paint is about the same with motion off: the new page renders more at
+load (the graded sheet, every language's name), and `content-visibility: auto` on the
+long sections under the hero is what keeps it level. Between runs the before build's
+largest paint moved by 0.3 s, so differences smaller than that are noise.
+
 ## The API function
 
 Installed from `uv.lock` with only `anthropic` and `fastapi` and what they need.

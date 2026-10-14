@@ -106,9 +106,11 @@ def main() -> int:
             page.wait_for_timeout(1800)
             check("with reduced motion reported, the landing page is still by default",
                   page.evaluate("document.documentElement.dataset.motion") == "off")
-            check("and nothing on it animates on its own: no running animations, the How it works story is not pinned",
+            check("and nothing on it animates on its own: no running animations, the hero's four steps all shown at once",
                   page.evaluate("document.getAnimations().filter(a => a.playState === 'running').length") == 0
-                  and page.locator("#how").get_attribute("style") is None)
+                  and page.locator("figure[data-played]").get_attribute("data-played") == "4")
+            check("the page never captures the scroll: the How a scan works section is not pinned",
+                  page.locator("#how").get_attribute("style") is None)
             axe(page, "the landing page")
 
             # --- the Motion switch ----------------------------------------------------
@@ -116,9 +118,12 @@ def main() -> int:
             page.wait_for_timeout(300)
             check("the Motion switch turns motion on even though the system asks for less",
                   page.evaluate("document.documentElement.dataset.motion") == "on")
-            page.wait_for_timeout(400)
-            check("with motion turned on, the How it works story becomes the pinned, scroll played version",
-                  "height" in (page.locator("#how").get_attribute("style") or ""))
+            page.evaluate("window.scrollTo(0, 0)")
+            early = page.locator("figure[data-played]").get_attribute("data-played")
+            page.wait_for_timeout(3200)
+            check("with motion turned on, the hero's four steps play in order once (input, boundary, reply, verdict)",
+                  early != "4" and page.locator("figure[data-played]").get_attribute("data-played") == "4"
+                  and page.locator("#how").get_attribute("style") is None)
             page.reload(wait_until="networkidle")
             check("that choice is remembered across a reload",
                   page.evaluate("document.documentElement.dataset.motion") == "on")
@@ -207,6 +212,25 @@ def main() -> int:
             page.goto(base + "/how", wait_until="networkidle")
             page.wait_for_timeout(1200)
             check("the How we know page renders", page.get_by_text("What is not proven yet").count() == 1)
+            nav_ink = page.evaluate("""() => { const h = document.querySelector('header'); const w = h.querySelector('[aria-label="PolyGuard home"]');
+                return h.classList.contains('ink') && getComputedStyle(w).color }""")
+            check("opened directly, the How we know nav takes the dark hero's colours (light text on ink)",
+                  nav_ink == "rgb(238, 237, 229)")
+            rates = page.locator("#rates-list > li")
+            n_langs = json.loads((ROOT / "web" / "src" / "bank-counts.json").read_text(encoding="utf-8"))["languages"]
+            first_rows = rates.count()
+            toggle = page.get_by_role("button", name=f"Show all {n_langs} languages")
+            check("the rates chart starts at English plus the ten highest, with a control that says it is collapsed",
+                  first_rows == 11 and toggle.get_attribute("aria-expanded") == "false")
+            toggle.click()
+            check("one press shows every language, and the control says it is expanded",
+                  rates.count() == n_langs
+                  and page.get_by_role("button", name="Show the top 10 only").get_attribute("aria-expanded") == "true")
+            lao = page.locator('#rates-list [lang="lo"]').first
+            check("Lao in the chart has a font that covers it (Noto Sans Lao is in the stack and loaded)",
+                  lao.count() == 1 and "Noto Sans Lao" in lao.evaluate("e => getComputedStyle(e).fontFamily")
+                  and page.evaluate("document.fonts.check('16px \"Noto Sans Lao\"', 'ລາວ')"))
+            page.get_by_role("button", name="Show the top 10 only").click()
             axe(page, "the How we know page")
             page.go_back()
             page.wait_for_timeout(1200)
@@ -321,6 +345,17 @@ def main() -> int:
                   not m.locator("#site-menu").count()
                   and m.evaluate("document.activeElement.textContent") == "Menu")
             axe(m, "the phone home page with its menu")
+            ar = m.locator('article [lang="ar"].text-left')
+            check("the Arabic card's label starts at the left like every other card, its text still right to left",
+                  ar.count() == 1 and ar.evaluate("e => getComputedStyle(e).direction") == "rtl"
+                  and ar.evaluate("e => getComputedStyle(e).textAlign") == "left")
+            m.goto(base + "/scan", wait_until="networkidle")
+            m.wait_for_timeout(800)
+            bar = m.locator("main > div.fixed").bounding_box()
+            check(f"the phone /scan bar takes at most an eighth of the screen ({bar and round(bar['height'])} of 844 px)",
+                  bar and bar["height"] <= 844 / 8)
+            check("and its Launch scan button is still a 40 pixel target",
+                  m.get_by_role("button", name="Launch scan").bounding_box()["height"] >= 40)
             c3.close()
 
             check(f"no page errors anywhere{': ' + '; '.join(errors[:3]) if errors else ''}", not errors)

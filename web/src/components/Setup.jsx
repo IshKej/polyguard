@@ -110,7 +110,7 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock, onOpe
   return (
     <main data-surface="paper" className="paper min-h-screen">
       <div className="ruler" />
-      <div className="mx-auto max-w-5xl px-5 pb-48 pt-28">
+      <div className="mx-auto max-w-5xl px-5 pb-32 pt-28 sm:pb-48">
         <button type="button" onClick={onBack} className="hl-hover caption mb-6 text-[.8rem]"><span className="hl">Back</span></button>
         <h1 className="display text-[clamp(2.2rem,4.6vw,3.6rem)]">
           Set up the scan.
@@ -291,20 +291,20 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock, onOpe
       </div>
 
       <div data-surface="ink" className="ink fixed inset-x-0 bottom-0 z-20">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-5 py-4">
-          <div>
-            <div className="display text-[1.7rem]">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2.5 sm:gap-4 sm:px-5 sm:py-4">
+          <div className="min-w-0">
+            <div className="display text-[1.05rem] sm:text-[1.7rem]">
               <span className="tabular-nums">{attacks}</span> attacks,{' '}
               <span className="tabular-nums">{langs.length}</span> language{langs.length === 1 ? '' : 's'}
             </div>
-            <div className="text-sm text-(--mute)">
+            <div className="text-xs leading-snug text-(--mute) sm:text-sm">
               {meta.live ? 'Live: real attacks on a real model.' : 'Simulated: no model is attacked, so the outcomes are made up.'}
             </div>
           </div>
           <button
             type="button" disabled={!ready || tooBig}
             onClick={() => onLaunch({ prompt, exampleName, langs, categories: cats, phrasings, model })}
-            className="btn btn-solid"
+            className="btn btn-solid btn-sm shrink-0 sm:px-[1.35rem] sm:py-4 sm:text-base"
           >
             Launch scan
           </button>

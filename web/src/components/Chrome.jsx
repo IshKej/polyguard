@@ -54,7 +54,12 @@ function useNavState(offset = 36, deps = []) {
     pick()
     window.addEventListener('scroll', pick, { passive: true })
     window.addEventListener('resize', pick)
-    return () => { window.removeEventListener('scroll', pick); window.removeEventListener('resize', pick) }
+    // A page can render its first ground after the nav mounts (the method page
+    // waits for its data), so look again whenever the page's size changes.
+    // Without this, /how opened directly kept paper colours on its ink hero.
+    const ro = new ResizeObserver(pick)
+    ro.observe(document.body)
+    return () => { window.removeEventListener('scroll', pick); window.removeEventListener('resize', pick); ro.disconnect() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
   return state

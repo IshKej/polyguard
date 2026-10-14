@@ -248,7 +248,7 @@ gate is on by default and native review is tracked rather than waved off.
 | Verification checks | 234 |
 | Unit tests | 288 (every public engine function) |
 | Audit findings | 78 across 20 rounds (all fixed; 62, cancellation, fixed 2026-10-13) |
-| Native speaker feedback integrated | 4 of 20 (Spanish, Vietnamese, Arabic, Portuguese); none validated |
+| Native speaker feedback integrated | 4 of 20 (Spanish, Vietnamese, Arabic, Portuguese); none validated. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
 | Paid or production model study runs | 0 (no scan of a production chatbot or paid API has run) |
 | Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |
 | Bank fingerprint | `fec8ba0f765c7a28a7b043822aea310b1bdb2c14d29ab946d19ca3a1da1cb8ab` since 2026-10-12 |

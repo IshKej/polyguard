@@ -79,8 +79,20 @@ function Tip({ tip }) {
 }
 
 // Step 1: one scan of the fair bot, every language as a bar.
+const TOP = 10
+
 function RatesChart({ rows, worst }) {
   const [tip, setTip] = useState(null)
+  const [all, setAll] = useState(false)
+  // Highest rate first, English pinned at the top as the baseline. Ties keep the
+  // bank's order, so the list does not shuffle between equal rows.
+  const ranked = useMemo(() => {
+    const en = rows.filter((x) => x.code === 'en')
+    const rest = rows.filter((x) => x.code !== 'en').map((x, i) => [x, i])
+      .sort((a, b) => b[0].broke - a[0].broke || a[1] - b[1]).map(([x]) => x)
+    return [...en, ...rest]
+  }, [rows])
+  const shown = all ? ranked : ranked.slice(0, TOP + 1)
   const box = useRef(null)
   const show = (e, row) => {
     const b = box.current.getBoundingClientRect()
@@ -102,8 +114,8 @@ function RatesChart({ rows, worst }) {
           ))}
         </div>
       </div>
-      <ul className="space-y-[2px]">
-        {rows.map((row) => {
+      <ul id="rates-list" className="space-y-[2px]">
+        {shown.map((row) => {
           const rate = row.broke / PER_LANG
           const isWorst = row.code === worst.code
           const isEn = row.code === 'en'
@@ -152,6 +164,14 @@ function RatesChart({ rows, worst }) {
           )
         })}
       </ul>
+      {ranked.length > TOP + 1 && (
+        <button
+          type="button" onClick={() => setAll((v) => !v)} aria-expanded={all} aria-controls="rates-list"
+          className="btn btn-line btn-sm mt-4"
+        >
+          {all ? `Show the top ${TOP} only` : `Show all ${rows.length} languages`}
+        </button>
+      )}
       <Tip tip={tip} />
     </div>
   )
@@ -433,8 +453,8 @@ export default function Method({ meta, onStart, onBack }) {
           <div className="mt-14 max-w-3xl border-l-4 border-ink pl-5">
             <h3 className="display text-[1.5rem]">What is not proven yet</h3>
             <p className="mt-2 text-(--mute)">
-              No scan of a production chatbot has run (only small pilots against a local open model), 53 of the 73 languages are machine translated and unreviewed, and only four languages have
-              had feedback from a native speaker (the Arabic is Modern Standard Arabic only). Until those change, PolyGuard has a method, not a result. The full audit
+              No scan of a production chatbot has run (only small pilots against a local open model), 53 of the 73 languages are machine translated and none has had a row by row native review, and native speaker
+              feedback has been received and integrated for only four languages (the Arabic is Modern Standard Arabic only). Until those change, PolyGuard has a method, not a result. The full audit
               trail and the preregistration are public.
             </p>
             <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption mt-3 inline-block"><span className="hl">Source, audit and preregistration</span></a>

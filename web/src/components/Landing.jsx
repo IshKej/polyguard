@@ -42,7 +42,7 @@ function Specimen({ lang, text }) {
     <article className="card cut flex min-h-56 flex-col justify-between p-5">
       <p dir="auto" lang={lang.code} className="text-[1.3rem] font-semibold leading-snug">{text}</p>
       <div className="mt-6 pr-6">
-        <div dir="auto" lang={lang.code} className="font-semibold">{lang.native}</div>
+        <div dir="auto" lang={lang.code} className="text-left font-semibold">{lang.native}</div>
         <div className="caption mt-1 text-(--mute)">{lang.name}, {lang.tier} resource</div>
       </div>
     </article>
@@ -104,10 +104,10 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
       </section>
 
       {/* The one real result so far, graded language by language. */}
-      <LocalEvidence className="border-t border-(--line)" />
+      <LocalEvidence className="cv border-t border-(--line)" />
 
       {/* Why it matters, with every language's own name as the evidence of the range. */}
-      <section data-surface="ink" className="ink">
+      <section data-surface="ink" className="cv ink">
         <div className="mx-auto max-w-7xl px-5 py-20 sm:py-24">
           <h2 className="display max-w-3xl text-[clamp(1.9rem,3.6vw,3rem)]">
             Most guardrail testing happens in English.
@@ -145,8 +145,8 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
         </div>
       </section>
 
-      {/* How it works: pinned, and played by scrolling. */}
-      <ScrollStory languages={others} lines={lines} prompt={meta?.examples?.[0]?.prompt || ''} />
+      {/* How a scan works, in four steps beside a finished board. */}
+      <ScrollStory languages={others} />
 
       {/* The question every result raises, answered on its own page. */}
       <section data-surface="ink" className="ink">
@@ -166,7 +166,7 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
       </div>
 
       {/* The close: highlighter ground, an ink panel with a bump, like a speech bubble's top. */}
-      <section data-surface="on-hi" className="on-hi px-3 pb-3 pt-16 sm:px-4">
+      <section data-surface="on-hi" className="on-hi px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-16 sm:px-4 sm:pb-5">
         <div className="ink relative rounded-[36px] px-6 pb-10 pt-20 text-center sm:px-10">
           <svg viewBox="0 0 240 40" className="absolute -top-[39px] left-1/2 h-10 w-60 -translate-x-1/2 fill-ink" aria-hidden="true">
             <path d="M0 40 C 40 40, 50 0, 90 0 L 150 0 C 190 0, 200 40, 240 40 Z" />
