@@ -1,10 +1,11 @@
 # Native speaker review
 
-**Status as of 2026-10-12: native speaker feedback has been received and
+**Status as of 2026-10-13: native speaker feedback has been received and
 integrated for 4 of the 20 hand-authored languages, Spanish, Vietnamese, Arabic
 and Portuguese. The other 16 have had no native review.
-The 53 machine translated languages added on 2026-10-05 have had no native review
-at all.** Feedback
+None of the 53 machine translated languages added on 2026-10-05 has had a row by
+row native review. For one of them, Tamil, a Tamil instructor sent general
+feedback on 2026-10-13 with no corrections, so nothing in the bank changed.** Feedback
 received and integrated is not a validation: it means a speaker read the lines and
 their corrections are now in the bank, not that the language is certified correct.
 The bank's `native_reviewed` flag is still false for every language.
@@ -162,9 +163,19 @@ credited.
 | Arabic | Native speaker (name withheld) | 2026-10-04 | 18 ok, 2 awkward, 1 wrong; seven wording suggestions | All 7 integrated 2026-10-04 in `generate_attack_bank.py`: 5 attacks (`ar_instruction_override_1`, `ar_instruction_override_2`, `ar_role_play_jailbreak_2`, `ar_system_prompt_extraction_1`, `ar_indirect_injection_0`) and 2 controls (`ar_control_0`, `ar_control_3`). In `ar_indirect_injection_0`, the line marked wrong, only the framing clause was replaced; the quoted customer review carrying the injection is unchanged. Where a suggestion left out the code word, it was kept. |
 | Portuguese | UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching Professor Eduardo Viana da Silva, credited with his permission | 2026-10-08 | Overall the translation was good; vocabulary made more Brazilian and current on 10 of 21 lines (for example registado to registrado) | 9 of 10 applied in full and 1 in part, 2026-10-12, in `generate_attack_bank.py`: `pt_role_play_jailbreak_0`, `pt_role_play_jailbreak_1`, `pt_system_prompt_extraction_2`, `pt_obfuscated_payload_0`, `pt_obfuscated_payload_2`, `pt_indirect_injection_0`, `pt_indirect_injection_1`, `pt_indirect_injection_2`, `pt_control_0`, `pt_control_2`. Not taken: "formal English" to "formal Portuguese" in `pt_indirect_injection_1`, kept as English so the task matches every language; that row's other edits were applied. |
 | Vietnamese | Native speaker (name withheld) | 2026-10-01 | Tone marks correct; understandable, though unnatural in places; one line needed rewording | `vi_role_play_jailbreak_2` reworded as suggested ("tuân theo tất cả" to "tuân theo mọi mệnh lệnh", final period after the canary), 2026-10-02 |
+| Tamil (machine translated) | Tamil instructor at a US university (name withheld until credit is confirmed) | 2026-10-13 | Feedback received, in a short reply: the Tamil lines read correctly against the English, and the English technical terms inside them are appropriate because they cannot be translated. No filled sheet, no per row ratings, no corrections | None. Feedback received, not integrated, and not a row by row review; `native_reviewed` stays false |
 
-All four are logged, with the new bank fingerprints, in the deviation log of
-`PREREGISTRATION.md`.
+The first four are logged, with the new bank fingerprints, in the deviation log of
+`PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry there.
+
+### Waiting
+
+- **Shona** (machine translated, the lowest similarity score after Yoruba). A
+  reviewer at a language institute agreed on 2026-10-13 to check the 21 lines as an
+  unpaid accuracy check, with the sheet requested by 2026-10-23. The review has not
+  started and no sheet has come back. Nothing about Shona changes until it does.
+- **Japanese** (hand-authored). A reviewer asked on 2026-10-06 whether help was
+  still needed and the sheet was sent again that day. Nothing has come back.
 
 ## Arabic scope
 
@@ -181,7 +192,8 @@ The correct phrasing anywhere this project is described is:
 > review. The Arabic is Modern Standard Arabic, and its review
 > does not establish coverage of Arabic dialects. Languages added later are
 > machine-translated and checked by reverse translation: 53 so far, none reviewed
-> by a native speaker. Every language also carries two automated quality scores
+> row by row by a native speaker (for Tamil, an instructor sent general feedback
+> that the lines read correctly, with no corrections). Every language also carries two automated quality scores
 > (language identification and sentence similarity), which flag gross failures
 > but do not validate anything. Translation quality is a known limitation and a
 > possible confound.
