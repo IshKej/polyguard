@@ -202,10 +202,14 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
                 ? 'Scans on this site can attack a real model, and setup shows the cost before anything is sent.'
                 : 'The demo is simulated: no model is attacked and the outcomes are made up.'}{' '}
               The report is a real scan of a small open model on a laptop, not a production chatbot.{' '}
-              <button type="button" onClick={onStart} className="underline underline-offset-4 hover:text-ink">
-                Scan your own chatbot
-              </button>
-              ; setup shows the mode and cost first.
+              To scan your own chatbot,{' '}
+              <span className="whitespace-nowrap">
+                <button type="button" onClick={onStart} className="underline underline-offset-4 hover:text-ink">
+                  start setup
+                </button>
+                :
+              </span>{' '}
+              it shows the mode and cost first.
             </p>
           </div>
           <div className="relative -mx-5 lg:mx-0">
