@@ -269,10 +269,18 @@ def main() -> int:
                     check(f"{label} metadata: still {want} afterwards, with no page error",
                           late and all(n == str(want) for n in late) and not p2_errors)
                 else:
-                    body = p2.locator("body").inner_text()
-                    check("failed metadata: the server error screen with a retry, no stale count, no page error",
-                          "reach its server" in body.lower() and "try again" in body.lower()
-                          and all(n == str(want) for n in late) and not p2_errors)
+                    notice = p2.get_by_role("status").filter(has_text="reach its server")
+                    check("failed metadata: the home page stays up with a small notice and a retry, "
+                          f"every count still {want}, no page error",
+                          notice.count() == 1 and notice.get_by_role("button", name="Try again").count() == 1
+                          and p2.get_by_role("heading", level=1).count() == 1
+                          and late and all(n == str(want) for n in late) and not p2_errors)
+                    p2.unroute("**/api/meta")
+                    notice.get_by_role("button", name="Try again").click()
+                    p2.wait_for_timeout(1200)
+                    check("failed metadata: Try again loads it and the notice goes away",
+                          p2.get_by_role("status").filter(has_text="reach its server").count() == 0
+                          and p2.get_by_role("button", name="Try the illustrative demo").is_enabled())
                 c2.close()
             page.goto(base + "/", wait_until="networkidle")
             settled = hero_counts(page)

@@ -146,7 +146,10 @@ export default function App() {
     return m
   }, [rows])
 
-  if (metaError && !meta) {
+  // A judge on bad wifi should still see the home page: there, a failed metadata
+  // load is a small notice with a retry. Screens that cannot work without the
+  // server (setup, results, the method page) keep the full explanation.
+  if (metaError && !meta && view !== 'landing') {
     return (
       <>
         <Nav loaded={false} onHome={() => {}} showScan={false} view="error" />
@@ -177,12 +180,18 @@ export default function App() {
       <div
         aria-hidden="true"
         className={`on-hi pointer-events-none fixed inset-0 z-50 grid place-items-center ${
-          wipe === 'idle' ? 'translate-y-full' : wipe === 'in' ? 'translate-y-0 transition-transform duration-[380ms] ease-[cubic-bezier(.7,0,.3,1)]' : '-translate-y-full transition-transform duration-[440ms] ease-[cubic-bezier(.7,0,.3,1)]'
+          wipe === 'idle' ? 'invisible translate-y-full' : wipe === 'in' ? 'translate-y-0 transition-transform duration-[380ms] ease-[cubic-bezier(.7,0,.3,1)]' : '-translate-y-full transition-transform duration-[440ms] ease-[cubic-bezier(.7,0,.3,1)]'
         }`}
       >
         <span className="font-serif text-[clamp(3rem,8vw,6rem)] leading-none">Poly<span className="display">Guard</span></span>
       </div>
       {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} onTry={tryExample} onMethod={() => go('method')} />}
+      {view === 'landing' && metaError && !meta && (
+        <div role="status" className="paper fixed inset-x-4 bottom-4 z-40 flex flex-wrap items-center gap-3 border-2 border-ink p-3 text-sm shadow-[4px_4px_0_var(--ink)] sm:right-auto sm:max-w-md">
+          <span>PolyGuard can’t reach its server right now, so the demo and scans are paused.</span>
+          <button type="button" onClick={loadMeta} className="btn btn-sm btn-solid">Try again</button>
+        </div>
+      )}
       {view === 'method' && meta && <Method meta={meta} onStart={() => go('setup')} onBack={() => go('landing')} />}
       {view === 'setup' && meta && (
         <Setup
