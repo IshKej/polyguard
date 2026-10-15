@@ -358,6 +358,35 @@ def main() -> int:
                   m.get_by_role("button", name="Launch scan").bounding_box()["height"] >= 40)
             c3.close()
 
+            # --- choosing languages on a touch phone, by keyboard and by tap ---------------
+            c4 = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce",
+                                     has_touch=True, is_mobile=True)
+            t4 = c4.new_page()
+            t4.on("pageerror", lambda e: errors.append(str(e)))
+            t4.goto(base + "/scan", wait_until="networkidle")
+            t4.wait_for_timeout(800)
+            lao = t4.locator('button[aria-pressed]:has(> [lang="lo"])').first
+            langs_in_bar = lambda: t4.locator("main > div.fixed").inner_text()  # noqa: E731
+            start = lao.get_attribute("aria-pressed")
+            lao.evaluate("e => e.previousElementSibling.focus()")
+            t4.keyboard.press("Tab")
+            ring = lao.evaluate("e => document.activeElement === e && getComputedStyle(e).outlineStyle !== 'none'"
+                                " && parseFloat(getComputedStyle(e).outlineWidth) >= 2")
+            check("Tab reaches a language button and shows a visible focus ring", ring)
+            t4.keyboard.press("Space")
+            after_space = lao.get_attribute("aria-pressed")
+            bar_after = langs_in_bar()
+            t4.keyboard.press("Enter")
+            check("Space and Enter each toggle a language, and the sticky bar's count follows",
+                  after_space != start and lao.get_attribute("aria-pressed") == start
+                  and f"{want - 1} languages" in " ".join(bar_after.split()))
+            lao.tap()
+            check("a tap toggles a language on a touch screen", lao.get_attribute("aria-pressed") != start)
+            lao.tap()
+            check("Lao on the setup page has its fallback font (Noto Sans Lao in the stack)",
+                  "Noto Sans Lao" in t4.locator('button [lang="lo"]').last.evaluate("e => getComputedStyle(e).fontFamily"))
+            c4.close()
+
             check(f"no page errors anywhere{': ' + '; '.join(errors[:3]) if errors else ''}", not errors)
             browser.close()
     except Exception as e:

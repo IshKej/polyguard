@@ -184,8 +184,8 @@ new bank fingerprints, in the deviation log of `PREREGISTRATION.md`. Tamil chang
   unpaid accuracy check, with the sheet requested by 2026-10-23. The review has not
   started and no sheet has come back. Credit stays withheld until she confirms the
   terms. Nothing about Shona changes until the sheet comes back.
-- **Croatian and Serbian** (machine translated). A university contact is looking for
-  speakers. No review yet.
+- **Croatian and Serbian** (machine translated). A university contact has referred a
+  speaker, who is expected to get in touch. No review yet.
 - **Japanese** (hand-authored). A reviewer asked on 2026-10-06 whether help was
   still needed and the sheet was sent again that day. Nothing has come back.
 
