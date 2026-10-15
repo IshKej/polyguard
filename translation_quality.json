@@ -2,7 +2,7 @@
  "schema": 1,
  "what": "Automated translation quality proxy per bank language. Two offline signals that catch gross failures (wrong language, meaning drift). Not a validation: neither tool measures fluency, register, or whether a native speaker would read an attack as an instruction.",
  "generated_on": "2026-10-14",
- "bank_sha256": "6c5639dc4dea33c39fc7f44a10dc8b8c65b1bd095812fecd1b64981a21d37a55",
+ "bank_sha256": "c3d89dfef3c9ebbf37e83b6b1b8e6d3f8cea60e805de77202ca9970aa25c5795",
  "n_languages": 73,
  "n_machine": 53,
  "preparation": "linguistics.strip_fixed_tokens with the canary and control token (removes both, Base64 blobs and SYSTEM OVERRIDE), then whitespace collapsed. Applied to translations and English seeds.",
@@ -65,7 +65,7 @@
   "wrong_pairs_p50": 0.313,
   "correct_pairs_n": 1512,
   "correct_pairs_p01": 0.6806,
-  "correct_pairs_p50": 0.897
+  "correct_pairs_p50": 0.8967
  },
  "lid_labels": {
   "en": [
@@ -897,7 +897,7 @@
    "provenance": "machine",
    "tier": "mid",
    "n_strings": 21,
-   "text_sha256": "e1c2b15434d05ba7be2c90c95995103eb870d0faf257708a61a2fb1657f90e70",
+   "text_sha256": "7d37b3866a9f6ea598d6e669846621446a578634f8fe4279203d678cd1eaf34b",
    "lid": {
     "share": 1.0,
     "share_close": 1.0,
@@ -905,10 +905,10 @@
     "misses": []
    },
    "sim": {
-    "mean": 0.9171,
-    "min": 0.8225,
-    "mean_wrong": 0.3173,
-    "margin": 0.5998,
+    "mean": 0.9016,
+    "min": 0.8102,
+    "mean_wrong": 0.3181,
+    "margin": 0.5836,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []

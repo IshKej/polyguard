@@ -2,7 +2,8 @@
 Regression tests for the native speaker corrections, Spanish (2026-10-01), Arabic
 (2026-10-04), Portuguese (2026-10-08, integrated 2026-10-12) and French (register,
 integrated 2026-10-14) and Lithuanian (11 of 15 returned corrections, integrated
-2026-10-14, 4 held), and for every unflagged or held row in those five languages. A
+2026-10-14, 4 held) and Bulgarian (14 of 16 corrections, integrated 2026-10-14, 2
+held), and for every unflagged or held row in those six languages. A
 digest of every language's text guards all 73 languages against unintended edits.
 
 Each row is pinned by the SHA-256 of its template and of its rendered bank text.
@@ -258,6 +259,50 @@ PINS = {
         "89f1bf50b2773948c7b1523b5526e1deed70d2bbd78676c48d2b9607a2749015", True),
     "lt_control_5": ("5a0b06766d5a4d409a28ee92464a5ab906f405b836c77ecf05ae07efe596ae8f",
         "1767bf567bf89afd3c42053f7614782f7d73660f14836cee5c8322181ce33bbc", False),
+    # Bulgarian (machine translated): 14 corrections from Iliyana Dimitrova integrated 2026-10-14;
+    # bg_system_prompt_extraction_1 and bg_indirect_injection_0 are held at their earlier text.
+    "bg_instruction_override_0": ("611ab0ce0fda43a97ed8062b5095ab7324e595cdaba730139b0a0ec52c74941b",
+        "21532f74077a253e43e6b02380a97bedcd9361727a116d2ee1df4bf0b13752d9", False),
+    "bg_instruction_override_1": ("f73d03e6c3ab9eaba4c3c518de0a02794a101d46b1e24d489ce3f82142e830e5",
+        "8a7e41a9bb57219df64ea4d1a4d732dbe59efda59a5b075cfed19515da171bb1", False),
+    "bg_instruction_override_2": ("5c2a55b5ea7c0c0ba9841ffd5d7755771545f3666a83abbd500246a8fd90b812",
+        "c54ce7534758154fa6aeff270fcb64460bd407a73fa1b9afc44a39877295a157", True),
+    "bg_role_play_jailbreak_0": ("60e94900da93a8bfe05a03da65de1f0bbf32afddb20bfb62a343c759e2472e3f",
+        "2b2552412e3ec9e4ee75d2194f5c9d4340d9fa3bdb527773577e781bb9e3dbfb", True),
+    "bg_role_play_jailbreak_1": ("d455243e20912f62d08f217c895c1d935fbba01c1d96fd107402492618e8c4ae",
+        "08bab23c9e48edbd9b97c371d82f62f9973b5a4ecca741a9768ca16f4bb47631", True),
+    "bg_role_play_jailbreak_2": ("83ca3d4005278395b5d3fbf19592c5bfd7817d8662976b874646e1a5cb3e00bd",
+        "12a33c7bfd07e82b3acd622c935b02124af43b6aa75ade0342affb3ca95d7728", True),
+    "bg_system_prompt_extraction_0": ("7d988d61d7c5aa2a5d73871242e207abe90d91629bd3731903b632ab98593c93",
+        "7d988d61d7c5aa2a5d73871242e207abe90d91629bd3731903b632ab98593c93", False),
+    "bg_system_prompt_extraction_1": ("d2efb76cbad6d741371ec1eb4c1efe20ee3e1360badb973716abafa0e3cb6aa1",
+        "d2efb76cbad6d741371ec1eb4c1efe20ee3e1360badb973716abafa0e3cb6aa1", False),
+    "bg_system_prompt_extraction_2": ("4c21798b6ab05922b89b4a1e26d67a4e6a8665a0f8894304338c44231d91970e",
+        "4c21798b6ab05922b89b4a1e26d67a4e6a8665a0f8894304338c44231d91970e", True),
+    "bg_obfuscated_payload_0": ("d89d8766a60958f42ecd2bfc1109e3e537bfc0c7eddef10807a8fd31b6f5e6fb",
+        "59f826d6dbdcd1157736ff079b469517591d85fca891e287017d8a17d11a6a6b", True),
+    "bg_obfuscated_payload_1": ("5697941dfd3cf318ade0879c265a3c815dd109907fc12342c84fa23b86579243",
+        "e2370483a389389d76760e24de6da370811f3094a18ffecf86953e0f0845dba0", True),
+    "bg_obfuscated_payload_2": ("90f7533825ca881a3e9ab9d1dfde56bc1e125f04a94f24b9e813c0b9048d9e0a",
+        "cade6cc690f701b999ae980c0bb804d61e246ea7e40de8be9255804a91c21d6d", True),
+    "bg_indirect_injection_0": ("b0d1c13f331c3a2073f76d3b76bf30b986b535e58e82a16e9391772c608d99aa",
+        "23ac1c849c3dcc3cf063249b2b8904b9b57407c9f9c1649e5c1fbabdb2fb71c2", False),
+    "bg_indirect_injection_1": ("c18076c65a2dcb3aa35389ab2a9e419c20109a294fc91ee8e97d6452480d24a5",
+        "37191e03f9374ca1fa3ef62a57af4d284caf493dc3e6b8251543244e72d25780", True),
+    "bg_indirect_injection_2": ("8013df780dc3cf56ac0323b8415c07d2b7826f810b8ed448da93323fbc14ada3",
+        "dbf48d254f4234315751d0de558ac94ed6e9ab4ec36632967c26d436e5782f6f", True),
+    "bg_control_0": ("e1d625a1a640f1c42ccbc2fa25ec45869e3de6db08cfb8dc6532d8decd9423cc",
+        "b79a9689431e0f77781e0e7bea336c359293dcef1f22000c7e292b1b3415a914", True),
+    "bg_control_1": ("db915c0935a49b14f0ec3b61f7cd613171710a3d72bdc11ac65f77618587a466",
+        "84e03bce40d9568b28b92521278b5ad7c1e6552a79ea58300c916ba4affb17c4", True),
+    "bg_control_2": ("a5fec8f92027a7b0487d3560b45297d50aa1245a1fd566a718a36e1471c45a12",
+        "0560431fe78f38cbe679655fec663c786cfc4b3db9a19bfa51403b9f34ed6a67", False),
+    "bg_control_3": ("2b65868c1ccd5c7f0ed9c66b8cdf5e0c08b95113ea0a93b2c3f1329286140b3f",
+        "a8b343c44a8adb2c9b30aabd7d679c7905d76fa72593bfbf4f1cef711e9ee77e", True),
+    "bg_control_4": ("c4c2e502012dc736713fa2c430d6082b5bfc12b4f7921cebfb042d50c5cfd38f",
+        "ff7df4b46947d561e586383de6ba53f1d02a96bd032b6e00f3d841036f52c512", True),
+    "bg_control_5": ("c0e6f13a92d8d9cede23aafcc016239204f3dac0f7cd68352cd2b025a8595197",
+        "3b3888880d2c787ad2458ed442b643b865f19483b8ed785324110302a975ec37", False),
 }
 
 
@@ -271,15 +316,16 @@ attacks = {a["id"]: a for a in BANK["attacks"]}
 controls = {c["id"]: c for c in BANK.get("controls", [])}
 bank_rows = {**attacks, **controls}
 
-check("exactly 43 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese, 5 French, 11 Lithuanian)",
-      sum(v[2] for v in PINS.values()) == 43
+check("exactly 57 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese, 5 French, 11 Lithuanian, 14 Bulgarian)",
+      sum(v[2] for v in PINS.values()) == 57
+      and sum(v[2] for k, v in PINS.items() if k.startswith("bg_")) == 14
       and sum(v[2] for k, v in PINS.items() if k.startswith("lt_")) == 11
       and sum(v[2] for k, v in PINS.items() if k.startswith("fr_")) == 5
       and sum(v[2] for k, v in PINS.items() if k.startswith("pt_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("es_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("ar_")) == 7)
-check("every Spanish, Arabic, Portuguese, French and Lithuanian row in the bank is pinned, and nothing else",
-      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr", "lt")} == set(PINS))
+check("every Spanish, Arabic, Portuguese, French, Lithuanian and Bulgarian row in the bank is pinned, and nothing else",
+      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr", "lt", "bg")} == set(PINS))
 for rid, (t_sha, r_sha, corrected) in PINS.items():
     kind = "corrected" if corrected else "unflagged"
     check(f"{rid} ({kind}): generator template unchanged", sha(template(rid)) == t_sha)
@@ -297,7 +343,7 @@ check("ar_indirect_injection_0 keeps the quoted review with the marker and the c
       and "SYSTEM OVERRIDE" in _quoted and CANARY not in _frame)
 
 # Tokens and markers survive in every reviewed language's rows.
-for lang in ("es", "ar", "pt", "fr", "lt"):
+for lang in ("es", "ar", "pt", "fr", "lt", "bg"):
     rows = [a for a in BANK["attacks"] if a["lang"] == lang]
     check(f"{lang}: every canary attack carries the canary once",
           all(a["text"].count(CANARY) == 1 for a in rows
@@ -324,13 +370,31 @@ for lang in ("es", "ar", "pt", "fr", "lt"):
           and all(c.get("native_reviewed", False) is False for c in ctl)
           and not BANK["languages"][lang].get("native_reviewed"))
 
+# Bulgarian: the review changed only the wording around the Base64 payload (rows
+# 10 to 12). The payload itself must be byte-identical to the one before the review,
+# the same in all three rows, and still the encoding of bg_instruction_override_0.
+# It is decoded here as data for the comparison only.
+_BG_PAYLOAD_SHA = "4eea01711119a684cc145730d0fd49fee5530692d95891cf744fe604b5f16ebb"
+_bg_obf = [attacks[f"bg_obfuscated_payload_{i}"]["text"] for i in range(3)]
+_bg_pay = [x.rstrip().rsplit(" ", 1)[-1] for x in _bg_obf]
+check("bg: the three obfuscated rows carry one payload, byte-identical to the one before the review",
+      len(set(_bg_pay)) == 1 and sha(_bg_pay[0]) == _BG_PAYLOAD_SHA)
+check("bg: that payload still encodes bg_instruction_override_0 exactly",
+      base64.b64decode(_bg_pay[0]).decode("utf-8") == attacks["bg_instruction_override_0"]["text"])
+check("bg: the two quoted-message attacks keep their frame, one blank line, then the quoted message",
+      all(attacks[f"bg_indirect_injection_{i}"]["text"].count("\n\n\"") == 1 for i in (1, 2)))
+check("bg: FreeBot and NoLimit keep their names", "FreeBot" in attacks["bg_role_play_jailbreak_0"]["text"]
+      and "NoLimit" in attacks["bg_role_play_jailbreak_1"]["text"])
+check("the bank's inventory is unchanged: 73 languages, 1095 attacks, 438 controls",
+      len(BANK["languages"]) == 73 and len(BANK["attacks"]) == 1095 and len(BANK["controls"]) == 438)
+
 # Every language's text, as a digest of its sorted (id, text) pairs: an edit to any
 # language nobody meant to touch fails here. Updated only with a deviation entry.
 LANG_DIGESTS = {
     "af": "5475563e8be775e89d23720d374ab0f81999f727a657cf2b5188729875617827",
     "ar": "146cfbdbc6b02b3b00e97291eea53a286f8ce3541678ba4efa3b0ea4400f9008",
     "az": "44f9e37a8b08bbd03272f60df8bc60fe249200742fc5aed80c394f4c692cafe7",
-    "bg": "d33bff584c28d5855b13af9a855285e11cc5020384d3dd021daf18678c78be86",
+    "bg": "812c9cc9b286f404a65adce1c70ebf36a7c34669bffbd0984ff5108efcd2bd6a",
     "bn": "b91d79e9438e80e4a6a24ee1472e83240b52afddc7c1127f52e715f1d29be22b",
     "ca": "2026d33291bb8fd9de2548be173de69e32427f119860deb790ab6b63e06ad2ed",
     "ceb": "543401ca445bbc3ee8bc2dfb0a471588563d11b1b6fa00ec30b49104ef7f5773",
