@@ -1051,6 +1051,54 @@ from their own evidence, and by driving the site in a real browser.
     cost bound, the spend guard, the preflight and every document that counts
     calls now count controls twice. PREREGISTRATION.md, 2026-10-11.
 
+## Round 21: a full pass after the redesign and three reviews
+
+79. **An old scan's report would have shown scores for text it never sent.** The
+    published 2026-10-11 report reads the per language translation scores, and
+    rebuilding it after the Lithuanian review would have printed Lithuanian's new
+    score beside a scan that sent the old text. FIX: the scores for the scan's own
+    bank are kept beside it (`translation_quality-at-scan.json`, every language's
+    text hash checked against that bank from git), the report is built from them,
+    and any report built with scores for another bank says so (verify_all 2e).
+
+80. **A page-header middleware hid the visitor's disconnect from cancellation.**
+    Adding security headers with Starlette's response-wrapping middleware put it
+    between the live scan's event stream and the client, and the server went on
+    starting calls after the tab closed (228 more). Caught by
+    `api/test_cancellation.py` before anything was pushed. FIX: plain ASGI that
+    passes `/api/` straight through; verify_all 2j forbids the wrapping kind.
+
+81. **The site sent no security headers.** No content security policy, nothing
+    against being framed, no nosniff. FIX: `vercel.json` sends a policy that allows
+    scripts only from the site, no framing, nosniff, a referrer policy and a
+    permissions policy; the local server applies the same block so the browser
+    tests run under it and fail on anything it blocks.
+
+82. **Changing screen told a screen reader nothing.** Every screen had the same
+    title and focus stayed on the link that had just disappeared. FIX: each screen
+    sets its title and focus moves to its heading (browser test).
+
+83. **One integrated correction had no regression pin.** Vietnamese, corrected on
+    2026-10-02, was the only reviewed language not pinned. FIX: all 21 rows pinned,
+    the corrected one from the text in the commit that applied it.
+
+84. **Review counts were typed into the method page and went stale.** It said four
+    languages after the fifth and sixth landed. FIX: the counts come from
+    `native_review.json` through a generated summary (verify_all 2f).
+
+85. **The README's first image showed a hero that no longer exists.** The
+    highlighter cursor and the speech bubble were removed on 2026-10-13; the image
+    and its description still showed them. FIX: re-shot from the current build.
+
+86. **The header's Simulated badge appeared only after the server answered.** On a
+    slow connection the top of the page carried no label. FIX: the badge shows
+    Simulated until the server says a scan would be live, the conservative
+    direction.
+
+87. **Two limitations below had gone stale.** One said feedback was integrated for
+    Spanish and Vietnamese only; one listed French among the mixed-register
+    languages after its controls moved to tu. FIX: both restated.
+
 ## Known limitations kept honest (stated in-app / README)
 - Results are specific to the chosen victim model.
 - Generated (unverified) languages are machine-translated; marked as such.
@@ -1072,8 +1120,9 @@ from their own evidence, and by driving the site in a real browser.
   find one; otherwise it is reported as underpowered and inconclusive.
 - The multilingual safety gap is a published result, not a PolyGuard discovery.
   See RELATED_WORK.md for what this project does and does not claim.
-- Native speaker feedback has been integrated for Spanish and Vietnamese only;
-  that is feedback, not validation. Provenance is stated as author or machine;
+- Native speaker feedback has been received and integrated for Spanish,
+  Vietnamese, Arabic, Portuguese and French, and in part for Lithuanian and
+  Bulgarian (some rows held for confirmation); that is feedback, not validation. Provenance is stated as author or machine;
   neither means reviewed. See NATIVE_REVIEW.md.
 - Machine translation is expected to UNDERSTATE the low-resource gap, because a
   garbled attack fails for reasons unrelated to the defence being measured, but
@@ -1086,9 +1135,11 @@ from their own evidence, and by driving the site in a real browser.
 - Capability controls run 6 per language, which confirms a language the model
   cannot operate in at all but not partial limitation; the report states which,
   derived from the interval rather than asserted.
-- In German, French, Russian, Ukrainian, Chinese and Indonesian the attacks use
-  the informal "you" (du, tu, ты, ти, 你, kamu) while the benign controls use the
-  formal one (Sie, vous, Вы, Ви, 您, Anda). English has no such distinction, so
+- In German, Russian, Ukrainian, Chinese and Indonesian the attacks use the
+  informal "you" (du, ты, ти, 你, kamu) while the benign controls use the formal one
+  (Sie, Вы, Ви, 您, Anda); French did too until 2026-10-14, when its reviewer
+  flagged it and the controls moved to tu. The Lithuanian and Bulgarian reviewers
+  edited the controls in the formal register and the attacks in the informal one. English has no such distinction, so
   nothing in the source decided it. Bossy informal phrasing is plausible for an
   attack and polite phrasing for a routine request, but it is a second
   difference between attack and control besides intent. It is not changed

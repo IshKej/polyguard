@@ -34,6 +34,8 @@ TQ_NOW = ROOT / "translation_quality.json"
 TQ_BEFORE = ROOT / "results/local/2026-10-11/translation_quality-at-scan.json"
 ROWS_OUT = ROOT / "review_row_scores.json"
 SITE_OUT = ROOT / "web/src/review-data.json"
+# Counts only, small enough for the main bundle (the /how page states them).
+SUMMARY_OUT = ROOT / "web/src/review-summary.json"
 BEFORE_BANK_SHA = "4e2ba320c932823e046d2113af44ee2ca5e4042cf3d75f1ea8abd15117cdf1f8"
 BEFORE_BANK_COMMIT = "75e5fe6"
 REVIEWED = ("integrated", "integrated_in_part")
@@ -149,6 +151,16 @@ def site_json() -> str:
     return json.dumps(site_data(), ensure_ascii=False, indent=1) + "\n"
 
 
+def summary_json() -> str:
+    d = site_data()
+    n = lambda s: sum(lang["status"] == s for lang in d["languages"])  # noqa: E731
+    out = {"languages": len(d["languages"]),
+           "machine": sum(lang["provenance"] == "machine" for lang in d["languages"]),
+           "integrated": n("integrated"), "integrated_in_part": n("integrated_in_part"),
+           "feedback_no_corrections": n("feedback_no_corrections")}
+    return json.dumps(out, indent=1) + "\n"
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--build", action="store_true", help="recompute per row scores (needs the local LaBSE model)")
@@ -160,4 +172,5 @@ if __name__ == "__main__":
         build_rows(a.labse)
         print(f"wrote {ROWS_OUT.relative_to(ROOT)}")
     SITE_OUT.write_text(site_json(), encoding="utf-8", newline="\n")
-    print(f"wrote {SITE_OUT.relative_to(ROOT)}")
+    SUMMARY_OUT.write_text(summary_json(), encoding="utf-8", newline="\n")
+    print(f"wrote {SITE_OUT.relative_to(ROOT)} and {SUMMARY_OUT.relative_to(ROOT)}")

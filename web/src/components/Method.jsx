@@ -1,4 +1,5 @@
 import LocalEvidence from './LocalEvidence'
+import REVIEW from '../review-summary.json'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMotionOff } from '../lib/motion'
 
@@ -453,9 +454,11 @@ export default function Method({ meta, onStart, onBack, onCoverage }) {
           <div className="mt-14 max-w-3xl border-l-4 border-ink pl-5">
             <h3 className="display text-[1.5rem]">What is not proven yet</h3>
             <p className="mt-2 text-(--mute)">
-              No scan of a production chatbot has run (only small pilots against a local open model), 53 of the 73 languages are machine translated, no language has been validated by a native speaker, and native
-              speaker feedback has been received and integrated for only five languages and, in part, two more (the Arabic
-              is Modern Standard Arabic only). Until those change, PolyGuard has a method, not a result. The full audit
+              No scan of a production chatbot has run (only small pilots against a local open model), {REVIEW.machine} of the{' '}
+              {REVIEW.languages} languages are machine translated, no language has been validated by a native speaker, and
+              native speaker feedback has been received and integrated for only {REVIEW.integrated} languages
+              {REVIEW.integrated_in_part ? ` and, in part, ${REVIEW.integrated_in_part} more` : ''} (the Arabic is Modern
+              Standard Arabic only). Until those change, PolyGuard has a method, not a result. The full audit
               trail and the preregistration are public.
             </p>
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">

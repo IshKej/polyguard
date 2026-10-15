@@ -88,7 +88,8 @@ _rows = json.loads(_rs.ROWS_OUT.read_text(encoding="utf-8"))
 _tqb = json.loads(_rs.TQ_BEFORE.read_text(encoding="utf-8"))
 _tqn = json.loads(_rs.TQ_NOW.read_text(encoding="utf-8"))
 ck("2f. the review pages' data is reproducible from the status file, the bank and the score history",
-   _rs.SITE_OUT.read_text(encoding="utf-8") == _rs.site_json())
+   _rs.SITE_OUT.read_text(encoding="utf-8") == _rs.site_json()
+   and _rs.SUMMARY_OUT.read_text(encoding="utf-8") == _rs.summary_json())
 _repro = all(
     round(sum(v[w] for v in r.values()) / len(r), 4) == tq["languages"][c]["sim"]["mean"]
     and round(min(v[w] for v in r.values()), 4) == tq["languages"][c]["sim"]["min"]

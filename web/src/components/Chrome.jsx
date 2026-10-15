@@ -77,16 +77,15 @@ export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) 
           <Wordmark />
         </button>
         <div className="flex items-center gap-3 sm:gap-5">
-          {loaded && (
-            // Always shown, phones included, so a cropped screenshot of a demo can
-            // never pass for a real measurement.
-            <span
-              className="tag inline-block border border-current"
-              title={live ? 'Scans attack a real model.' : 'No model is attacked. Outcomes are made up.'}
-            >
-              {live ? 'Live' : 'Simulated'}
-            </span>
-          )}
+          {/* Always shown, phones included, so a cropped screenshot of a demo can
+              never pass for a real measurement; Simulated until the server says a
+              scan would be live, so the label never claims more than it knows. */}
+          <span
+            className="tag inline-block border border-current"
+            title={live ? 'Scans attack a real model.' : 'No model is attacked. Outcomes are made up.'}
+          >
+            {live && loaded ? 'Live' : 'Simulated'}
+          </span>
           {onMethod && view !== 'method' && (
             <button type="button" onClick={onMethod} className="hl-hover caption hidden text-[.8rem] md:inline">
               <span className="hl">How we know</span>

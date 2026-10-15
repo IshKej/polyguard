@@ -91,15 +91,15 @@ python generate_attack_bank.py   # rebuild corpus       -> 1095 attacks + 438 co
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, a few seconds -> 288/288
-python verify_all.py             # full battery        -> 239/239
+python verify_all.py             # full battery        -> 244/244
 python api/test_api.py           # web API             -> 95/95
-python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 57/57
+python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 87/87
 python test_stats_properties.py  # 38 properties of the statistics on random inputs -> 38/38
 python mutation_check.py         # 23 planted bugs in the statistics, all must be caught -> 23/23
 python power_check.py            # power model against within-tier spread (about 3 min)
 python capability_check.py       # capability rule false flags and detection (about 15 s)
 python api/test_cancellation.py  # closing the tab stops a live scan -> 9/9
-python test_native_review.py     # every reviewed row pinned, every language digested -> 306/306
+python test_native_review.py     # every reviewed row pinned, every language digested -> 355/355
 python review_ingest.py --self-test   # returned review sheets are read correctly -> 7/7
 python expand_languages.py --check-stored   # gates on the 53 stored machine translations
 python cli.py replay scan.json   # recompute a saved scan from its evidence
@@ -275,11 +275,11 @@ gate is on by default and native review is tracked rather than waved off.
 | Attacks | 1095 (73 languages x 5 categories x 3 phrasings) |
 | Capability controls | 438 (6 per language), each fired twice: neutral prompt and bot prompt |
 | Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
-| Verification checks | 239 |
-| Native review regression checks | 306 (every reviewed row pinned, every language digested) |
-| Browser tests | 57 (with accessibility checks and a 390 pixel phone) |
+| Verification checks | 244 |
+| Native review regression checks | 355 (every reviewed row pinned, every language digested) |
+| Browser tests | 87 (with accessibility checks, the security policy, a 390 and a 320 pixel phone) |
 | Unit tests | 288 (every public engine function) |
-| Audit findings | 78 across 20 rounds (all fixed; 62, cancellation, fixed 2026-10-13) |
+| Audit findings | 87 across 21 rounds (all fixed; round 21 on 2026-10-15) |
 | Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
 | Paid or production model study runs | 0 (no scan of a production chatbot or paid API has run) |
 | Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |
