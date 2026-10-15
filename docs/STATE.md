@@ -1,6 +1,6 @@
 # PolyGuard: current state and handoff
 
-**Last updated 2026-10-12.** Read this first if you are picking the project up
+**Last updated 2026-10-15.** Read this first if you are picking the project up
 cold. Everything below is reconstructable from the repo, but this is the short
 version and the reasoning behind the decisions.
 
@@ -11,7 +11,16 @@ Deadline: **Congressional App Challenge, 26 October 2026.**
 Built, audited, verified offline, and **live at https://polyguard-ten.vercel.app**
 (Ishaan's Vercel account, with a Supabase database for share links, game answers
 and the spend guard). **No live scan against a production chatbot or a paid API
-has ever run.** Every number in the app today is from a language-independent mock.
+has ever run.** Demo results in the app are simulated and labelled so; the home
+page also shows the 2026-10-11 local diagnostic, labelled as a real scan of a small
+open model on a laptop, not a production chatbot.
+
+**2026-10-15: redesign and review work deployed.** `main` at `01343f3`: the hero
+works one real attack from the local scan through step by step, the local scan is
+shown as a graded sheet of all 73 languages, the type is sentence case, the 3D
+bubble and Three.js are gone, and the French, Lithuanian and Bulgarian review work
+is in the bank. Vercel production deployment succeeded and CI passed on every
+pushed branch.
 
 **2026-10-06: first real scans, local only.** The four `examples.py` bots were
 scanned in all 20 bank languages against a local open weight model (Qwen3.5 4B
@@ -82,14 +91,17 @@ python generate_attack_bank.py   # rebuild corpus       -> 1095 attacks + 438 co
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, a few seconds -> 288/288
-python verify_all.py             # full battery        -> 234/234
+python verify_all.py             # full battery        -> 239/239
 python api/test_api.py           # web API             -> 95/95
-python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 26/26
+python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 57/57
 python test_stats_properties.py  # 38 properties of the statistics on random inputs -> 38/38
 python mutation_check.py         # 23 planted bugs in the statistics, all must be caught -> 23/23
 python power_check.py            # power model against within-tier spread (about 3 min)
 python capability_check.py       # capability rule false flags and detection (about 15 s)
 python api/test_cancellation.py  # closing the tab stops a live scan -> 9/9
+python test_native_review.py     # every reviewed row pinned, every language digested -> 306/306
+python review_ingest.py --self-test   # returned review sheets are read correctly -> 7/7
+python expand_languages.py --check-stored   # gates on the 53 stored machine translations
 python cli.py replay scan.json   # recompute a saved scan from its evidence
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0
@@ -103,7 +115,9 @@ streamlit run app.py             # the research console
 python cli.py scan --prompt f --mock   # headless, no key needed
 ```
 
-If any of those fail, something regressed. They all pass as of this writing.
+If any of those fail, something regressed. They all passed on 2026-10-15
+(`power_check.py` about 90 s, `mutation_check.py` about 4 min, `calibrate_stats.py`
+about 30 s on this laptop).
 
 ## The blockers, in order
 
@@ -133,10 +147,16 @@ Always run `npx vercel whoami` before any Vercel command: it must be `ishkej`.
 
 React app in `web/` with a FastAPI layer in `api/`. The look ("the test sheet":
 paper, ink, highlighter, red pen) and the research behind it are logged in
-`docs/design-research.md`. The first version of the look is kept as the git tag
-`design/test-sheet-v1`. The landing page has a scroll story of a scan and a
-"spot the attack" game built on real messages from the bank (`GET /api/game`),
-which needs no key. Everything that would show a result is labelled simulated
+`docs/design-research.md` (v6 and v7 cover the 2026-10-13 redesign). The first
+version of the look is kept as the git tag `design/test-sheet-v1`. The home page
+opens on one real attack from the 2026-10-11 local scan worked through in four
+steps (`web/src/components/Mechanism.jsx`), then that scan as a graded sheet of
+all 73 languages (`LocalEvidence.jsx`); both read `web/src/local-example.json`,
+which `publish_example.py` writes from the saved scan. Below that: every
+language's name in its own script, the same attack in eight languages, how a scan
+works, and a "spot the attack" game built on real messages from the bank
+(`GET /api/game`), which needs no key. Lime and red mean held and got through in
+the hero and the sheet. Everything that would show a result is labelled simulated
 until a key exists.
 
 ## First moves once the key exists, in this order
@@ -243,7 +263,6 @@ gate is on by default and native review is tracked rather than waved off.
 ## Where things live
 
 - Source of truth: this GitHub repository, https://github.com/IshKej/polyguard
-  GitHub should replace it as the real mirror.
 - Nothing secret is in the repo. `.gitignore` excludes `secrets.toml`, and no key
   is hardcoded anywhere.
 
@@ -254,7 +273,9 @@ gate is on by default and native review is tracked rather than waved off.
 | Attacks | 1095 (73 languages x 5 categories x 3 phrasings) |
 | Capability controls | 438 (6 per language), each fired twice: neutral prompt and bot prompt |
 | Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
-| Verification checks | 234 |
+| Verification checks | 239 |
+| Native review regression checks | 306 (every reviewed row pinned, every language digested) |
+| Browser tests | 57 (with accessibility checks and a 390 pixel phone) |
 | Unit tests | 288 (every public engine function) |
 | Audit findings | 78 across 20 rounds (all fixed; 62, cancellation, fixed 2026-10-13) |
 | Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
