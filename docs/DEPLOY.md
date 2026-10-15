@@ -1,82 +1,97 @@
-# Deploying PolyGuard to a public URL (free)
+# Deploying PolyGuard
 
-Goal: a live `https://polyguard.streamlit.app` link you can put in the Congressional App Challenge demo video and submission. Free, no credit card.
+The site is live at https://polyguard-ten.vercel.app, on Ishaan's own Vercel account
+(`ishkej`). This file is how it is hosted, how a change gets there safely, and what
+it costs once live scans are switched on.
 
-You do the two account steps (they must be under your name); everything else is already set up in this repo.
+## 1. How it is hosted
 
-## 0. Before anything, run preflight
+- **One Vercel project, two services** (`vercel.json`): the Vite site from `web/`
+  at `/`, and the FastAPI app (`api/server.py`) at `/api/*`. They build and deploy
+  together, so the site and its API can never be out of step.
+- **Supabase** keeps the little shared state there is: saved scans behind share
+  links, game answers, and the spend guard's counters. The schema is
+  `supabase/migrations/`. The API reaches it only with the server's secret key; the
+  browser never talks to it.
+- **GitHub Actions** (`.github/workflows/ci.yml`) runs every offline suite and the
+  browser tests on every push, to any branch.
+- **Every push to `main` deploys production. Every push to another branch makes a
+  preview** at its own address, protected by Vercel's login so only the account
+  owner can open it.
 
-```bash
-python preflight.py
-```
+Run `npx vercel whoami` before any Vercel command: it must say `ishkej`. The Vercel
+connector in claude.ai belongs to a different team and is never used for this
+project.
 
-This simulates what Streamlit Cloud does: clean checkout, no environment, no
-secrets. It checks that every required file exists (including `attack_bank.json`,
-which Cloud loads and never regenerates), that no API key literal is sitting in a
-committed file, that `requirements.txt` covers every third-party import, and that
-the app boots with no key at all. Everything must pass before you push.
-
-## 1. Put the code on GitHub
-
-**The local git repository is already set up and committed.** You do not need to
-drag files anywhere. There are exactly two things only you can do:
-
-1. Make a free account at https://github.com if you do not have one.
-2. Create a new **public**, **empty** repository named `polyguard`. Do not let
-   GitHub add a README, a .gitignore or a licence, because the repo already has
-   its own history and an initialised repo would collide with it.
-
-Then, from the project folder, run these two commands with your username
-substituted:
+## 2. Before pushing anything
 
 ```bash
-git remote add origin https://github.com/YOUR-USERNAME/polyguard.git
-git push -u origin main
+python preflight.py        # files present, no key in any committed file, the app boots with no key
+python verify_all.py       # the full battery
+python test_native_review.py
+python api/test_cancellation.py
+python web/e2e/test_site.py   # needs `npm run build` in web/ first
 ```
 
-GitHub will ask you to sign in the first time. If it asks for a password, it
-wants a Personal Access Token rather than your account password: GitHub, Settings,
-Developer settings, Personal access tokens, Fine-grained tokens, and give it
-write access to the `polyguard` repository only.
+STATE.md lists the rest. All of them must pass; CI runs them again after the push.
 
-> `attack_bank.json` is committed on purpose. Streamlit Cloud loads it and does
-> not run the generators. If you ever regenerate it, commit the new one.
+## 3. Preview first, then production
 
-> `.streamlit/secrets.toml` is gitignored and does not exist in the repo. Only
-> `config.toml` and `secrets.toml.example` are committed. `preflight.py` fails the
-> build if a real key ever appears in a committed file.
-
-## 2. Deploy on Streamlit Community Cloud
-
-1. Go to https://share.streamlit.io and sign in **with GitHub**.
-2. **Create app** → pick your `polyguard` repo, branch `main`, main file `app.py`.
-3. Before deploying, open **Advanced settings → Secrets** and paste:
+1. Push the change to a branch, not to `main`. Vercel builds a preview of it.
+2. Check the preview. It sits behind Vercel's login, so read it through the CLI,
+   which carries your login:
+   ```bash
+   npx vercel curl /review/coverage --deployment <preview URL> -- -s -o /dev/null -D -
    ```
-   ANTHROPIC_API_KEY = "sk-ant-..."
-   ```
-   (your real Anthropic key — this stays private on Streamlit's side, never in GitHub).
+   In Git Bash on Windows, put `MSYS_NO_PATHCONV=1` in front, or the path `/` is
+   rewritten into a Windows folder before it reaches the CLI. Do not use the CLI's
+   `-d` (debug) flag here: it prints the deployment's protection bypass secret.
+3. When the preview is right, fast-forward `main` to that branch and push it. The
+   production deployment's state shows on GitHub (the commit's deployments) and in
+   the Vercel dashboard.
 
-   Optional, only if you want to scan other vendors' models too. Any you leave
-   out simply show as unavailable in the model picker:
-   ```
-   OPENAI_API_KEY = "sk-..."
-   GOOGLE_API_KEY = "..."
-   GROQ_API_KEY   = "gsk_..."
-   ```
-4. **Deploy.** First build takes a couple of minutes.
+**Rolling back.** In the Vercel dashboard, promote the previous production
+deployment (instant, no rebuild); then revert the commit on `main` so the next push
+does not bring the change back. The tag `backup-2026-10-13` marks the last
+production commit before the redesign.
 
-You now have a public URL. Anyone who opens it runs live scans against the demo bots.
+## 4. Environment variables (Vercel, Production)
 
-## 3. If you'd rather not expose your API key publicly
+None of these is ever committed. Locally they can live in a `.env` file, which is
+ignored by git.
 
-A public app means anyone visiting spends your API credits. Two safe options:
+| Variable | Needed for | Default when unset |
+|---|---|---|
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | share links, game answers, the spend guard | on Vercel: no saving, and no live scans either, because the spend guard has nowhere to count; locally an in-memory store stands in |
+| `ANTHROPIC_API_KEY` | live scans (and the default judge) | every scan is simulated and says so |
+| `POLYGUARD_PASSCODE` | live scans on the hosted site | **no live scans at all**: with a key but no passcode the site fails closed |
+| `POLYGUARD_DAILY_CALL_BUDGET` | paid calls per UTC day, every visitor together | 2000 |
+| `POLYGUARD_LIVE_PER_HOUR` | live scans per visitor per hour | 4 |
+| `POLYGUARD_MAX_LIVE` | live scans running at once, site wide | 2 |
+| `POLYGUARD_HOSTED_LIVE_MAX` | attacks in one hosted live scan, so it ends inside the 300 second limit | 60 |
+| `POLYGUARD_VICTIM_MODEL`, `POLYGUARD_JUDGE_MODEL` | which models are attacked and which judges | `claude-haiku-4-5` for both |
+| `POLYGUARD_WEB_ORIGINS` | cross-origin callers of the API, comma separated | the local Vite addresses only |
+| `POLYGUARD_SIGNING_KEY` | signing saved results | derived from `SUPABASE_SECRET_KEY` |
+| `POLYGUARD_IP_SALT` | salting the visitor hash used for rate limits | derived from `SUPABASE_SECRET_KEY` |
 
-- **Keep it in MOCK mode for the public link** and run the *live* scan only on your laptop during the demo video. The app already labels mock vs live clearly.
-- **Add a passcode gate** (ask me — it's ~15 lines) so only you can trigger live scans, and everyone else sees the interface.
+Other vendors' models appear in the picker only when their own key is set
+(`OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GROQ_API_KEY`); see section 6 before trusting
+any of them.
 
-On a student budget, recording the live scan in the video and leaving the public link in mock mode is the sensible move. Judges watch the video; the link is a bonus.
+## 5. What every page is sent with
 
-## 3b. Before trusting a new provider, smoke-test it
+`vercel.json` adds these to every page, not to `/api/`: a content security policy
+(scripts only from the site itself, styles from the site and Google Fonts, no
+framing), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a referrer
+policy and a permissions policy. Vercel adds HTTPS-only (`Strict-Transport-Security`)
+itself. The local server applies the same block when it serves the built site, so
+the browser tests run under it and fail on anything it blocks. Confirmed on a preview
+deployment on 2026-10-15.
+
+The research console (`app.py`, Streamlit) is not deployed; run it locally with
+`streamlit run app.py`.
+
+## 6. Before trusting a new provider, smoke-test it
 
 The Anthropic path is covered by the test suite. The OpenAI, Google and
 OpenAI-compatible adapters are written to each vendor's documented request shape
@@ -91,7 +106,7 @@ python providers.py --smoke    # one harmless call per configured provider
 Every configured model must print PASS. A FAIL means that adapter's request shape
 needs fixing, not that the model is vulnerable.
 
-## 4. Cost sanity check
+## 7. Cost sanity check
 
 One live scan fires **5 categories × 3 phrasings = 15 short calls to the victim model per language**, plus a judge call only when a reply actually contains the canary. So a 12-language demo scan is ~180 calls, and a full 87-language scan is ~1,305 calls. On the default victim (Claude Haiku) that lands in the low tens of cents even for the full scan, and the phrasings slider drops it to a third if you set it to 1.
 
@@ -101,4 +116,4 @@ So a full 87-language scan is **1,305 attack calls plus 1,044 control calls (522
 
 Scanning several vendors multiplies all of that by the number of models, and each vendor bills separately. Start with one model and one tier of languages before running the full cross-model sweep.
 
-The thing that could actually add up is a public link with no gate, where every visitor spends your credits. That is why option 3 exists.
+The thing that could actually add up is a public link with no gate, where every visitor spends your credits. That is why a live scan on the hosted site needs the passcode, the spend guard caps paid calls per day across every visitor, and one hosted live scan is capped at 60 attacks (section 4).

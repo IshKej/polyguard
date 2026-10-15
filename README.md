@@ -258,7 +258,7 @@ The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML rep
 | `review_agreement.py` | A judge's agreement with a hand review of saved scans, before and after |
 | `judge_report.txt` | The measured judge result, committed as evidence |
 | `requirements.txt` | Dependencies |
-| `DEPLOY.md` | Step-by-step Streamlit Cloud deployment |
+| `DEPLOY.md` | How the site is hosted (Vercel, Supabase), preview first, environment variables, rollback, costs |
 
 ## Verify it yourself
 
