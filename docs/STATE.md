@@ -102,6 +102,7 @@ python api/test_cancellation.py  # closing the tab stops a live scan -> 9/9
 python test_native_review.py     # every reviewed row pinned, every language digested -> 355/355
 python review_ingest.py --self-test   # returned review sheets are read correctly -> 7/7
 python expand_languages.py --check-stored   # gates on the 53 stored machine translations
+python web/e2e/smoke_live.py https://polyguard-ten.vercel.app --review   # read-only check of the live site
 python cli.py replay scan.json   # recompute a saved scan from its evidence
 python judge_eval.py             # judge gold set       -> heuristic bias measured
 python calibrate_stats.py        # statistical calibration (slow) -> exit 0

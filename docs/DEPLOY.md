@@ -49,6 +49,13 @@ STATE.md lists the rest. All of them must pass; CI runs them again after the pus
 3. When the preview is right, fast-forward `main` to that branch and push it. The
    production deployment's state shows on GitHub (the commit's deployments) and in
    the Vercel dashboard.
+4. Then smoke-test what is actually live. It only reads: it never runs a scan,
+   saves a result or answers the game.
+   ```bash
+   python web/e2e/smoke_live.py https://polyguard-ten.vercel.app --review
+   ```
+   The same script checks a protected preview if the project's bypass secret is in
+   the environment as `VERCEL_AUTOMATION_BYPASS_SECRET`; it is sent, never printed.
 
 **Rolling back.** In the Vercel dashboard, promote the previous production
 deployment (instant, no rebuild); then revert the commit on `main` so the next push
