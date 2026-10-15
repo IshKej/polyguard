@@ -70,3 +70,25 @@ progress, so nothing waits on a background worker. A durable queue would add a
 service, a failure mode and state to keep consistent. Revisit if live scans
 measured after the pilot run close to the 300 second limit, or if the hosted cap
 turns out too small to be useful.
+
+### Re-measured 2026-10-15, same method
+
+The same comparison a day later, after the review pages, the security headers and
+one change made because of it. The machine ran slower overall that day (the old
+build's headline moved from 3.52 s to 3.76 s), so compare within a day, not across.
+Measured side by side under that day's conditions, the 2026-10-14 build painted its
+headline at 3.98 s, about 0.2 s after the old build: rendering every section of the
+long home page before the first paint was holding the headline back. Everything
+below the hero now mounts a frame after the first paint.
+
+| | Before | After |
+|---|---|---|
+| JavaScript, raw | 919 kB | 343 kB |
+| Main thread long tasks, motion off | 6.4 s | 3.1 s |
+| Main thread long tasks, motion on | 5.5 s | 1.7 s |
+| Largest contentful paint, motion off | 3.76 s | 3.47 s |
+| Largest contentful paint, motion on | 3.14 s | 3.26 s |
+
+The 0.12 s with motion on is inside the day's run to run spread. The review pages
+load on demand (about 42 kB together) and are not counted above.
+

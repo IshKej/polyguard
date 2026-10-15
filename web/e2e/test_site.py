@@ -420,8 +420,8 @@ def main() -> int:
                 check(f"{width}px /review: the header still says Simulated, and nothing scrolls sideways",
                       r5.locator("header").get_by_text("Simulated", exact=True).is_visible()
                       and not r5.evaluate("document.documentElement.scrollWidth > innerWidth"))
-                if width == 1280:
-                    axe(r5, "the /review page")
+                if width in (1280, 390):
+                    axe(r5, f"the /review page at {width}px")
                 r5.goto(base + "/review/coverage", wait_until="networkidle")
                 r5.wait_for_timeout(800)
                 cells = r5.locator("li[data-status]")
@@ -440,8 +440,9 @@ def main() -> int:
                 check(f"{width}px coverage: nothing scrolls sideways, and the right layout for the width is shown",
                       not r5.evaluate("document.documentElement.scrollWidth > innerWidth")
                       and (r5.locator("table").is_visible() if width > 500 else r5.locator("ul[aria-label^='Languages with']").is_visible()))
+                if width in (1280, 390):
+                    axe(r5, f"the /review/coverage page at {width}px")
                 if width == 1280:
-                    axe(r5, "the /review/coverage page")
                     r5.get_by_role("button", name="Why native review matters").click()
                     r5.wait_for_timeout(500)
                     check("coverage links to the why page in the app", r5.url.rstrip("/").endswith("/review"))

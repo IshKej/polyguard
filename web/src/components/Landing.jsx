@@ -1,6 +1,6 @@
 import BANK_COUNTS from '../bank-counts.json'
 import LocalEvidence, { REPORT_URL } from './LocalEvidence'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { firstSentence } from '../api'
 import { MotionSwitch } from './Chrome'
 import Mechanism from './Mechanism'
@@ -60,6 +60,14 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
   // bank itself: never a hard-coded number that goes stale.
   const count = meta?.languages?.length ?? BANK_COUNTS.languages
   const gallery = useMemo(() => lines.slice(0, 8).map((l) => ({ ...l, lang: others.find((o) => o.code === l.code) })), [lines, others])
+  // Everything under the hero mounts a frame after the first paint, so on a slow
+  // phone the headline is not held back by sections nobody can see yet.
+  const [rest, setRest] = useState(false)
+  useEffect(() => {
+    let timer = 0
+    const frame = requestAnimationFrame(() => { timer = setTimeout(() => setRest(true), 0) })
+    return () => { cancelAnimationFrame(frame); clearTimeout(timer) }
+  }, [])
 
   return (
     <main>
@@ -103,6 +111,7 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
         </div>
       </section>
 
+      {rest && (<>
       {/* The one real result so far, graded language by language. */}
       <LocalEvidence className="cv border-t border-(--line)" />
 
@@ -193,6 +202,7 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
           </div>
         </div>
       </section>
+      </>)}
     </main>
   )
 }
