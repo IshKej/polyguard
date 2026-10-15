@@ -27,6 +27,9 @@ SOURCE = ROOT / "results/local/2026-10-11/reanalysis-2026-10-12/scan.json"
 REVIEW = ROOT / "results/local/2026-10-11/HAND_REVIEW.md"
 OUT = ROOT / "web/public/examples/real-scan-2026-10-11.html"
 SITE_DATA = ROOT / "web/src/local-example.json"
+# The translation scores as they stood for the bank this scan sent (4e2ba320...),
+# kept beside the scan so later bank edits cannot change what its report shows.
+TQ_AT_SCAN = ROOT / "results/local/2026-10-11/translation_quality-at-scan.json"
 HERO_PAIR = ("en_instruction_override_0", "cy_instruction_override_0")
 EVIDENCE = "https://github.com/IshKej/polyguard/tree/main/results/local/2026-10-11"
 
@@ -64,7 +67,9 @@ def summary(scan: dict) -> str:
 
 def build() -> str:
     scan = json.loads(SOURCE.read_text(encoding="utf-8"))
-    page = report_html.build_report(scan)
+    tq = json.loads(TQ_AT_SCAN.read_text(encoding="utf-8"))
+    assert tq["bank_sha256"] == scan["instrument"]["bank_sha256"], "scores must be for the scan's own bank"
+    page = report_html.build_report(scan, tq_data=tq)
     head_anchor = "<title>PolyGuard report</title>"
     body_anchor = "<body><main class=wrap>"
     assert page.count(head_anchor) == 1 and page.count(body_anchor) == 1

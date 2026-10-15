@@ -68,6 +68,15 @@ ck("2c. the published example report is reproducible from the saved scan",
    _pe.OUT.read_text(encoding="utf-8") == _pe.build())
 ck("2d. the home page's local example (hero replies, graded sheet) is reproducible from the saved scan",
    _pe.SITE_DATA.read_text(encoding="utf-8") == _pe.site_json())
+# 2e. A report shows translation scores for the text its scan sent. The 2026-10-11
+# scan keeps the scores built for its own bank; scores for a later bank are marked.
+_scan11 = json.loads(_pe.SOURCE.read_text(encoding="utf-8"))
+_tq11 = json.loads(_pe.TQ_AT_SCAN.read_text(encoding="utf-8"))
+_note = "not for the bank this scan sent"
+ck("2e. an old scan's report uses the scores for its own bank, and says so when it cannot",
+   _tq11["bank_sha256"] == _scan11["instrument"]["bank_sha256"]
+   and _note not in _pe.report_html.build_report(_scan11, tq_data=_tq11)
+   and _note in _pe.report_html.build_report(_scan11, tq_data={**_tq11, "bank_sha256": "0" * 64}))
 
 # 3. ids unique
 ids = [a["id"] for a in bank["attacks"]]

@@ -1,8 +1,8 @@
 {
  "schema": 1,
  "what": "Automated translation quality proxy per bank language. Two offline signals that catch gross failures (wrong language, meaning drift). Not a validation: neither tool measures fluency, register, or whether a native speaker would read an attack as an instruction.",
- "generated_on": "2026-10-06",
- "bank_sha256": "4e2ba320c932823e046d2113af44ee2ca5e4042cf3d75f1ea8abd15117cdf1f8",
+ "generated_on": "2026-10-14",
+ "bank_sha256": "6c5639dc4dea33c39fc7f44a10dc8b8c65b1bd095812fecd1b64981a21d37a55",
  "n_languages": 73,
  "n_machine": 53,
  "preparation": "linguistics.strip_fixed_tokens with the canary and control token (removes both, Base64 blobs and SYSTEM OVERRIDE), then whitespace collapsed. Applied to translations and English seeds.",
@@ -59,7 +59,7 @@
   "declared_before_scoring": "docs/progress/translation-quality.md"
  },
  "threshold": {
-  "sim_T": 0.5486,
+  "sim_T": 0.5487,
   "wrong_pairs_n": 25920,
   "wrong_pairs_max": 0.6484,
   "wrong_pairs_p50": 0.313,
@@ -585,7 +585,7 @@
    "provenance": "author",
    "tier": "high",
    "n_strings": 21,
-   "text_sha256": "de37000a1dcee90a3ef259931fd25cb393d7cbc85552176d2dcdf3ffbde68131",
+   "text_sha256": "80bc957ee99afc734203057e57e6cbeb22ca1ac64f343dd5a2210d62387f50f6",
    "lid": {
     "share": 1.0,
     "share_close": 1.0,
@@ -593,10 +593,10 @@
     "misses": []
    },
    "sim": {
-    "mean": 0.9191,
+    "mean": 0.9208,
     "min": 0.8228,
-    "mean_wrong": 0.3211,
-    "margin": 0.598,
+    "mean_wrong": 0.3196,
+    "margin": 0.6012,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []
@@ -633,18 +633,18 @@
    "provenance": "author",
    "tier": "high",
    "n_strings": 21,
-   "text_sha256": "43c28de2ff602792859d6dc70c23cb835184fdb2d835048ca03f4b4994e745ad",
+   "text_sha256": "439be1da5313a0618e658262bc4bf9b3cfa2cd87046d4d9346efafed56dfc366",
    "lid": {
     "share": 1.0,
     "share_close": 1.0,
-    "mean_p_top": 0.9733,
+    "mean_p_top": 0.9705,
     "misses": []
    },
    "sim": {
-    "mean": 0.9072,
-    "min": 0.8263,
-    "mean_wrong": 0.3239,
-    "margin": 0.5832,
+    "mean": 0.9068,
+    "min": 0.8266,
+    "mean_wrong": 0.3238,
+    "margin": 0.5829,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []
@@ -1514,7 +1514,7 @@
    "provenance": "machine",
    "tier": "mid",
    "n_strings": 21,
-   "text_sha256": "0fa067af799158f69902553e6fd8045069ea526cc1362c1a60b111e0ca5740d0",
+   "text_sha256": "bf52de3e9a3b888958d6603ba776f753e1213050f7e2b1bc8eb81599ee604506",
    "lid": {
     "share": 1.0,
     "share_close": 1.0,
@@ -1522,10 +1522,10 @@
     "misses": []
    },
    "sim": {
-    "mean": 0.898,
-    "min": 0.8324,
-    "mean_wrong": 0.3079,
-    "margin": 0.5902,
+    "mean": 0.8852,
+    "min": 0.7227,
+    "mean_wrong": 0.3095,
+    "margin": 0.5756,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []

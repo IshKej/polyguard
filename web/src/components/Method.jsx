@@ -453,8 +453,9 @@ export default function Method({ meta, onStart, onBack }) {
           <div className="mt-14 max-w-3xl border-l-4 border-ink pl-5">
             <h3 className="display text-[1.5rem]">What is not proven yet</h3>
             <p className="mt-2 text-(--mute)">
-              No scan of a production chatbot has run (only small pilots against a local open model), 53 of the 73 languages are machine translated and none has had a row by row native review, and native speaker
-              feedback has been received and integrated for only five languages (the Arabic is Modern Standard Arabic only). Until those change, PolyGuard has a method, not a result. The full audit
+              No scan of a production chatbot has run (only small pilots against a local open model), 53 of the 73 languages are machine translated, no language has been validated by a native speaker, and native
+              speaker feedback has been received and integrated for only five languages and, in part, a sixth (the Arabic is
+              Modern Standard Arabic only). Until those change, PolyGuard has a method, not a result. The full audit
               trail and the preregistration are public.
             </p>
             <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption mt-3 inline-block"><span className="hl">Source, audit and preregistration</span></a>

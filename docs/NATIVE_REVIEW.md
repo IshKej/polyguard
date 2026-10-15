@@ -3,9 +3,11 @@
 **Status as of 2026-10-14: native speaker feedback has been received and
 integrated for 5 of the 20 hand-authored languages, Spanish, Vietnamese, Arabic,
 Portuguese and French. The other 15 have had no native review.
-None of the 53 machine translated languages added on 2026-10-05 has had a row by
-row native review. For one of them, Tamil, a Tamil instructor sent general
-feedback on 2026-10-13 with no corrections, so nothing in the bank changed.** Feedback
+No machine translated language has been validated. Of the 53 added on
+2026-10-05, Lithuanian has native speaker feedback integrated in part (11 of 15
+returned revisions, 2026-10-14; 4 held for confirmation), and for Tamil an
+instructor sent general feedback on 2026-10-13 with no corrections, so nothing in
+the bank changed. The other 51 have had no native review.** Feedback
 received and integrated is not a validation: it means a speaker read the lines and
 their corrections are now in the bank, not that the language is certified correct.
 The bank's `native_reviewed` flag is still false for every language.
@@ -164,17 +166,26 @@ credited.
 | Portuguese | UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching Professor Eduardo Viana da Silva, credited with his permission | 2026-10-08 | Overall the translation was good; vocabulary made more Brazilian and current on 10 of 21 lines (for example registado to registrado) | 9 of 10 applied in full and 1 in part, 2026-10-12, in `generate_attack_bank.py`: `pt_role_play_jailbreak_0`, `pt_role_play_jailbreak_1`, `pt_system_prompt_extraction_2`, `pt_obfuscated_payload_0`, `pt_obfuscated_payload_2`, `pt_indirect_injection_0`, `pt_indirect_injection_1`, `pt_indirect_injection_2`, `pt_control_0`, `pt_control_2`. Not taken: "formal English" to "formal Portuguese" in `pt_indirect_injection_1`, kept as English so the task matches every language; that row's other edits were applied. |
 | Vietnamese | Native speaker (name withheld) | 2026-10-01 | Tone marks correct; understandable, though unnatural in places; one line needed rewording | `vi_role_play_jailbreak_2` reworded as suggested ("tuân theo tất cả" to "tuân theo mọi mệnh lệnh", final period after the canary), 2026-10-02 |
 | French | Native speaker (name withheld) | 2026-10-14 | The lines read as instructions. The register was mixed: the attacks address the bot as tu, the capability controls use vous | The register is now tu throughout, 2026-10-14 in `generate_attack_bank.py`: five controls (`fr_control_0`, `fr_control_1`, `fr_control_3`, `fr_control_4`, `fr_control_5`) moved from vous to tu; `fr_control_2` uses neither form; no attack changed. The new wording is the author's response to the feedback, not text the reviewer wrote or checked |
+| Lithuanian (machine translated) | Native speaker (name withheld) | 2026-10-14 | Revised wording returned for 15 of 21 rows, 6 left unchanged; the rating columns were not filled in. Her themes: excessive politeness in some lines, and wording she does not consider natural in Lithuanian | 11 integrated 2026-10-14 in `machine_translations/lt.json`: 6 attacks (`lt_role_play_jailbreak_0`, `lt_role_play_jailbreak_1`, `lt_system_prompt_extraction_0`, `lt_system_prompt_extraction_1`, `lt_indirect_injection_0`, `lt_indirect_injection_2`) and 5 controls (`lt_control_0` to `lt_control_4`). Held, earlier text kept: `lt_instruction_override_1` (a spelling to confirm), `lt_system_prompt_extraction_2` and `lt_indirect_injection_1` (meaning to check against the English), and `lt_instruction_override_0` (it is the plaintext of the three Lithuanian Base64 attacks, which stay unchanged). Integrated in part, not a validation of the Lithuanian bank |
 | Tamil (machine translated) | Tamil instructor at a US university (name withheld until credit is confirmed) | 2026-10-13 | Feedback received, in a short reply: the Tamil lines read correctly against the English, and the English technical terms inside them are appropriate because they cannot be translated. No filled sheet, no per row ratings, no corrections | None. Feedback received, not integrated, and not a row by row review; `native_reviewed` stays false |
 
-Spanish, Arabic, Portuguese, Vietnamese and French are logged, with the new bank
-fingerprints, in the deviation log of `PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry there.
+Spanish, Arabic, Portuguese, Vietnamese, French and Lithuanian are logged, with the
+new bank fingerprints, in the deviation log of `PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry there.
 
 ### Waiting
 
+- **Lithuanian, four held rows.** `lt_instruction_override_0`, `lt_instruction_override_1`,
+  `lt_system_prompt_extraction_2` and `lt_indirect_injection_1` keep their earlier
+  text until the open questions on them are answered (see the review log).
+- **Bulgarian** (machine translated). Iliyana Dimitrova, who has agreed to be credited
+  by name, is reviewing the sheet on 2026-10-15. Nothing is integrated yet.
 - **Shona** (machine translated, the lowest similarity score after Yoruba). A
   reviewer at a language institute agreed on 2026-10-13 to check the 21 lines as an
   unpaid accuracy check, with the sheet requested by 2026-10-23. The review has not
-  started and no sheet has come back. Nothing about Shona changes until it does.
+  started and no sheet has come back. Credit stays withheld until she confirms the
+  terms. Nothing about Shona changes until the sheet comes back.
+- **Croatian and Serbian** (machine translated). A university contact is looking for
+  speakers. No review yet.
 - **Japanese** (hand-authored). A reviewer asked on 2026-10-06 whether help was
   still needed and the sheet was sent again that day. Nothing has come back.
 
@@ -192,9 +203,10 @@ The correct phrasing anywhere this project is described is:
 > Vietnamese, Arabic, Portuguese (Brazilian) and French; the other 15 have had no
 > native review. The Arabic is Modern Standard Arabic, and its review
 > does not establish coverage of Arabic dialects. Languages added later are
-> machine-translated and checked by reverse translation: 53 so far, none reviewed
-> row by row by a native speaker (for Tamil, an instructor sent general feedback
-> that the lines read correctly, with no corrections). Every language also carries two automated quality scores
+> machine-translated and checked by reverse translation: 53 so far, none validated
+> by a native speaker. For one, Lithuanian, a native speaker's revisions are
+> integrated in part (11 of 15, four held); for Tamil, an instructor sent general
+> feedback that the lines read correctly, with no corrections. Every language also carries two automated quality scores
 > (language identification and sentence similarity), which flag gross failures
 > but do not validate anything. Translation quality is a known limitation and a
 > possible confound.

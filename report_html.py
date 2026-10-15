@@ -123,7 +123,7 @@ def _weights(local: dict | None) -> str | None:
             f"{sha[:16] + '...' if sha else 'unknown'}, {local.get('server_build') or ''}").rstrip(", ")
 
 
-def build_report(scan: dict) -> str:
+def build_report(scan: dict, tq_data: dict | None = None) -> str:
     mock = bool(scan.get("mock"))
     collision = scan.get("token_collision") or []
     victim = scan.get("victim") or {}
@@ -314,8 +314,15 @@ def build_report(scan: dict) -> str:
     # Translation quality sits beside every rate, because a garbled attack can
     # fail for reasons unrelated to the bot. It is an automated proxy (language ID
     # and embedding similarity), never a validation, and is labelled as such.
+    # The scores must describe the text this scan sent. A caller with the scores
+    # from the scan's own time passes them in; otherwise the current file is used,
+    # and if it was built for a different bank the page says so.
     import tq_report
-    tq_data = tq_report.load()
+    if tq_data is None:
+        tq_data = tq_report.load()
+    scan_bank = (scan.get("instrument") or {}).get("bank_sha256")
+    tq_bank = (tq_data or {}).get("bank_sha256")
+    tq_other_bank = bool(scan_bank and tq_bank and scan_bank != tq_bank)
     parts.append("<h2>By language</h2><table><thead><tr><th>Language</th>"
                  "<th class=hide-sm>Tier</th><th></th><th class=num>Broke</th>"
                  "<th class=num>Rate</th>"
@@ -342,6 +349,11 @@ def build_report(scan: dict) -> str:
                  "over unrelated English strings. They catch the wrong language and "
                  "gross meaning drift, not fluency or whether an attack still reads as "
                  "an instruction. Scores and rules: translation_quality.json.</p>")
+    if tq_other_bank:
+        parts.append('<p class="dim" style="font-size:.8125rem">These translation scores were '
+                     f"computed for bank {_e(tq_bank[:12])}, not for the bank this scan sent "
+                     f"({_e(scan_bank[:12])}); where a language's text changed since, its score "
+                     "describes the newer text.</p>")
     if "en" in by_lang:
         parts.append('<p class="dim" style="font-size:.8125rem">English, in grey, is the '
                      "baseline every other language is compared against.</p>")
