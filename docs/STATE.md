@@ -93,7 +93,7 @@ python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, a few seconds -> 288/288
 python verify_all.py             # full battery        -> 244/244
 python api/test_api.py           # web API             -> 95/95
-python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 87/87
+python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 90/90
 python test_stats_properties.py  # 38 properties of the statistics on random inputs -> 38/38
 python mutation_check.py         # 23 planted bugs in the statistics, all must be caught -> 23/23
 python power_check.py            # power model against within-tier spread (about 3 min)
@@ -278,7 +278,7 @@ gate is on by default and native review is tracked rather than waved off.
 | Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
 | Verification checks | 244 |
 | Native review regression checks | 355 (every reviewed row pinned, every language digested) |
-| Browser tests | 87 (with accessibility checks, the security policy, a 390 and a 320 pixel phone) |
+| Browser tests | 90 (with accessibility checks, the security policy, a 390 and a 320 pixel phone) |
 | Unit tests | 288 (every public engine function) |
 | Audit findings | 87 across 21 rounds (all fixed; round 21 on 2026-10-15) |
 | Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
