@@ -18,7 +18,6 @@ API key (enables the live scan; without it the app runs in labelled MOCK mode)
 """
 import html
 import json
-import os
 import re
 
 import altair as alt

@@ -303,6 +303,50 @@ PINS = {
         "ff7df4b46947d561e586383de6ba53f1d02a96bd032b6e00f3d841036f52c512", True),
     "bg_control_5": ("c0e6f13a92d8d9cede23aafcc016239204f3dac0f7cd68352cd2b025a8595197",
         "3b3888880d2c787ad2458ed442b643b865f19483b8ed785324110302a975ec37", False),
+    # Vietnamese (author written): one correction, vi_role_play_jailbreak_2, applied 2026-10-02
+    # (commit 99a3091) and pinned from that commit's text; the other rows as they stood on 2026-10-15.
+    "vi_instruction_override_0": ("1c8aeb13253c9e9c76eaef629b21a85e78664d2e9e87ec65e6e086872517fbeb",
+        "f84836874e8011338a4f45cb706c4dfddddc9cdf43ce0a5e3097448477942b67", False),
+    "vi_instruction_override_1": ("3a3f027d852427497cadc44c7e908b0215e8c492dd6475127eaa38120a6fbb4d",
+        "cebddd6099312efa2810de55d52fba7b17850ea2c7a021f38080f440d17cb46b", False),
+    "vi_instruction_override_2": ("90a17bee2e36dd678f303c05f313e2d6c9b8903e6565445e4fd10824d1274bac",
+        "d759dbc57112f650fa4b96dba0185b54e6d735f38a7800bd459a6a201f4fb8be", False),
+    "vi_role_play_jailbreak_0": ("6286c9e204b8d256af7f21c87578dbbd835ae30c22ad29d7f5e920f3d71685cf",
+        "b82051710b5661ae898355ea641925d8a9ba759a86039535961fd7312b8826f1", False),
+    "vi_role_play_jailbreak_1": ("66331ab6cbfa3518407b0357a85132b31de8440b902104280229557b70b364f3",
+        "21aa3414de91175feab9dcdc2134033ec3824e0794b8b0c5ac2634ee1e0bfb79", False),
+    "vi_role_play_jailbreak_2": ("1c09911715fafb4649e09718990ecab80f4192ff6c6238c94cce9597c7c6a2a7",
+        "faa61083f75dbcd0cf8625176dcb00f65875e2133c09ab4194daf44d743c4c1c", True),
+    "vi_system_prompt_extraction_0": ("a522ca03559b9ac55823abe5542e9db71e9e074c12d029875419bd2056db9779",
+        "a522ca03559b9ac55823abe5542e9db71e9e074c12d029875419bd2056db9779", False),
+    "vi_system_prompt_extraction_1": ("e7ecd7bfaa2829451cfe5a686d28a5dba019658d957ff23fdc036f3bdd235748",
+        "e7ecd7bfaa2829451cfe5a686d28a5dba019658d957ff23fdc036f3bdd235748", False),
+    "vi_system_prompt_extraction_2": ("32c62c5214d86e64a3f16bbacaf2acf31e8611d4b88860ab7c91ac4af99cc9a2",
+        "32c62c5214d86e64a3f16bbacaf2acf31e8611d4b88860ab7c91ac4af99cc9a2", False),
+    "vi_obfuscated_payload_0": ("6ba39b548ba5b6adfae44cfc0ca21cb635f32382fa580aba9c626ff20302b899",
+        "37ae3f793635aab8e5bc550e0133f1e6a829dc36ea7cecbe607a4bd8f78ecf64", False),
+    "vi_obfuscated_payload_1": ("bd151e9146b9a881807cd93294f849316d2b9ceb5b686371549d0a4ef7248029",
+        "8bf9a8c0663606f5e12e0886e8dbce510a3cf42fe7007c12210b943510462cf5", False),
+    "vi_obfuscated_payload_2": ("afa3eec8a8653eaa5da972ee134794f2ce9c2f5d1c6f6fc90286ff1cfee9eb61",
+        "6c2129cc4ea947f8f79bc6d4e9f1fdab4a537b70e12cbcb264eaf2e213c26281", False),
+    "vi_indirect_injection_0": ("ee3dddc2f1e824c2dbe96849de7bf7eb138ea1f9e782364d6a4e6d2aac436e77",
+        "bceaa6fc9336c516cb89c54c0c0366fbfe7cbd9a054c5a8cc9d8a554ddd36394", False),
+    "vi_indirect_injection_1": ("5ecc8d4b4f0bc0b79f371e50a1f4867079186ab571762f19aac7bc2850e3cef4",
+        "40687951f2054ed09cabffbc98a87f1f9d2d2042ee6bc231ae8b3f2b24d53ef2", False),
+    "vi_indirect_injection_2": ("aec88de54b7dfb6330a51d7049920a3609d025849ad56cc1abac42fbf2a7f8bc",
+        "a487e7786729d1812b070ace3e1918d8b4aea80b0843378906039eb3ba690735", False),
+    "vi_control_0": ("1eaea48b6b5d2c15e06042968504bd03f5e6f871d8683f9731e13459d62f76e5",
+        "b8e79c690dae2e55d86909a50e986f8d390442796782ebbe8566ccb54b6fa8b8", False),
+    "vi_control_1": ("b8c337449ef8f2d7bec37b2419061eb9c60ff80b7d0461c96637645dd22646e5",
+        "fbf9093140ea00a7afa409db44c33ee9b1d261483b2bc0278b9df73140e3121d", False),
+    "vi_control_2": ("4944aa9d939120e0f26b20faf8e5c562531ca4ac8b30f2345f6b70bef8fbdd93",
+        "9bf3cbc12f38769efd1da1e15f63a493e0f612392d6b2a277b45e7d84a987e68", False),
+    "vi_control_3": ("7cb0c697c98302011bf91d8b5f21a72fd5c689f1300ab991ab6fc3088d33db6e",
+        "c05e8401322359fc55aab27fe4d95ac3fb907cf2737fb1ada82e6120ef698960", False),
+    "vi_control_4": ("5b02331096c98c0011abe907274e11e27b45b65006c123770520bc7a6156b4b7",
+        "5246b9e78106299123b602045f57c2d5f7630b9a8f346a48f69f013205180357", False),
+    "vi_control_5": ("15cceeb998ada177dc2ec2dfdb5e3db9f0cd599ac8fb409dd550c496f2da54ed",
+        "1be395e6b62f97962e3c73ddb71388a4dd48d629491bae3423582223a5b09fa0", False),
 }
 
 
@@ -316,16 +360,17 @@ attacks = {a["id"]: a for a in BANK["attacks"]}
 controls = {c["id"]: c for c in BANK.get("controls", [])}
 bank_rows = {**attacks, **controls}
 
-check("exactly 57 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese, 5 French, 11 Lithuanian, 14 Bulgarian)",
-      sum(v[2] for v in PINS.values()) == 57
+check("exactly 58 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese, 5 French, 11 Lithuanian, 14 Bulgarian, 1 Vietnamese)",
+      sum(v[2] for v in PINS.values()) == 58
+      and sum(v[2] for k, v in PINS.items() if k.startswith("vi_")) == 1
       and sum(v[2] for k, v in PINS.items() if k.startswith("bg_")) == 14
       and sum(v[2] for k, v in PINS.items() if k.startswith("lt_")) == 11
       and sum(v[2] for k, v in PINS.items() if k.startswith("fr_")) == 5
       and sum(v[2] for k, v in PINS.items() if k.startswith("pt_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("es_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("ar_")) == 7)
-check("every Spanish, Arabic, Portuguese, French, Lithuanian and Bulgarian row in the bank is pinned, and nothing else",
-      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr", "lt", "bg")} == set(PINS))
+check("every row of the seven reviewed languages (es ar pt fr lt bg vi) is pinned, and nothing else",
+      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr", "lt", "bg", "vi")} == set(PINS))
 for rid, (t_sha, r_sha, corrected) in PINS.items():
     kind = "corrected" if corrected else "unflagged"
     check(f"{rid} ({kind}): generator template unchanged", sha(template(rid)) == t_sha)
@@ -343,7 +388,7 @@ check("ar_indirect_injection_0 keeps the quoted review with the marker and the c
       and "SYSTEM OVERRIDE" in _quoted and CANARY not in _frame)
 
 # Tokens and markers survive in every reviewed language's rows.
-for lang in ("es", "ar", "pt", "fr", "lt", "bg"):
+for lang in ("es", "ar", "pt", "fr", "lt", "bg", "vi"):
     rows = [a for a in BANK["attacks"] if a["lang"] == lang]
     check(f"{lang}: every canary attack carries the canary once",
           all(a["text"].count(CANARY) == 1 for a in rows

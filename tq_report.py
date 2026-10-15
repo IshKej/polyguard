@@ -199,7 +199,7 @@ def print_report(data: dict, bank: dict, flagged_only: bool = False) -> None:
     langs = data["languages"]
     th = data.get("threshold") or {}
     print(f"Translation quality ({PROXY_LABEL}), generated {data.get('generated_on')}")
-    print(f"  models: " + "; ".join(f"{m['repo']}@{m['revision'][:8]}"
+    print("  models: " + "; ".join(f"{m['repo']}@{m['revision'][:8]}"
                                      for m in data["models"].values()))
     if th.get("sim_T") is not None:
         print(f"  LaBSE threshold T = {th['sim_T']:.3f} (p{SIM_PERCENTILE} of "

@@ -13,10 +13,8 @@ all. Do not delete any of them to make a run pass.
     python verify_all.py
 """
 import base64
-import importlib
 import inspect
 import json
-import os
 import re
 import subprocess
 import sys
@@ -34,7 +32,7 @@ def ck(name, cond):
 # 1. modules import
 import engine
 import expand_languages as ex
-import generate_attack_bank as gen
+import generate_attack_bank as gen  # noqa: F401  (check 1: every module imports)
 import languages_catalog as cat
 ck("1. all modules import", True)
 
@@ -120,6 +118,14 @@ ck("2i. every language with a review status is described in NATIVE_REVIEW.md, un
            if s["status"] in ("integrated", "integrated_in_part", "feedback_no_corrections"))
    and all(bank["languages"][c]["name"] in _nr for c, s in _ns["languages"].items()
            if s["status"] in ("under_way", "requested")))
+
+# 2j. Cancellation depends on the server seeing the visitor leave mid-stream. A
+# response-wrapping middleware (Starlette's BaseHTTPMiddleware, @app.middleware)
+# sits in between and hides that disconnect; it did once, caught by
+# api/test_cancellation.py. The page-header middleware must stay plain ASGI.
+_srv = (HERE / "api" / "server.py").read_text(encoding="utf-8")
+ck("2j. the API adds no response-wrapping middleware (it would hide a disconnect from cancellation)",
+   '@app.middleware("http")' not in _srv and "BaseHTTPMiddleware" not in _srv)
 
 # 3. ids unique
 ids = [a["id"] for a in bank["attacks"]]

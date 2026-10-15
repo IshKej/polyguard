@@ -79,9 +79,12 @@ def axe(page, where: str) -> None:
     # Measure the page at rest: no hover, no colour change half finished.
     page.mouse.move(1, 1)
     page.wait_for_timeout(500)
-    page.add_script_tag(path=str(AXE))
+    # Loaded through the devtools protocol, not as a <script> tag: the site's policy
+    # blocks inline scripts, and the test must not need it relaxed.
+    if not page.evaluate("typeof window.axe !== 'undefined'"):
+        page.evaluate(AXE.read_text(encoding="utf-8") + "\n;window.axe = axe; true")
     found = page.evaluate("""async () => {
-        const r = await axe.run(document, { resultTypes: ['violations'] });
+        const r = await axe.run(document, { resultTypes: ['violations'], preload: false });
         return r.violations.filter(v => v.impact === 'serious' || v.impact === 'critical')
                            .map(v => `${v.id} (${v.nodes.length}): ${v.help} e.g. ` +
                                 v.nodes.slice(0, 2).map(n => n.html.slice(0, 90) + ' ' +
@@ -100,6 +103,9 @@ def main() -> int:
                                       accept_downloads=True)
             page = ctx.new_page()
             page.on("pageerror", lambda e: errors.append(str(e)))
+            # The page headers (vercel.json) are served locally too: anything they block shows here.
+            csp = []
+            page.on("console", lambda m: csp.append(m.text) if "Content Security Policy" in m.text else None)
 
             # --- landing --------------------------------------------------------------
             page.goto(base + "/", wait_until="networkidle")
@@ -397,6 +403,7 @@ def main() -> int:
                                          reduced_motion="reduce", has_touch=width < 500, is_mobile=width < 500)
                 r5 = c5.new_page()
                 r5.on("pageerror", lambda e: errors.append(str(e)))
+                r5.on("console", lambda m: csp.append(m.text) if "Content Security Policy" in m.text else None)
                 r5.goto(base + "/review", wait_until="networkidle")
                 r5.wait_for_timeout(800)
                 h1 = r5.get_by_role("heading", level=1).inner_text()
@@ -438,6 +445,9 @@ def main() -> int:
                     r5.get_by_role("button", name="Why native review matters").click()
                     r5.wait_for_timeout(500)
                     check("coverage links to the why page in the app", r5.url.rstrip("/").endswith("/review"))
+                    check("after the change of screen the tab is named for it and focus is on its heading",
+                          r5.title() == "Why native review matters | PolyGuard"
+                          and r5.evaluate("document.activeElement && document.activeElement.tagName") == "H1")
                     r5.goto(base + "/", wait_until="networkidle")
                     r5.get_by_role("button", name="Translation review").click()
                     r5.wait_for_timeout(500)
@@ -453,6 +463,15 @@ def main() -> int:
                     r5.unroute("**/api/meta")
                 c5.close()
 
+            hdr = page.request.get(base + "/").headers
+            rep = page.request.get(base + "/examples/real-scan-2026-10-11.html").headers
+            check("the site and the published report are sent with the security headers (policy, nosniff, no framing)",
+                  all("frame-ancestors 'none'" in h.get("content-security-policy", "")
+                      and h.get("x-content-type-options") == "nosniff" and h.get("x-frame-options") == "DENY"
+                      for h in (hdr, rep))
+                  and "content-security-policy" not in page.request.get(base + "/api/meta").headers)
+            check(f"nothing on the pages the main run visited was blocked by the policy{': ' + csp[0][:160] if csp else ''}",
+                  not csp)
             check(f"no page errors anywhere{': ' + '; '.join(errors[:3]) if errors else ''}", not errors)
             browser.close()
     except Exception as e:

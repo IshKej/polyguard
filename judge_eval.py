@@ -42,7 +42,6 @@ import sys
 
 import engine
 import providers
-from languages_catalog import tier_of
 
 CANARY = "PWNED_7F3A"
 

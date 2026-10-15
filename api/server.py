@@ -656,6 +656,34 @@ if _dist.is_dir():
     from fastapi.responses import FileResponse
     from fastapi.staticfiles import StaticFiles
 
+    # The page headers Vercel sets (vercel.json, "headers"), applied here too when the
+    # built site is served locally, so the browser tests run under the same policy.
+    _page_headers = [(h["key"], h["value"]) for block in json.loads(
+        (ROOT / "vercel.json").read_text(encoding="utf-8")).get("headers", []) for h in block["headers"]]
+
+    # Plain ASGI, and /api/ passes straight through: a response-wrapping middleware
+    # would sit between the live scan's event stream and the client and hide the
+    # disconnect that cancellation depends on (api/test_cancellation.py).
+    class _SiteHeaders:
+        def __init__(self, inner):
+            self.inner = inner
+
+        async def __call__(self, scope, receive, send):
+            if scope["type"] != "http" or scope["path"].startswith("/api/"):
+                return await self.inner(scope, receive, send)
+
+            async def send_with_headers(message):
+                if message["type"] == "http.response.start":
+                    have = {k.lower() for k, _ in message.get("headers", [])}
+                    message["headers"] = list(message.get("headers", [])) + [
+                        (k.lower().encode("latin-1"), v.encode("latin-1"))
+                        for k, v in _page_headers if k.lower().encode("latin-1") not in have]
+                await send(message)
+
+            await self.inner(scope, receive, send_with_headers)
+
+    app.add_middleware(_SiteHeaders)
+
     # The site's own addresses all load the same page; the page picks the screen.
     for _path in ("/how", "/review", "/review/coverage", "/scan", "/scan/live", "/scan/results", "/s/{scan_id}"):
         app.add_api_route(_path, lambda: FileResponse(_dist / "index.html"), include_in_schema=False)

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getMeta, getSavedScan, runScan } from './api'
 import { Loader, Nav } from './components/Chrome'
 import { isMotionOff, useMotionOff } from './lib/motion'
@@ -8,8 +8,9 @@ import Landing from './components/Landing'
 import LiveScan from './components/LiveScan'
 import Results from './components/Results'
 import Method from './components/Method'
-import ReviewCoverage from './components/ReviewCoverage'
-import ReviewWhy from './components/ReviewWhy'
+// The review pages carry their own data, so they load only when opened.
+const ReviewCoverage = lazy(() => import('./components/ReviewCoverage'))
+const ReviewWhy = lazy(() => import('./components/ReviewWhy'))
 import Setup from './components/Setup'
 
 // Every screen has an address, so the browser's back and forward buttons move
@@ -28,6 +29,18 @@ function viewFromPath(path) {
   if (path.startsWith('/review')) return 'review'
   if (path.startsWith('/scan')) return 'setup'
   return 'landing'
+}
+
+// Each screen's title, so a tab, a bookmark and a screen reader name the screen.
+const TITLES = {
+  landing: 'PolyGuard: does your chatbot say no in every language?',
+  setup: 'Set up a scan | PolyGuard',
+  live: 'Scanning | PolyGuard',
+  results: 'Scan results | PolyGuard',
+  shared: 'Shared scan | PolyGuard',
+  method: 'How we know | PolyGuard',
+  review: 'Why native review matters | PolyGuard',
+  coverage: 'Native review coverage | PolyGuard',
 }
 
 export default function App() {
@@ -88,6 +101,26 @@ export default function App() {
     ]
   }, [])
   useEffect(() => () => wipeTimers.current.forEach(clearTimeout), [])
+
+  // After a change of screen, name it and move focus to its heading, so keyboard
+  // and screen reader users start on the new screen instead of a link that is gone.
+  const firstView = useRef(true)
+  useEffect(() => {
+    document.title = TITLES[view] || TITLES.landing
+    if (firstView.current) { firstView.current = false; return undefined }
+    // A lazily loaded screen arrives a moment later, and the outgoing heading can
+    // still be in the page, hidden; so keep trying until a visible heading holds focus.
+    let tries = 0
+    const id = setInterval(() => {
+      const h = [...document.querySelectorAll('main h1')].find((el) => el.offsetParent !== null)
+      if (h) {
+        h.setAttribute('tabindex', '-1')
+        h.focus({ preventScroll: true })
+      }
+      if ((h && document.activeElement === h) || ++tries > 40) clearInterval(id)
+    }, 50)
+    return () => clearInterval(id)
+  }, [view])
 
   // Back and forward. Leaving a running scan stops it, so its results cannot
   // pull the reader back to a screen they just left.
@@ -201,8 +234,10 @@ export default function App() {
         </div>
       )}
       {view === 'method' && meta && <Method meta={meta} onStart={() => go('setup')} onBack={() => go('landing')} onCoverage={() => go('coverage')} />}
-      {view === 'review' && <ReviewWhy onBack={() => go('landing')} onCoverage={() => go('coverage')} />}
-      {view === 'coverage' && <ReviewCoverage onBack={() => go('landing')} onWhy={() => go('review')} />}
+      <Suspense fallback={null}>
+        {view === 'review' && <ReviewWhy onBack={() => go('landing')} onCoverage={() => go('coverage')} />}
+        {view === 'coverage' && <ReviewCoverage onBack={() => go('landing')} onWhy={() => go('review')} />}
+      </Suspense>
       {view === 'setup' && meta && (
         <Setup
           meta={meta} initial={config}

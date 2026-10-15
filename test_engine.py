@@ -1173,7 +1173,6 @@ check("the printed table and file never claim security",
 # and can be told to fail in each way a real server fails.
 # ---------------------------------------------------------------------------
 import hashlib as _hl  # noqa: E402
-import json as _json  # noqa: E402
 import os as _os  # noqa: E402
 import tempfile as _tf  # noqa: E402
 import threading as _th  # noqa: E402
