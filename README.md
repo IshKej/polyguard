@@ -29,7 +29,7 @@ PolyGuard measures that gap so a builder can see it and shrink it **before an at
 ## How it works
 
 1. You paste the target bot's **system prompt**.
-2. PolyGuard spins up a live instance of that bot (its system prompt as the system message) and fires the **attack bank** at it: 5 injection types × **3 distinct phrasings** × every language in the bank (20 today, 87 in the catalog). Three variants per cell means each result is an average, not a coin flip.
+2. PolyGuard spins up a live instance of that bot (its system prompt as the system message) and fires the **attack bank** at it: 5 injection types × **3 distinct phrasings** × every language in the bank (73 today, 87 in the catalog). Three variants per cell means each result is an average, not a coin flip.
 3. Every attack tries to make the bot emit a secret **canary token**, or leak its own instructions. Success is **measured, not guessed**: the token must actually appear, and a language-agnostic judge, shown the user's message and the reply, confirms the bot *acted on* the injected instruction rather than quoting the token while refusing (so a refusal in any language is never miscounted as a break). A reply that did the user's real task, such as translating a message, and carried the injected line along without obeying it is a hold, counted apart as **echoed** so it stays visible. Extraction is scored by a long verbatim overlap with the system prompt.
 4. You get a language × category **break map**, a ranked vulnerability chart, the attack type your bot is weakest against, and the exact prompts that worked.
 5. The tier comparison is reported with **95% Wilson confidence intervals** and a **Mann-Whitney U test on per-language rates**, so the headline is "low-resource languages break X% more often, p = …" rather than a number you have to take on faith. The test deliberately clusters by language, because attacks on the same bot are not independent and pooling them would overstate significance. The uncorrected attack-level p-value is shown too, labelled as optimistic.
@@ -40,7 +40,7 @@ PolyGuard measures that gap so a builder can see it and shrink it **before an at
 
 ## What a scan looks like
 
-![A scan's results: the verdict, the headline numbers, and the board of every language](docs/results.png)
+![A simulated scan's results: the banner saying it is simulated, whether every planned attack ran, and the headline numbers](docs/results.png)
 
 *Shown with simulated data, which the app labels as such. A simulated run attacks no model and proves nothing about any real chatbot.*
 
