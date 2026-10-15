@@ -339,9 +339,9 @@ def main() -> int:
             check("the menu opens with the keyboard and says so",
                   m.locator('[aria-controls="site-menu"]').get_attribute("aria-expanded") == "true"
                   and m.locator("#site-menu").is_visible())
-            check("the menu holds How we know, own bot setup, the Motion switch and GitHub",
+            check("the menu holds How we know, own bot setup, translation review, the Motion switch and GitHub",
                   all(m.locator("#site-menu").get_by_text(x).count() for x in
-                      ("How we know", "Scan your own chatbot", "Motion", "GitHub")))
+                      ("How we know", "Scan your own chatbot", "Translation review", "Motion", "GitHub")))
             m.locator("#site-menu").get_by_role("button", name="Motion off").click()
             check("pausing is one tap away: the Motion switch in the menu works",
                   m.evaluate("document.documentElement.dataset.motion") == "on")
@@ -449,7 +449,9 @@ def main() -> int:
                           r5.title() == "Why native review matters | PolyGuard"
                           and r5.evaluate("document.activeElement && document.activeElement.tagName") == "H1")
                     r5.goto(base + "/", wait_until="networkidle")
-                    r5.get_by_role("button", name="Translation review").click()
+                    check("on a wide screen the nav links to translation review too",
+                          r5.locator("header").get_by_role("button", name="Translation review").is_visible())
+                    r5.locator("main").get_by_role("button", name="Translation review").click()
                     r5.wait_for_timeout(500)
                     check("the home page footer links to review coverage", r5.url.rstrip("/").endswith("/review/coverage"))
                     r5.go_back()

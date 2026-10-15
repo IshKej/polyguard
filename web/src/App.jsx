@@ -214,6 +214,7 @@ export default function App() {
         onHome={() => { stop.current?.(); go('landing') }}
         onScan={() => go('setup')}
         onMethod={() => go('method')}
+        onReview={() => go('coverage')}
         showScan={view === 'landing' && !!meta}
         view={view}
       />

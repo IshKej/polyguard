@@ -65,7 +65,7 @@ function useNavState(offset = 36, deps = []) {
   return state
 }
 
-export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) {
+export function Nav({ live, loaded, onHome, onScan, onMethod, onReview, showScan, view }) {
   const { surface, scrolled, hidden } = useNavState(36, [view])
   return (
     <header
@@ -91,6 +91,11 @@ export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) 
               <span className="hl">How we know</span>
             </button>
           )}
+          {onReview && view !== 'coverage' && view !== 'review' && (
+            <button type="button" onClick={onReview} className="hl-hover caption hidden text-[.8rem] lg:inline">
+              <span className="hl">Translation review</span>
+            </button>
+          )}
           <MotionSwitch className="hidden text-[.8rem] md:inline" />
           <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption hidden text-[.8rem] md:inline">
             <span className="hl">GitHub</span>
@@ -100,7 +105,8 @@ export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) 
               Scan your own chatbot
             </button>
           )}
-          <MobileMenu onMethod={view !== 'method' ? onMethod : null} onScan={showScan ? onScan : null} />
+          <MobileMenu onMethod={view !== 'method' ? onMethod : null} onScan={showScan ? onScan : null}
+            onReview={view !== 'coverage' ? onReview : null} />
         </div>
       </div>
     </header>
@@ -110,7 +116,7 @@ export function Nav({ live, loaded, onHome, onScan, onMethod, showScan, view }) 
 // Below tablet width the nav keeps only the badge and this button. The panel holds
 // everything the wide nav shows, with touch sized targets, and the Motion switch is
 // in it so pausing is one tap away rather than at the bottom of the page.
-function MobileMenu({ onMethod, onScan }) {
+function MobileMenu({ onMethod, onScan, onReview }) {
   const [open, setOpen] = useState(false)
   const button = useRef(null)
   const panel = useRef(null)
@@ -143,6 +149,7 @@ function MobileMenu({ onMethod, onScan }) {
              className="paper absolute right-0 top-full mt-2 w-64 border-2 border-ink py-2 shadow-[4px_4px_0_var(--ink)]">
           {onMethod && <button type="button" onClick={go(onMethod)} className={item}>How we know</button>}
           {onScan && <button type="button" onClick={go(onScan)} className={item}>Scan your own chatbot</button>}
+          {onReview && <button type="button" onClick={go(onReview)} className={item}>Translation review</button>}
           <div className={item}><MotionSwitch className="text-base" /></div>
           <a href={REPO} target="_blank" rel="noopener" className={item}>GitHub</a>
         </nav>
