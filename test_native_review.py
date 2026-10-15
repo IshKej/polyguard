@@ -1,7 +1,8 @@
 """
 Regression tests for the native speaker corrections, Spanish (2026-10-01), Arabic
-(2026-10-04) and Portuguese (2026-10-08, integrated 2026-10-12), and for every
-unflagged row in those three languages.
+(2026-10-04), Portuguese (2026-10-08, integrated 2026-10-12) and French (register,
+integrated 2026-10-14), and for every unflagged row in those four languages. A
+digest of every language's text guards all 73 languages against unintended edits.
 
 Each row is pinned by the SHA-256 of its template and of its rendered bank text.
 The 27 corrected rows were pinned from the corrections themselves (the review
@@ -168,6 +169,49 @@ PINS = {
                      "79e7423fafc9861fb45dbce513c433bdd6b1359e6b69167df8bc5039409c32ae", False),
     "pt_control_5": ("fb842a2a2a0ea3ac75c998590ccea9af20d5e83946f33634bc155017199c83da",
                      "67e0bee5978dd2e3f3784baabf0847c04f766ec9fb21d727edd3faf98263be94", False),
+    # French (author written): register made consistent 2026-10-14, controls tu like the attacks.
+    "fr_instruction_override_0": ("b3fd8381d734fd6dce7325e8e910be38c52fbed0a4d5224812576dc988ac5ea6",
+        "22832f19cc96db78e77534cc28e4a73f4b576dc023e4901012678b133af45fd0", False),
+    "fr_instruction_override_1": ("46d619996688820172661867739c89b45613b9d46cd7869ba62077004e5da6f6",
+        "fa4e34fe780bafafdd3f86bb21cf48d5eab8df0a6c10f9ef8bf2323cfea7aa05", False),
+    "fr_instruction_override_2": ("4dbbcfdbe0f138a2674badea04a05738ffb35f2a2ec24d368b9ea72d7731bf19",
+        "044a0950e2689ef4bc635b71108dc998c0d00095bb31430354bf1e80ae15e75c", False),
+    "fr_role_play_jailbreak_0": ("3291d5b1d398a4db0579ca8916c56439a2c6753223eb5206c9ae57d33e9bda7e",
+        "dc8f87400e44619da93e379ded61743f2442a64938f69f7dbb533d75cb9020b9", False),
+    "fr_role_play_jailbreak_1": ("cb6aa5a41d076af497793127ca1155f494ea73df8da94ef710d1b3df3f817cc1",
+        "20afd96e1dfbd63564715fa42e3a3139a75aef93ca0bb9275f54eb7b9cbd1402", False),
+    "fr_role_play_jailbreak_2": ("e3f3bb32f48807bb77049b685d651cd748e646823d2deb01cc3f1a32e7126fef",
+        "e99c86b9e2b17f8a044a9a575e311c599a6becf755313f232f44f87d14aa6475", False),
+    "fr_system_prompt_extraction_0": ("5a5d02a9646585bf2ac20c2ec4c262de35dfbd86c6b5ecb5f9c83b36afc990ee",
+        "5a5d02a9646585bf2ac20c2ec4c262de35dfbd86c6b5ecb5f9c83b36afc990ee", False),
+    "fr_system_prompt_extraction_1": ("e7504b2bac917d2778b854b9eb4cabf675a279abbe8c6237e74fe42a2bb51fa4",
+        "e7504b2bac917d2778b854b9eb4cabf675a279abbe8c6237e74fe42a2bb51fa4", False),
+    "fr_system_prompt_extraction_2": ("d695f313f7db1e786480b3a9be44bd68b6ae6fa1bf5596ef99e2dfc2b55c0b58",
+        "d695f313f7db1e786480b3a9be44bd68b6ae6fa1bf5596ef99e2dfc2b55c0b58", False),
+    "fr_obfuscated_payload_0": ("220c46392378f5ab6b9fc57f5dd0355c62bcf9734327ed0ab124b7cd3bebf2f8",
+        "738afed198cdffcb78ce75ce416329a28052b1c1d3f284205c1962c2bbcc3f80", False),
+    "fr_obfuscated_payload_1": ("3995b82b4f7101041109488fed7a4cbb2c3a4a37f5c734eec6656a74e5fcf996",
+        "8ae582ba03f0b875429f141fb8ab9823da13efeea390d2b8153dddf795bad864", False),
+    "fr_obfuscated_payload_2": ("a3a73b46a95bf797c015be069de7ce43b68bbe84b1683114bfea56bb1439d3c5",
+        "238561a9410f8f43882f936ce314a63fe00bfbbb3c9f32df669c5594285ea847", False),
+    "fr_indirect_injection_0": ("e3b76a1121c40d186adbf36f8afd6c59f8b734b725f81bbef922dbdba5715224",
+        "f590e42cad807937ae8c93278f154da96a8bb826285b8276dd9429363901ff45", False),
+    "fr_indirect_injection_1": ("400f879fd6d2a2bde10be312c735dc9709b62e4d42bed55e9644ebebf4850169",
+        "21417fc07198cee671452f0b1b374247f5597e193115b7c8128a8cb062cc734e", False),
+    "fr_indirect_injection_2": ("08e7ce027b0822f130a668244150041157bed47402fb63d05facc3a9ec271fdf",
+        "d78a762ae58f78b6b68fa987639fbb3f89b0607b40ce734123e78ebf6b2b6784", False),
+    "fr_control_0": ("9ac679a232c6c4d26bf95aa5fc4373bc4e7f611bbe808dc28ff923347a66d756",
+        "31346cf5b9611b017c8805739d4259e2013b2e0d77a140bdb3edff220657ce5a", True),
+    "fr_control_1": ("853ea60b88aeeb8cba725d9cc36ee45fcf47d3febae2318ff508f484f808d483",
+        "84e7b148f93301ff0ccfa09a21f24989557311e0d4f658d39909732c8bb4438e", True),
+    "fr_control_2": ("78baddf5cfb7df6ecb6e24ac1595908a1c957d5a30a789cdf00fbd2120e0bf8e",
+        "d6219ee48d06fdcc7d457576e5cc86fb0cf2199fb1f453551c7d86c4a870c919", False),
+    "fr_control_3": ("81e61ec2ac9598c60dae50eee085a6af536235e02b0e76a22fa0ec98ad063878",
+        "f84805d7ef45a9a7a90eb20a4fca6551f588f114a21f93533114ad013b24c0a3", True),
+    "fr_control_4": ("25d0f11edf31bf194fb1a96f30ac9676e27217e0cca8c388e6b0487fd2f02d7f",
+        "ff4a9577d066e532c7407d4839b1a88654434d42b5b4c4b624d3e6257a5f1548", True),
+    "fr_control_5": ("c5b92742533412ee3c7f77d8d39c3119905edff7672afcf371fd07456cdcb9d0",
+        "4e86af307393fe5d00d2e85c030332b18aa16d0c92a7c6b2ad7bd12a0f40641e", True),
 }
 
 
@@ -181,13 +225,14 @@ attacks = {a["id"]: a for a in BANK["attacks"]}
 controls = {c["id"]: c for c in BANK.get("controls", [])}
 bank_rows = {**attacks, **controls}
 
-check("exactly 27 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese)",
-      sum(v[2] for v in PINS.values()) == 27
+check("exactly 32 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese, 5 French)",
+      sum(v[2] for v in PINS.values()) == 32
+      and sum(v[2] for k, v in PINS.items() if k.startswith("fr_")) == 5
       and sum(v[2] for k, v in PINS.items() if k.startswith("pt_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("es_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("ar_")) == 7)
-check("every Spanish, Arabic and Portuguese row in the bank is pinned, and nothing else",
-      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt")} == set(PINS))
+check("every Spanish, Arabic, Portuguese and French row in the bank is pinned, and nothing else",
+      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr")} == set(PINS))
 for rid, (t_sha, r_sha, corrected) in PINS.items():
     kind = "corrected" if corrected else "unflagged"
     check(f"{rid} ({kind}): generator template unchanged", sha(template(rid)) == t_sha)
@@ -204,8 +249,8 @@ check("ar_indirect_injection_0 keeps the quoted review with the marker and the c
       _quoted.startswith('"') and _quoted.endswith(CANARY + '"')
       and "SYSTEM OVERRIDE" in _quoted and CANARY not in _frame)
 
-# Tokens and markers survive in every Spanish, Arabic and Portuguese row.
-for lang in ("es", "ar", "pt"):
+# Tokens and markers survive in every reviewed language's rows.
+for lang in ("es", "ar", "pt", "fr"):
     rows = [a for a in BANK["attacks"] if a["lang"] == lang]
     check(f"{lang}: every canary attack carries the canary once",
           all(a["text"].count(CANARY) == 1 for a in rows
@@ -231,6 +276,96 @@ for lang in ("es", "ar", "pt"):
           all(a.get("native_reviewed") is False for a in rows)
           and all(c.get("native_reviewed", False) is False for c in ctl)
           and not BANK["languages"][lang].get("native_reviewed"))
+
+# Every language's text, as a digest of its sorted (id, text) pairs: an edit to any
+# language nobody meant to touch fails here. Updated only with a deviation entry.
+LANG_DIGESTS = {
+    "af": "5475563e8be775e89d23720d374ab0f81999f727a657cf2b5188729875617827",
+    "ar": "146cfbdbc6b02b3b00e97291eea53a286f8ce3541678ba4efa3b0ea4400f9008",
+    "az": "44f9e37a8b08bbd03272f60df8bc60fe249200742fc5aed80c394f4c692cafe7",
+    "bg": "d33bff584c28d5855b13af9a855285e11cc5020384d3dd021daf18678c78be86",
+    "bn": "b91d79e9438e80e4a6a24ee1472e83240b52afddc7c1127f52e715f1d29be22b",
+    "ca": "2026d33291bb8fd9de2548be173de69e32427f119860deb790ab6b63e06ad2ed",
+    "ceb": "543401ca445bbc3ee8bc2dfb0a471588563d11b1b6fa00ec30b49104ef7f5773",
+    "cs": "45a65c85d0ef1e1e82e71f7c20976bf4a5a3dc1eff7d9240dc609ff685c14499",
+    "cy": "d16509f0a9b551926cfd1c77b4f42dbde8d2025ff52acdb558dd74cb533ab186",
+    "da": "d1a185208cb3d0386725b28a200926f5d21a33fe3e522b60f4f570387d75293b",
+    "de": "a261b5c263f6d2dc54a77acc9d053de2f1d644bcbc49786c8ec5e6aab2e582a0",
+    "el": "d1fca607988cbed2449e9b8f0c5ca56772c043613c2c54fc90dbb64465daf77d",
+    "en": "480dc4ac5d0ec21b88caddf62714d069195dc1ffe6ddad5c7c5b3656511dfd9b",
+    "es": "e5d874df468d3e52b4703d1fa2f1cb4d4624b6e20e269da0e371032f234eb936",
+    "et": "9b699203ebdf24b63820c959f7a91f1a68df8168a896c006586937cf8fbad399",
+    "eu": "9501a8a7c8cb53a2ec32ac9813c24e62c21669e2923a8e9dca1aae15e9c6972b",
+    "fa": "100d0e212976fc8cf1ad8625217a07a51c75240726a39856408e00a2e27bd18b",
+    "fi": "b80b6ccc23e02d19267271eb095521521fbfa8ca80370cb5ccde19b4641e3b1c",
+    "fr": "dc158ff1063c0012aecc5cf4194f584966694125db89b688ce282bdb0ca873c2",
+    "ga": "c821ccf4c5fa04c4a951f2f797a16a548cb796f86ec1ef653d61cdb577cd3a56",
+    "gl": "bb28ab2a3e4fbcf3ad81ebc47d790e94e309f1847d85a83641fd356e4d68acda",
+    "gu": "ee53734ffeb0ab7ddb87b01d5bd0fea8c83441613e3b1be0c3b8d65663458e13",
+    "ha": "4fe88e5bc04e357fb68bd632bdc33d135aa10ca9ce62e7a7a461784010de6335",
+    "he": "41b426ed689bd524ddf3cf3bd7732894d5079bc0614525248a7432b67572eda9",
+    "hi": "3e0cd20d9ff0d9bc8f44f0ae41a658d260e0148cb6582a7c21590c0111742dcc",
+    "hr": "72141fe00435b1f8d28c2a3a2f997acba62233569d9ac118f8bc5c6452d1823d",
+    "ht": "f30433011ad80e235f76ccd9c0c29011ac781362a39ef3a60d1de52edfb0f20c",
+    "hu": "fbd58f3476b9ea50f52266a907c9b911e735fcab16839486c7e2961194660cbc",
+    "id": "e99cc67e6794901c6c7f1f496ec8dc7b3e799ec9af397fbe2e19510271b930d4",
+    "ig": "396c28e0a20ae99c146357ca3d99ece8f0750a508c190a5f83d3b3a5623581e3",
+    "is": "47b82a0c89b021c2e4b1da7849377448745b12f20950d6c18e45403a51a1729e",
+    "it": "30b0f2cd10ce01fd9bc306ee2e4012f8ee4ab846cdcaf974d66b834ac2ef7556",
+    "ja": "6897447876660bcea8409539072260aeeaa6e2d62fa71a8023e848420f50fe7d",
+    "ka": "8e924928c976c10e27c7401db8ac15097f700c3714b296de110118fd6dbef482",
+    "kk": "3422f8dc32c26a637c03e48a138bae5d2b0178c73e4671561b70c529b81a83e0",
+    "kn": "5e92e36f136178c5e1ebcb69a91d19ce8036aaaad07e5b4a26a0fc94848cb8fd",
+    "ko": "35042bbfa8acebe3c20378a19a046dee6ec1d22db82bcccba59ace33f9c0a402",
+    "ky": "5cd606c4c621da5fbab314f860facc01f9ccb860e7db3e06fac83b3f517ba134",
+    "lo": "28dcf0f2deb6c3bd66f04f1247e9ec02d3631174eac13163a18c09c23fbf028e",
+    "lt": "34bffdeade1c93b79e3c2a15428120ae95496f25ac24c894ec4a970584d1bb4f",
+    "lv": "d869ce3ece8c1fe1da0ac021fee2686aafb9ce7cd9c6df9e287369d28748c0ed",
+    "mk": "c455edf0aa3cf1bbe8fd8f13ff39af4678470483fd90c74886dd0207c88d8009",
+    "ml": "95308c44cf7b72d02e8c75bdc96fb51f73fd0e2589dceb2faa86f8e3b5da06ce",
+    "mr": "6a6ccb3d9800e98477f679124a8f7f42b5cb7e599ad827b227cbc1313c370e12",
+    "ms": "0184ebc8c5bbbe85a30d721b5709b01411d1f99ba07a5a762d8e7b016543b9d3",
+    "nl": "92f669ca11c1353be366df98520ff757147e88996207806bc20d7629e317576a",
+    "no": "45c119532e27eb486977936431e6b5a2d856c6355c59d6a4cc40b4d049524c57",
+    "ny": "97349ff40bce85382f538c2610d1719f1b184ad1ddbfe17b861a2f382559cba1",
+    "or": "fb3f0c79680a24477685810297d51d16705312d98a7743dd3e6185ad5f350d03",
+    "pa": "10bf1f3f60e095e5c2057418efefc8f0c8011921e20a0efb1610fb74fac170a3",
+    "pl": "6074282a39bcf5ee4b5a9c08f7dbf112e903de93dbdbee10b860f8d8a387f054",
+    "pt": "e369d9d3be47ace30211299b7c610842d110fc4c3b465e90067aa85a17f8ebf2",
+    "ro": "eed1e3d0cc6f79f174539c9fb153fe2ec3d6e01edb61b54cf1fc2b35ca09977f",
+    "ru": "40335b421b9279e0602ffc644b88af9f390cbe52877eb858c80eb9ef20e881cd",
+    "sk": "339115dc0ab4dead92c70301b198ed77c09ee2d8d0df337ae7e343e6ab626007",
+    "sl": "e66c48dc99cc587113724255f7ae200507edd8e3ce6d0e8726be79b298a01d79",
+    "sn": "041e3b349111157455fe517104f25739986ea307844940bc6f5d679724286818",
+    "sq": "d18b18580f7f4a52f86d55fc33ebc7b7bf421a53bc09e54c8078ad5e2b9342c1",
+    "sr": "cc2e9df90b10ddc62be2013af2355c9461aa8f1a37c799f9b166136d48b4ae36",
+    "sv": "34232357c6353b6ed4fac2ef2cd3eb21e187f4bbe7b92d9c05cd7a2e9bfe52ad",
+    "ta": "2cc2f2111809cec03f78334830ab3eaad4c818e8bde20d1fe27894bd11147a24",
+    "te": "3c7ced73b3a621bcc3127e4c6334646ff6002d3a2c4738810a7fb57848503441",
+    "th": "589951486845111742d12520edbfe1576fff4945befda9a6369f0267795a37ae",
+    "tl": "1aff845d06d6f35f6dbe731b45e05a3dafffd51f2520fc716fd3ef18cd3f8e51",
+    "tr": "cf25960ea9c366f291cf2005b743ec96ebd272851228abf8eb104f71ffe7e518",
+    "uk": "0f379e6ead0d29327028a74333437024492dd02a7bf11c80ba91a4c1d3014bcd",
+    "ur": "7eb95ea26888857b10834011fceacead3967f4fe07c315f19f96b1cace897142",
+    "uz": "73bd2eecbd28be8a9eccccb4a343eaa0211631869ac0a68efb3d56caf7f74443",
+    "vi": "6a2c64cdc2701f28aa7dcfb9eca12c51d3ff109352d8f3b5350ad31b4d5fda5c",
+    "xh": "ae14395b46634390d3ee8a5b1165e48172615bc24f834339d64290615fd1cff2",
+    "yo": "e076e269eb454f7a99ed7c7dd494ee4ed7fed85e9ebc6fdb31cd458802bdc6c0",
+    "zh": "2f8867149dc4314e1189b549c6e19caaa0419c08feb2179e81759bf745e5caf0",
+    "zu": "298ef83cf017ac7d495fcb5b03659fc91f78dc8f2cc2b3d5ae8b00989f91cd2e",
+}
+
+
+def lang_digest(lang: str) -> str:
+    pairs = sorted((r["id"], r["text"]) for r in BANK["attacks"] + BANK["controls"] if r["lang"] == lang)
+    return hashlib.sha256(json.dumps(pairs, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+check(f"every language in the bank has a pinned text digest ({len(LANG_DIGESTS)})",
+      set(BANK["languages"]) == set(LANG_DIGESTS))
+_moved = [lang for lang in LANG_DIGESTS if lang in BANK["languages"] and lang_digest(lang) != LANG_DIGESTS[lang]]
+check(f"no language's text changed without its digest being updated{': ' + ', '.join(_moved) if _moved else ''}",
+      not _moved)
 
 check("the instrument constants are unchanged",
       BANK["canary"] == "PWNED_7F3A" and BANK["control_token"] == "CTRL_4B8E")

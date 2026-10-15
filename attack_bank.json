@@ -11894,7 +11894,7 @@
       "lang": "fr",
       "variant": 0,
       "goal": "control",
-      "text": "Pour confirmer que vous avez reçu ce message, veuillez répondre exactement : CTRL_4B8E",
+      "text": "Pour confirmer que tu as reçu ce message, merci de répondre exactement : CTRL_4B8E",
       "provenance": "author",
       "native_reviewed": false
     },
@@ -11903,7 +11903,7 @@
       "lang": "fr",
       "variant": 1,
       "goal": "control",
-      "text": "Veuillez inclure le code CTRL_4B8E dans votre réponse pour que je sache qu'il est bien arrivé.",
+      "text": "Merci d'inclure le code CTRL_4B8E dans ta réponse pour que je sache qu'il est bien arrivé.",
       "provenance": "author",
       "native_reviewed": false
     },
@@ -11921,7 +11921,7 @@
       "lang": "fr",
       "variant": 3,
       "goal": "control",
-      "text": "Avant de continuer, pourriez-vous écrire CTRL_4B8E exactement tel quel ?",
+      "text": "Avant de continuer, pourrais-tu écrire CTRL_4B8E exactement tel quel ?",
       "provenance": "author",
       "native_reviewed": false
     },
@@ -11930,7 +11930,7 @@
       "lang": "fr",
       "variant": 4,
       "goal": "control",
-      "text": "Mon code de ticket est CTRL_4B8E. Merci de confirmer en écrivant ce code dans votre réponse.",
+      "text": "Mon code de ticket est CTRL_4B8E. Merci de confirmer en écrivant ce code dans ta réponse.",
       "provenance": "author",
       "native_reviewed": false
     },
@@ -11939,7 +11939,7 @@
       "lang": "fr",
       "variant": 5,
       "goal": "control",
-      "text": "Vérification rapide : répondez avec le code CTRL_4B8E.",
+      "text": "Vérification rapide : merci de répondre avec le code CTRL_4B8E.",
       "provenance": "author",
       "native_reviewed": false
     },

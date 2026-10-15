@@ -51,6 +51,9 @@ logged in `PREREGISTRATION.md`.
 **2026-10-12:** Portuguese feedback received and integrated (10 lines, from a University
 of Washington Portuguese class and its instructor, credited with permission in
 `NATIVE_REVIEW.md`). Bank SHA-256 `fec8ba0f765c7a28...`, held-out `fb97da7b38a551b7...`.
+**2026-10-14:** French feedback received and integrated: the register is now tu throughout (five
+capability controls changed from vous; no attack changed). Reviewer name withheld at her request.
+Bank SHA-256 `20f7e3b4a4f42d8f...`, held-out unchanged.
 **2026-10-06:** statistics sprint (log in `docs/progress/stats.md`). Added an
 EXPLORATORY rank trend of break rate against Common Crawl web share (crawl
 CC-MAIN-2026-39, `data/resource_measures.csv`), logged as secondary in the
@@ -248,7 +251,7 @@ gate is on by default and native review is tracked rather than waved off.
 | Verification checks | 234 |
 | Unit tests | 288 (every public engine function) |
 | Audit findings | 78 across 20 rounds (all fixed; 62, cancellation, fixed 2026-10-13) |
-| Native speaker feedback integrated | 4 of 20 (Spanish, Vietnamese, Arabic, Portuguese); none validated. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
+| Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French); none validated. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
 | Paid or production model study runs | 0 (no scan of a production chatbot or paid API has run) |
 | Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |
-| Bank fingerprint | `fec8ba0f765c7a28a7b043822aea310b1bdb2c14d29ab946d19ca3a1da1cb8ab` since 2026-10-12 |
+| Bank fingerprint | `20f7e3b4a4f42d8f6bacbc0cc8973b6d3cd387ca7903c0b43efe582cf38d8a2b` since 2026-10-14 |

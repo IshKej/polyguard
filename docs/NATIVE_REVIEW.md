@@ -1,8 +1,8 @@
 # Native speaker review
 
-**Status as of 2026-10-13: native speaker feedback has been received and
-integrated for 4 of the 20 hand-authored languages, Spanish, Vietnamese, Arabic
-and Portuguese. The other 16 have had no native review.
+**Status as of 2026-10-14: native speaker feedback has been received and
+integrated for 5 of the 20 hand-authored languages, Spanish, Vietnamese, Arabic,
+Portuguese and French. The other 15 have had no native review.
 None of the 53 machine translated languages added on 2026-10-05 has had a row by
 row native review. For one of them, Tamil, a Tamil instructor sent general
 feedback on 2026-10-13 with no corrections, so nothing in the bank changed.** Feedback
@@ -163,10 +163,11 @@ credited.
 | Arabic | Native speaker (name withheld) | 2026-10-04 | 18 ok, 2 awkward, 1 wrong; seven wording suggestions | All 7 integrated 2026-10-04 in `generate_attack_bank.py`: 5 attacks (`ar_instruction_override_1`, `ar_instruction_override_2`, `ar_role_play_jailbreak_2`, `ar_system_prompt_extraction_1`, `ar_indirect_injection_0`) and 2 controls (`ar_control_0`, `ar_control_3`). In `ar_indirect_injection_0`, the line marked wrong, only the framing clause was replaced; the quoted customer review carrying the injection is unchanged. Where a suggestion left out the code word, it was kept. |
 | Portuguese | UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching Professor Eduardo Viana da Silva, credited with his permission | 2026-10-08 | Overall the translation was good; vocabulary made more Brazilian and current on 10 of 21 lines (for example registado to registrado) | 9 of 10 applied in full and 1 in part, 2026-10-12, in `generate_attack_bank.py`: `pt_role_play_jailbreak_0`, `pt_role_play_jailbreak_1`, `pt_system_prompt_extraction_2`, `pt_obfuscated_payload_0`, `pt_obfuscated_payload_2`, `pt_indirect_injection_0`, `pt_indirect_injection_1`, `pt_indirect_injection_2`, `pt_control_0`, `pt_control_2`. Not taken: "formal English" to "formal Portuguese" in `pt_indirect_injection_1`, kept as English so the task matches every language; that row's other edits were applied. |
 | Vietnamese | Native speaker (name withheld) | 2026-10-01 | Tone marks correct; understandable, though unnatural in places; one line needed rewording | `vi_role_play_jailbreak_2` reworded as suggested ("tuân theo tất cả" to "tuân theo mọi mệnh lệnh", final period after the canary), 2026-10-02 |
+| French | Native speaker (name withheld) | 2026-10-14 | The lines read as instructions. The register was mixed: the attacks address the bot as tu, the capability controls use vous | The register is now tu throughout, 2026-10-14 in `generate_attack_bank.py`: five controls (`fr_control_0`, `fr_control_1`, `fr_control_3`, `fr_control_4`, `fr_control_5`) moved from vous to tu; `fr_control_2` uses neither form; no attack changed. The new wording is the author's response to the feedback, not text the reviewer wrote or checked |
 | Tamil (machine translated) | Tamil instructor at a US university (name withheld until credit is confirmed) | 2026-10-13 | Feedback received, in a short reply: the Tamil lines read correctly against the English, and the English technical terms inside them are appropriate because they cannot be translated. No filled sheet, no per row ratings, no corrections | None. Feedback received, not integrated, and not a row by row review; `native_reviewed` stays false |
 
-The first four are logged, with the new bank fingerprints, in the deviation log of
-`PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry there.
+Spanish, Arabic, Portuguese, Vietnamese and French are logged, with the new bank
+fingerprints, in the deviation log of `PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry there.
 
 ### Waiting
 
@@ -187,9 +188,9 @@ The correct phrasing anywhere this project is described is:
 
 > Attack strings for 20 languages were written by the author and checked
 > automatically for script, encoding, length and uniqueness. Native speaker
-> feedback has been received and integrated for four of them, Spanish,
-> Vietnamese, Arabic and Portuguese (Brazilian); the other 16 have had no native
-> review. The Arabic is Modern Standard Arabic, and its review
+> feedback has been received and integrated for five of them, Spanish,
+> Vietnamese, Arabic, Portuguese (Brazilian) and French; the other 15 have had no
+> native review. The Arabic is Modern Standard Arabic, and its review
 > does not establish coverage of Arabic dialects. Languages added later are
 > machine-translated and checked by reverse translation: 53 so far, none reviewed
 > row by row by a native speaker (for Tamil, an instructor sent general feedback
