@@ -387,6 +387,72 @@ def main() -> int:
                   "Noto Sans Lao" in t4.locator('button [lang="lo"]').last.evaluate("e => getComputedStyle(e).fontFamily"))
             c4.close()
 
+            # --- the review pages: why native review matters, and coverage ----------------
+            rd = json.loads((ROOT / "web" / "src" / "review-data.json").read_text(encoding="utf-8"))
+            accepted = {"Iliyana Dimitrova",
+                        "UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching "
+                        "Professor Eduardo Viana da Silva, credited with his permission"}
+            for width in (1280, 390, 320):
+                c5 = browser.new_context(viewport={"width": width, "height": 900 if width > 500 else 844},
+                                         reduced_motion="reduce", has_touch=width < 500, is_mobile=width < 500)
+                r5 = c5.new_page()
+                r5.on("pageerror", lambda e: errors.append(str(e)))
+                r5.goto(base + "/review", wait_until="networkidle")
+                r5.wait_for_timeout(800)
+                h1 = r5.get_by_role("heading", level=1).inner_text()
+                dumbbells = r5.locator('figure[aria-labelledby="dumbbell-caption"] [role="img"]')
+                labels = [dumbbells.nth(i).get_attribute("aria-label") for i in range(dumbbells.count())]
+                want_lt = f"Lithuanian, lowest row: {rd['moved'][[m['code'] for m in rd['moved']].index('lt')]['lowest'][0]:.3f} before review"
+                check(f"{width}px /review opens directly: headline, a before and after for every language whose text "
+                      "the review changed, the numbers from the data",
+                      "score went down" in h1 and dumbbells.count() == 2 * len(rd["moved"])
+                      and any(want_lt in (lab or "") for lab in labels))
+                check(f"{width}px /review shows the Lithuanian line whose score fell most, with its English",
+                      r5.get_by_text("The line whose score fell most").count() == 1
+                      and "CTRL_4B8E" in r5.locator("dl").first.inner_text())
+                check(f"{width}px /review: the header still says Simulated, and nothing scrolls sideways",
+                      r5.locator("header").get_by_text("Simulated", exact=True).is_visible()
+                      and not r5.evaluate("document.documentElement.scrollWidth > innerWidth"))
+                if width == 1280:
+                    axe(r5, "the /review page")
+                r5.goto(base + "/review/coverage", wait_until="networkidle")
+                r5.wait_for_timeout(800)
+                cells = r5.locator("li[data-status]")
+                from collections import Counter
+                shown = Counter(cells.nth(i).get_attribute("data-status") for i in range(cells.count()))
+                wanted = Counter(l["status"] for l in rd["languages"])
+                check(f"{width}px /review/coverage maps every language with its status from the data ({cells.count()})",
+                      cells.count() == len(rd["languages"]) == 73 and shown == wanted)
+                credits = {x.strip() for x in r5.locator("[data-credit]:visible").all_inner_texts()}
+                html = r5.content()
+                check(f"{width}px coverage credits: the withheld string or a credit the reviewer accepted, and no email address",
+                      credits and credits <= accepted | {rd["withheld"]} and "Iliyana Dimitrova" in credits
+                      and not re.search(r"[\w.+-]+@[\w-]+\.(edu|com|org|net|ac|zw|uk|si|is|es)", html))
+                check(f"{width}px coverage: Shona is shown as arranged, not as reviewed",
+                      r5.locator('li[data-status]:has([lang="sn"])').get_attribute("data-status") == "under_way")
+                check(f"{width}px coverage: nothing scrolls sideways, and the right layout for the width is shown",
+                      not r5.evaluate("document.documentElement.scrollWidth > innerWidth")
+                      and (r5.locator("table").is_visible() if width > 500 else r5.locator("ul[aria-label^='Languages with']").is_visible()))
+                if width == 1280:
+                    axe(r5, "the /review/coverage page")
+                    r5.get_by_role("button", name="Why native review matters").click()
+                    r5.wait_for_timeout(500)
+                    check("coverage links to the why page in the app", r5.url.rstrip("/").endswith("/review"))
+                    r5.goto(base + "/", wait_until="networkidle")
+                    r5.get_by_role("button", name="Translation review").click()
+                    r5.wait_for_timeout(500)
+                    check("the home page footer links to review coverage", r5.url.rstrip("/").endswith("/review/coverage"))
+                    r5.go_back()
+                    r5.wait_for_timeout(500)
+                    check("and the back button returns home", r5.url.rstrip("/") == base)
+                    r5.route("**/api/meta", lambda route: route.abort())
+                    r5.goto(base + "/review", wait_until="domcontentloaded")
+                    r5.wait_for_timeout(1500)
+                    check("with the server unreachable, the review page still shows (it needs nothing from the server)",
+                          "score went down" in r5.get_by_role("heading", level=1).inner_text())
+                    r5.unroute("**/api/meta")
+                c5.close()
+
             check(f"no page errors anywhere{': ' + '; '.join(errors[:3]) if errors else ''}", not errors)
             browser.close()
     except Exception as e:

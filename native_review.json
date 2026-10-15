@@ -1,0 +1,29 @@
+{
+  "schema": "polyguard.native-review/1",
+  "what": "Public native review status per language. Credit is either the exact string 'Native speaker (name withheld)' or a credit the reviewer expressly accepted; verify_all.py enforces that. Details and row ids: docs/NATIVE_REVIEW.md.",
+  "withheld": "Native speaker (name withheld)",
+  "statuses": {
+    "integrated": "Feedback received and integrated",
+    "integrated_in_part": "Feedback received, integrated in part (some rows held for confirmation)",
+    "feedback_no_corrections": "Feedback received, no corrections",
+    "under_way": "Review arranged, nothing returned yet",
+    "requested": "Review requested, nothing returned yet"
+  },
+  "languages": {
+    "es": {"status": "integrated", "credit": "Native speaker (name withheld)", "returned": "2026-10-01", "integrated": "2026-10-02", "rows_changed": 10, "rows_held": 0},
+    "vi": {"status": "integrated", "credit": "Native speaker (name withheld)", "returned": "2026-10-01", "integrated": "2026-10-02", "rows_changed": 1, "rows_held": 0},
+    "ar": {"status": "integrated", "credit": "Native speaker (name withheld)", "returned": "2026-10-04", "integrated": "2026-10-04", "rows_changed": 7, "rows_held": 0,
+           "note": "Modern Standard Arabic only; the review does not establish coverage of Arabic dialects."},
+    "pt": {"status": "integrated", "credit": "UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching Professor Eduardo Viana da Silva, credited with his permission",
+           "returned": "2026-10-08", "integrated": "2026-10-12", "rows_changed": 10, "rows_held": 0},
+    "fr": {"status": "integrated", "credit": "Native speaker (name withheld)", "returned": "2026-10-14", "integrated": "2026-10-14", "rows_changed": 5, "rows_held": 0,
+           "note": "The reviewer found the register mixed; the five controls were moved to tu by the author. That wording is the author's, not the reviewer's."},
+    "lt": {"status": "integrated_in_part", "credit": "Native speaker (name withheld)", "returned": "2026-10-14", "integrated": "2026-10-14", "rows_changed": 11, "rows_held": 4},
+    "bg": {"status": "integrated_in_part", "credit": "Iliyana Dimitrova", "returned": "2026-10-14", "integrated": "2026-10-14", "rows_changed": 14, "rows_held": 2},
+    "ta": {"status": "feedback_no_corrections", "credit": "Native speaker (name withheld)", "returned": "2026-10-13", "rows_changed": 0, "rows_held": 0},
+    "sn": {"status": "under_way"},
+    "hr": {"status": "under_way"},
+    "sr": {"status": "under_way"},
+    "ja": {"status": "requested"}
+  }
+}

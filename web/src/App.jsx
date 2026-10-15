@@ -8,17 +8,24 @@ import Landing from './components/Landing'
 import LiveScan from './components/LiveScan'
 import Results from './components/Results'
 import Method from './components/Method'
+import ReviewCoverage from './components/ReviewCoverage'
+import ReviewWhy from './components/ReviewWhy'
 import Setup from './components/Setup'
 
 // Every screen has an address, so the browser's back and forward buttons move
 // between screens, and /how can be shared. A scan's own screens only make sense
 // with that scan in memory, so opening them fresh lands on the setup screen.
-const PATHS = { landing: '/', setup: '/scan', live: '/scan/live', results: '/scan/results', method: '/how' }
+const PATHS = {
+  landing: '/', setup: '/scan', live: '/scan/live', results: '/scan/results', method: '/how',
+  review: '/review', coverage: '/review/coverage',
+}
 // A share link: /s/ and 22 characters of base64url, the saved scan's id.
 const SHARED = /^\/s\/([A-Za-z0-9_-]{22})\/?$/
 function viewFromPath(path) {
   if (SHARED.test(path)) return 'shared'
   if (path.startsWith('/how')) return 'method'
+  if (path.startsWith('/review/coverage')) return 'coverage'
+  if (path.startsWith('/review')) return 'review'
   if (path.startsWith('/scan')) return 'setup'
   return 'landing'
 }
@@ -149,7 +156,8 @@ export default function App() {
   // A judge on bad wifi should still see the home page: there, a failed metadata
   // load is a small notice with a retry. Screens that cannot work without the
   // server (setup, results, the method page) keep the full explanation.
-  if (metaError && !meta && view !== 'landing') {
+  // The review pages need nothing from the server, so they stay up too.
+  if (metaError && !meta && !['landing', 'review', 'coverage'].includes(view)) {
     return (
       <>
         <Nav loaded={false} onHome={() => {}} showScan={false} view="error" />
@@ -185,14 +193,16 @@ export default function App() {
       >
         <span className="font-serif text-[clamp(3rem,8vw,6rem)] leading-none">Poly<span className="display display-caps">Guard</span></span>
       </div>
-      {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} onTry={tryExample} onMethod={() => go('method')} />}
+      {view === 'landing' && <Landing meta={meta} onStart={() => meta && go('setup')} onTry={tryExample} onMethod={() => go('method')} onReview={() => go('coverage')} />}
       {view === 'landing' && metaError && !meta && (
         <div role="status" className="paper fixed inset-x-4 bottom-4 z-40 flex flex-wrap items-center gap-3 border-2 border-ink p-3 text-sm shadow-[4px_4px_0_var(--ink)] sm:right-auto sm:max-w-md">
           <span>PolyGuard can’t reach its server right now, so the demo and scans are paused.</span>
           <button type="button" onClick={loadMeta} className="btn btn-sm btn-solid">Try again</button>
         </div>
       )}
-      {view === 'method' && meta && <Method meta={meta} onStart={() => go('setup')} onBack={() => go('landing')} />}
+      {view === 'method' && meta && <Method meta={meta} onStart={() => go('setup')} onBack={() => go('landing')} onCoverage={() => go('coverage')} />}
+      {view === 'review' && <ReviewWhy onBack={() => go('landing')} onCoverage={() => go('coverage')} />}
+      {view === 'coverage' && <ReviewCoverage onBack={() => go('landing')} onWhy={() => go('review')} />}
       {view === 'setup' && meta && (
         <Setup
           meta={meta} initial={config}

@@ -157,6 +157,10 @@ not the same as where it is easiest to find a speaker.
 
 ## Review log
 
+The site shows this log as a map of all 73 languages at `/review/coverage`, and what
+review did to the automated score at `/review`. Both are generated from
+`native_review.json` and the score history by `review_scores.py`.
+
 Reviewers are not named in this public repository unless they agree to be
 credited.
 

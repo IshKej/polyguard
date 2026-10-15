@@ -258,7 +258,7 @@ const SAFEGUARDS = [
   ['Decided before the data', 'The tests and thresholds were written down before any real scan, so they cannot be tuned to get an answer.'],
 ]
 
-export default function Method({ meta, onStart, onBack }) {
+export default function Method({ meta, onStart, onBack, onCoverage }) {
   const reduce = useMotionOff()
   const languages = useMemo(() => {
     const ls = meta?.languages || []
@@ -458,7 +458,12 @@ export default function Method({ meta, onStart, onBack }) {
               is Modern Standard Arabic only). Until those change, PolyGuard has a method, not a result. The full audit
               trail and the preregistration are public.
             </p>
-            <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption mt-3 inline-block"><span className="hl">Source, audit and preregistration</span></a>
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+              {onCoverage && (
+                <button type="button" onClick={onCoverage} className="hl-hover caption"><span className="hl">Review coverage, language by language</span></button>
+              )}
+              <a href={REPO} target="_blank" rel="noopener" className="hl-hover caption"><span className="hl">Source, audit and preregistration</span></a>
+            </div>
           </div>
 
           <div className="mt-14 flex flex-wrap gap-3">

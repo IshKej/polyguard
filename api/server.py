@@ -657,6 +657,6 @@ if _dist.is_dir():
     from fastapi.staticfiles import StaticFiles
 
     # The site's own addresses all load the same page; the page picks the screen.
-    for _path in ("/how", "/scan", "/scan/live", "/scan/results", "/s/{scan_id}"):
+    for _path in ("/how", "/review", "/review/coverage", "/scan", "/scan/live", "/scan/results", "/s/{scan_id}"):
         app.add_api_route(_path, lambda: FileResponse(_dist / "index.html"), include_in_schema=False)
     app.mount("/", StaticFiles(directory=str(_dist), html=True), name="web")

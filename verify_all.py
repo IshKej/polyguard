@@ -78,6 +78,49 @@ ck("2e. an old scan's report uses the scores for its own bank, and says so when 
    and _note not in _pe.report_html.build_report(_scan11, tq_data=_tq11)
    and _note in _pe.report_html.build_report(_scan11, tq_data={**_tq11, "bank_sha256": "0" * 64}))
 
+# 2f. The review pages. Their data is generated (review_scores.py) from the public
+# status file, the bank and the score history; the per row scores reproduce the
+# published per language scores exactly; and a reviewer is never named unless the
+# credit is one they accepted. Withheld credit is the one exact string.
+import hashlib
+import re as _re
+import review_scores as _rs
+_ns = json.loads(_rs.STATUS.read_text(encoding="utf-8"))
+_rows = json.loads(_rs.ROWS_OUT.read_text(encoding="utf-8"))
+_tqb = json.loads(_rs.TQ_BEFORE.read_text(encoding="utf-8"))
+_tqn = json.loads(_rs.TQ_NOW.read_text(encoding="utf-8"))
+ck("2f. the review pages' data is reproducible from the status file, the bank and the score history",
+   _rs.SITE_OUT.read_text(encoding="utf-8") == _rs.site_json())
+_repro = all(
+    round(sum(v[w] for v in r.values()) / len(r), 4) == tq["languages"][c]["sim"]["mean"]
+    and round(min(v[w] for v in r.values()), 4) == tq["languages"][c]["sim"]["min"]
+    for c, r in _rows["languages"].items() for w, tq in (("before", _tqb), ("after", _tqn)))
+ck("2g. per row review scores reproduce the published mean and lowest score, before and after",
+   _repro and set(_rows["languages"]) == set(_rs.changed_languages(_ns, _tqb, _tqn))
+   and _rows["after_bank_sha256"] == hashlib.sha256((HERE / "attack_bank.json").read_bytes()).hexdigest()
+   and _rows["before_bank_sha256"] == _tqb["bank_sha256"])
+# Credits a reviewer expressly accepted. Anything else must be the withheld string.
+_ACCEPTED = {
+    "pt": "UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching Professor Eduardo Viana da Silva, credited with his permission",
+    "bg": "Iliyana Dimitrova",
+}
+_credits_ok = all(s.get("credit") in (None, _ns["withheld"], _ACCEPTED.get(c))
+                  and (s.get("credit") is None) == (s["status"] in ("under_way", "requested"))
+                  for c, s in _ns["languages"].items())
+_public = (_rs.STATUS.read_text(encoding="utf-8") + _rs.SITE_OUT.read_text(encoding="utf-8")
+           + _rs.ROWS_OUT.read_text(encoding="utf-8"))
+ck("2h. review credit: withheld unless accepted, no email address in any review page file",
+   _credits_ok and _ns["withheld"] == "Native speaker (name withheld)"
+   and not _re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", _public))
+_nr = (HERE / "docs" / "NATIVE_REVIEW.md").read_text(encoding="utf-8")
+ck("2i. every language with a review status is described in NATIVE_REVIEW.md, under the same status",
+   all(s["status"] in _ns["statuses"] for s in _ns["languages"].values())
+   and set(_ns["languages"]) <= set(bank["languages"])
+   and all((f"| {bank['languages'][c]['name']}" in _nr) for c, s in _ns["languages"].items()
+           if s["status"] in ("integrated", "integrated_in_part", "feedback_no_corrections"))
+   and all(bank["languages"][c]["name"] in _nr for c, s in _ns["languages"].items()
+           if s["status"] in ("under_way", "requested")))
+
 # 3. ids unique
 ids = [a["id"] for a in bank["attacks"]]
 ck("3. attack ids unique", len(ids) == len(set(ids)))

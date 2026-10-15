@@ -49,7 +49,7 @@ function Specimen({ lang, text }) {
   )
 }
 
-export default function Landing({ meta, onStart, onTry, onMethod }) {
+export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
   const others = useMemo(() => (meta?.languages || []).filter((l) => l.code !== 'en'), [meta])
   const lines = useMemo(
     () => others.map((l) => ({ code: l.code, text: firstSentence(meta?.hero_line?.[l.code]) })).filter((l) => l.text),
@@ -183,6 +183,9 @@ export default function Landing({ meta, onStart, onTry, onMethod }) {
             <p className="text-(--mute)">PolyGuard is a defensive tool. Test only systems you own or are authorized to test.</p>
             <div className="flex items-center gap-5">
               <MotionSwitch />
+              {onReview && (
+                <button type="button" onClick={onReview} className="caption underline underline-offset-4">Translation review</button>
+              )}
               <a href={REPO} target="_blank" rel="noopener" className="caption underline underline-offset-4">
                 Source, audit and preregistration
               </a>

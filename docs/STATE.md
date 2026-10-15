@@ -195,6 +195,8 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 | `data/resource_measures.csv` | Web share per language for the exploratory trend test (pinned SHA-256) |
 | `selection_bias_demo.py` | Reproduces the worst-language selection bias |
 | `review_sheet.py` | Exports CSVs for native-speaker review |
+| `native_review.json` | Public review status per language; credit is the withheld string unless a reviewer accepted credit (verify_all 2h) |
+| `review_scores.py` | Builds the review pages' data: `--build` recomputes per row scores with the local LaBSE model (`review_row_scores.json`), then writes `web/src/review-data.json` |
 | `rehearsal.py` | Runs the whole pipeline offline against a planted answer key |
 | `cli.py` | Headless scan, baseline comparison, CI exit codes |
 | `report_html.py` | Self-contained shareable HTML report |
