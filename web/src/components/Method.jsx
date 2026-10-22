@@ -454,7 +454,7 @@ export default function Method({ meta, onStart, onBack, onCoverage }) {
           <div className="mt-14 max-w-3xl border-l-4 border-ink pl-5">
             <h3 className="display text-[1.5rem]">What is not proven yet</h3>
             <p className="mt-2 text-(--mute)">
-              No scan of a production chatbot has run (only small pilots against a local open model), {REVIEW.machine} of the{' '}
+              No production chatbot has been scanned and no paid-model results are published (the only published runs are small pilots against a local open model), {REVIEW.machine} of the{' '}
               {REVIEW.languages} languages are machine translated, no language has been validated by a native speaker, and
               native speaker feedback has been received and integrated for only {REVIEW.integrated} languages
               {REVIEW.integrated_in_part ? ` and, in part, ${REVIEW.integrated_in_part} more` : ''} (the Arabic is Modern

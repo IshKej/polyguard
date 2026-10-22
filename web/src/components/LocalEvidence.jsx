@@ -12,7 +12,7 @@ const TIERS = [['high', 'High resource'], ['mid', 'Mid resource'], ['low', 'Low 
 const LIMITS = [
   'One small model, so this says nothing about the chatbots companies deploy.',
   `When it ran, ${Object.values(LOCAL.languages).filter((l) => l.machine).length} of the ${Object.keys(LOCAL.languages).length} languages were machine translated with no native speaker review.`,
-  'It is not the pre-registered study: no paid or production chatbot scan has run yet.',
+  'It is not the pre-registered study: no production chatbot has been scanned, and no paid-model results are published yet.',
 ]
 
 function Cell({ code, l }) {

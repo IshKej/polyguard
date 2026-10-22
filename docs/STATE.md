@@ -10,8 +10,11 @@ Deadline: **Congressional App Challenge, 26 October 2026.**
 
 Built, audited, verified offline, and **live at https://polyguard-ten.vercel.app**
 (Ishaan's Vercel account, with a Supabase database for share links, game answers
-and the spend guard). **No live scan against a production chatbot or a paid API
-has ever run.** Demo results in the app are simulated and labelled so; the home
+and the spend guard). **No production chatbot has been scanned, and no paid-model
+results are in this repository.** A first paid pilot (stage 1: Claude Haiku 4.5 as
+victim and judge, one run, capped at $10) was approved on 2026-10-21 and is run
+outside the repository; its results come back through `pilot_intake.py` and are
+not reported anywhere until reviewed. Demo results in the app are simulated and labelled so; the home
 page also shows the 2026-10-11 local diagnostic, labelled as a real scan of a small
 open model on a laptop, not a production chatbot.
 
@@ -101,6 +104,7 @@ python capability_check.py       # capability rule false flags and detection (ab
 python api/test_cancellation.py  # closing the tab stops a live scan -> 9/9
 python test_native_review.py     # every reviewed row pinned, every language digested -> 355/355
 python review_ingest.py --self-test   # returned review sheets are read correctly -> 7/7
+python test_pilot_intake.py      # intake for the stage 1 live pilot, no key needed -> 14/14
 python expand_languages.py --check-stored   # gates on the 53 stored machine translations
 python web/e2e/smoke_live.py https://polyguard-ten.vercel.app --review   # read-only check of the live site
 python cli.py replay scan.json   # recompute a saved scan from its evidence
@@ -282,6 +286,6 @@ gate is on by default and native review is tracked rather than waved off.
 | Unit tests | 288 (every public engine function) |
 | Audit findings | 87 across 21 rounds (all fixed; round 21 on 2026-10-15) |
 | Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
-| Paid or production model study runs | 0 (no scan of a production chatbot or paid API has run) |
+| Paid or production model study runs | 0 in this repository. A stage 1 paid pilot (one run, Claude Haiku 4.5 victim and judge) was approved 2026-10-21 and is run outside it; results pending. No production chatbot scanned |
 | Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |
 | Bank fingerprint | `c3d89dfef3c9ebbf37e83b6b1b8e6d3f8cea60e805de77202ca9970aa25c5795` since 2026-10-14 |

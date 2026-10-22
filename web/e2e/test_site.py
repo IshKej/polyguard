@@ -251,7 +251,7 @@ def main() -> int:
             ev = page.locator("#local-evidence").locator("xpath=ancestor::section").inner_text()
             check("the home page shows the local scan's evidence with judged and reviewed breaks kept apart",
                   "flagged 14" in ev and "kept 10" in ev and "not yet checked by the author" in ev
-                  and "no paid or production chatbot scan has run yet" in ev)
+                  and "no production chatbot has been scanned, and no paid-model results are published yet" in ev)
             sheet = page.locator("#local-evidence").locator("xpath=ancestor::section").locator("figure li[class*='rounded']")
             check("the graded sheet has a cell for every language in the scan",
                   sheet.count() == len(json.loads((ROOT / "web" / "src" / "local-example.json").read_text(encoding="utf-8"))["languages"]))

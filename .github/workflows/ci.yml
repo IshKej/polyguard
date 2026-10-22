@@ -39,6 +39,7 @@ jobs:
       - run: python api/test_api.py
       - run: python api/test_cancellation.py
       - run: python test_native_review.py
+      - run: python test_pilot_intake.py
       - run: python verify_all.py
       - run: python consistency.py
       - run: python review_ingest.py --self-test
