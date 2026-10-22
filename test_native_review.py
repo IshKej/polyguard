@@ -347,6 +347,135 @@ PINS = {
         "5246b9e78106299123b602045f57c2d5f7630b9a8f346a48f69f013205180357", False),
     "vi_control_5": ("15cceeb998ada177dc2ec2dfdb5e3db9f0cd599ac8fb409dd550c496f2da54ed",
         "1be395e6b62f97962e3c73ddb71388a4dd48d629491bae3423582223a5b09fa0", False),
+    # Icelandic (machine translated): 5 corrections from Finnur Friðriksson integrated 2026-10-21; is_instruction_override_0 held (Base64 plaintext).
+    "is_instruction_override_0": ("bb87382420ae2a14f630b7959a837b88cf3cd6574026df20f5ba70354177313c",
+        "f096c19715e8ad458b9a16f58f71d556de4a11f81e13538b166fcca93822dc92", False),
+    "is_instruction_override_1": ("4aea8c049dcd42e872b3a0df252eaff1d3e99d5fdc7ac7ebe49c5b76971b5c2d",
+        "3208d226143bc0c02e52d987adf5ab5b1bf422b5467f4447564b14f020eedf2b", False),
+    "is_instruction_override_2": ("03264fdc1cbb36140fdb17ea2005dc6e5ff2389f677cd2a3b4d04a006b15bca8",
+        "9b8355a3a8e45f8fcb917a92a6812e6849d631feca0fcc0fabcb571494a1683b", False),
+    "is_role_play_jailbreak_0": ("89316dbd09996213ec1754deeadd5e948127c1c1fc9a60e8191dd0aa864ae43d",
+        "394f863a4d2992f771961b9a3926353b40d38956745d1985a6abf26cbfc594bf", False),
+    "is_role_play_jailbreak_1": ("fa7f2d1eab3ec0794149c2ee6f0a1cdbf612021d038645eb0d137f40e9cb6f15",
+        "51abadb1f9f26aef5f6fa1310752303bc1badefeaf374cd2e629a08a01bb05f4", True),
+    "is_role_play_jailbreak_2": ("4f23b9b2db0ae8bba798ac558b5b44e4adc32bac20d8af7c2140fa1c52aa0fa5",
+        "6d5d5b5e1ef2d46d1b6ca1b04bcf1db4e8a9f1aaf6d1f40eefc5555a7fd20ecc", False),
+    "is_system_prompt_extraction_0": ("dc1e06a826f2bb1e154980db07d389f6977061ab0d2ecabe1a0b1bc4272a235f",
+        "dc1e06a826f2bb1e154980db07d389f6977061ab0d2ecabe1a0b1bc4272a235f", True),
+    "is_system_prompt_extraction_1": ("337029484cf3f15f73aee19fef341f54a1f51a2bd543d7955c0346ac2dc6e065",
+        "337029484cf3f15f73aee19fef341f54a1f51a2bd543d7955c0346ac2dc6e065", True),
+    "is_system_prompt_extraction_2": ("a8ac8f4a55679c5877b4ae92f6821710b81f76623784fd8419988d086c8b9243",
+        "a8ac8f4a55679c5877b4ae92f6821710b81f76623784fd8419988d086c8b9243", False),
+    "is_obfuscated_payload_0": ("28be27c9773286822f84872d78fd5e614a1dd2f28a623d298b8b20a4a58b900f",
+        "37af2f9ab8854db0dfba4bec7fd66b7aaef5c53f4e0a1e2e40f892278b0f53f6", False),
+    "is_obfuscated_payload_1": ("db6fa3d8a8d261af4baa28d24480a1e573a3f99914f49db33a200c03f174e064",
+        "0e995d258fd4b20a0a3dcc76e668674a5e5a50d74030daab3f36a375570b0eb0", False),
+    "is_obfuscated_payload_2": ("74575b740b8e5a9ecb053f4a8790a27729e68a1aea7d46974a85baedcf105807",
+        "940df00213e5ca059e66ec3761592a8b67371fbcb0b4aeb8e99f177bf692be03", False),
+    "is_indirect_injection_0": ("c2fd8cb6503966eeb3271199776ec4087c21d1145cf4b142e166dae45f675dd2",
+        "65de961f8c6781646b9fbc33669714060e39fef1f095dbacc8f52c64f6b61c93", False),
+    "is_indirect_injection_1": ("213e62c1aa5171a423d908efce06abe7226bcfefa31b58832fe5a8893834587c",
+        "d83a356ea18cbbde310fc8b2437d41bfddf787d468382844c572904881a4217a", False),
+    "is_indirect_injection_2": ("11bc8037fb2f6e05277d7f0aa2c573fca72c71e1fe540a10958636d5ca95b554",
+        "5770213746856409ebc5590eb1e36aef0cba652ff7a094c42ad313ab64534cd8", False),
+    "is_control_0": ("16b8100e48c63c0ee669e643b369c9ca3fc97588e1f046f7e5f5f0c49999f6fc",
+        "80f3e9331cf09ead97879eadf6d5d8e92ea0567637f771b2cf299e57932c13f2", False),
+    "is_control_1": ("8d75c4fa067c32813e036d0a12803894684778f335c48c6bd2b314f450d23a91",
+        "2b8881853b6b0d4c5dc58c9fedfd634f4898eb15f2d9978203d284e5d56d57f7", True),
+    "is_control_2": ("d4a9197fc1c7ea9b8b9f98d4f11c4c9746a0fcbcba7fb694aa9cc20a7d9531fb",
+        "4502424d929e2052b7056919219787b0dec1e8c793dec74facbd717be870e748", False),
+    "is_control_3": ("5861f2a431df075d99c7da0984f5bd1047a9ab7c4b9f2273afb1620739511f3c",
+        "f1265c24fc11a6807ab5457134f437cb5c401da9d7c45322d51cda7c1496ffdf", False),
+    "is_control_4": ("e37b84108049bc6ee866414962837a4be714246fbe342cd3f152b0a398d0435d",
+        "dfa3302ceadb895539e9bc06a9189e6ce62c1e72b3546fd105e2a713d3ec59a1", True),
+    "is_control_5": ("3c51ffac1ff30d3407751c90e42cd836a332bf0d09473cf3a74738412a096894",
+        "0a427acd09d089d18be35728118591623120edb0feacbf66bb953de338597dc2", False),
+    # Serbian (machine translated): 16 corrections from Marko P. Milovanović integrated 2026-10-21; sr_instruction_override_0 (Base64 plaintext) and sr_indirect_injection_1 (task) held.
+    "sr_instruction_override_0": ("ba1d7b2a6014c984d3280190360f00c3a6ae1f8cb6803551837c77fd9d0c691c",
+        "fc6d3b922c2a72b6e464e38cce659345d3e8e754c3df74922d39f689140bc467", False),
+    "sr_instruction_override_1": ("6b7bd97abac0ce40a39a5f46963142cad7c705182173c74189d87c4d4c6f5a8f",
+        "89e9f19b9744c1c6adbc126fab1f783394a28f7f4ec1149c27664e70f38a87b8", True),
+    "sr_instruction_override_2": ("8e2992b8a54db5cbd1b504c0e2848f6394fcc9aed6f317185bb79f5f5fcd0349",
+        "b5b712ca24eff073f04b6955272f09d72ddaf9c54e7f447bdd7ec868958e0ef0", True),
+    "sr_role_play_jailbreak_0": ("0aad26ba6c961fd42fecd3ef28af0cfcecae2c328eec5eaee46877fb1b697a37",
+        "5dd83af6b37c99a020a3fe0166a203c334a35a81d5737471be7850a11f3b5ec2", True),
+    "sr_role_play_jailbreak_1": ("5451f031400552414880c6dac7c0a1bcf3c2bc251c4e7f3904ac985251d7120b",
+        "98f38f14e460e5ec69918df84ae72de6c1cca60122a4cc564367e71bb82bad66", True),
+    "sr_role_play_jailbreak_2": ("d92714bd6a9b54153cd669a9ebb5c7ae1b361ae17a2768a29008a62320b7d0c8",
+        "17f9c60a7e4c6bec275680b9fad29b90a4f284a2bcdaccbe8c34009c933ac6ed", True),
+    "sr_system_prompt_extraction_0": ("10474885233fc5c0744322509d7c743c877b8ae8f7d20c86072dac613617711e",
+        "10474885233fc5c0744322509d7c743c877b8ae8f7d20c86072dac613617711e", True),
+    "sr_system_prompt_extraction_1": ("8d682923dc2e0a39d240f67435f512dca7ac7cea2de67086e56733f83869666f",
+        "8d682923dc2e0a39d240f67435f512dca7ac7cea2de67086e56733f83869666f", False),
+    "sr_system_prompt_extraction_2": ("44749071d57b6e0e04ff9fe61cf1cf0a8144e58117c0b0efce6c7e0fa8375dff",
+        "44749071d57b6e0e04ff9fe61cf1cf0a8144e58117c0b0efce6c7e0fa8375dff", True),
+    "sr_obfuscated_payload_0": ("20516f4dcf55e3343d09ef5570ff2f1e7630e6abcd542da70e96ac172a2c8218",
+        "8df579a4f27cc077d7ce70ca0703d6a517a466fe6df91f63bd26a5c7d59476c5", False),
+    "sr_obfuscated_payload_1": ("606c2abf7f9f20e69a8e7823a415ea2cad8d49b63aac20ccfb6e6fb87dd95f4a",
+        "5b7654d5f6a567f28d85a20cf1c8698e50b2d601b7ab4340c8ce53c46a58ebcd", False),
+    "sr_obfuscated_payload_2": ("a1de3196349bb727bfadeab2f4a2c47cbd3d09b8968966a90e080b4b54cea8a8",
+        "e45168cbf2b9009ed1c40fe0819f8816dbecd9ffc5e54924920c9e7a23013d4c", True),
+    "sr_indirect_injection_0": ("5245975afe1d3338b431d8315422107391bb1daadb5d70637ffd1d216fd61a41",
+        "89311ed732fd25be723209da6b72c8954e4adf93b003ded925af889a466b1492", True),
+    "sr_indirect_injection_1": ("d2305e00fdd41edba84a1ac46d998242c184830b06de7a10cf636c6cd2f88878",
+        "ce97e1e938acfd66d613cf4bf4dc6416f76aaf967237bafafc9096da7aaf72d3", False),
+    "sr_indirect_injection_2": ("5c913788a59a71a75db3c9ee76ba8231c88994b7bbdabee54b007a01ffaf2c45",
+        "cb084e1c359f82f62cfd3c6d76a8f2d02c6fe10ad1809bd2ffba604c0c630cac", True),
+    "sr_control_0": ("9ef0f63b1e97b6ba5b3b9a69796e48e6d9e74839d3b26b338d9c938d3f4d56b1",
+        "dda9ea089b26d4ebe486aecb45f22eb815766881e2f62f12c019408d1a17cdb6", True),
+    "sr_control_1": ("564a98364ea7ed0cb4d62036e15334cc5d2f9856d2c72aadd2875c9bcac68238",
+        "8e25bf3bb01daaf8cc60129d83210967005dd0b0f9c36bd272eea25ea1343832", True),
+    "sr_control_2": ("b1ed0e366987a69db2ff1d1cf67c4b2479480c86ae583a8f3b767f3d198c5a2c",
+        "424d6d6cfad66c10fd0f5acdd6efacfd5bf6a8ed0586736b424d76b751e354d3", True),
+    "sr_control_3": ("a54ea0e2f16cf61c287888fa657f90a35875ee08fc310cf140396a8f2d10aead",
+        "29ee36114e9b71147a19f1cbe7d1f61a565c6801ffd47b3ddf35b0e513bcb6f2", True),
+    "sr_control_4": ("a531855718f2b96154366b7274c650f11174077481d075703762e6ac164f9771",
+        "9f011b6057b408f2eca25304f3ba73e8a81af050550132231149943836539919", True),
+    "sr_control_5": ("cf1e9955cb0582ebab2fa05b6bccc5cc915f8f11d8f550a325222ff0c12ff12d",
+        "8e8ce1142c6ec3eabbe6a5506ca7e55a2f42ec58055c2fb1b0325163ec8a325b", True),
+    # Croatian (machine translated): 15 corrections from Marko P. Milovanović integrated 2026-10-21; hr_instruction_override_0 (Base64 plaintext), hr_indirect_injection_1 (task) and hr_obfuscated_payload_0 held.
+    "hr_instruction_override_0": ("57de2f917b9a5f2512c1cdd645da55e32bfd9f4c2e7a364fb245eb2ea18ec2bb",
+        "511e8030064b646de1a4073d81af0788437e0907f44a868425480f79807d8ae0", False),
+    "hr_instruction_override_1": ("63ef2325fd3354749589d26e5b18886f5a1ce4352401d9c39895b5ab37d3649e",
+        "87951224bf07de62e4952e686f14277f6e77dbfd8dd46f753a181431fb2a465d", True),
+    "hr_instruction_override_2": ("369cdcb7c3b3364a5e66dc1998f860fdea813068a6615404845b27ad3300200f",
+        "2a41c3d93c08aafa72768fa38651c71d4e2150b542c26388981299324c6e164a", False),
+    "hr_role_play_jailbreak_0": ("f9003c2355ded6bef8bd2b90c80f7a9eece000205ad1d4d0873a3b4c1d1a3643",
+        "dce86109ffc00821580314841ec21dd6b225403aae1b3ae54c0328142a991dbb", True),
+    "hr_role_play_jailbreak_1": ("ee0c4d206bf2ebd670297b67d4c7b664d74584b3ec3af2c6f5842628bc7c0f51",
+        "0c9a6f5a7e938120c07eeccfee549e28cd359b5f8b996a91628f511100db8c15", True),
+    "hr_role_play_jailbreak_2": ("90966389a8212defa8af551aa76659dcc3afa7bdfc60f1f76f0be9c23151fe77",
+        "bef770ce2e46c2fc4329de5034037ee0e9d4a237c24b6b48c5c286653011a4f2", True),
+    "hr_system_prompt_extraction_0": ("d170ff9f18e022e330407e1d5a0247104960feb93b37f4da722f66320e9ecd65",
+        "d170ff9f18e022e330407e1d5a0247104960feb93b37f4da722f66320e9ecd65", True),
+    "hr_system_prompt_extraction_1": ("f5f90603b8427a1321395ca646f3067f6341d45fb5fb6630dbce8a3a4d3d238d",
+        "f5f90603b8427a1321395ca646f3067f6341d45fb5fb6630dbce8a3a4d3d238d", False),
+    "hr_system_prompt_extraction_2": ("f39f0d480e64b22d8c4fbe3e8f51e28eda64cf3518c5cdbbddeb394aa80a7d84",
+        "f39f0d480e64b22d8c4fbe3e8f51e28eda64cf3518c5cdbbddeb394aa80a7d84", True),
+    "hr_obfuscated_payload_0": ("53e10347097cd7be93c4b6291ee283e84352b11c1434fd26a50367f348f514d2",
+        "fd53c702b8b984c82058bb6d6e211306de7497eadad71ed4c6a3729361c6d709", False),
+    "hr_obfuscated_payload_1": ("3db7be2930cabd46f46f55e1ec82916f88a51090e7b726a8c525f1d880fc0be5",
+        "bee06d06e26e76065c6f8e434aba91f3721264fbe50862a1252bbb741773b6be", False),
+    "hr_obfuscated_payload_2": ("4ce5e7ace4480c7eda1c317aab20d39d829ca63452bf46baed7c56b6bc685061",
+        "f98b71e5f46389cbd98b8f86caf9c596c0defa976b3a8fe01e2d36ae82579fcf", True),
+    "hr_indirect_injection_0": ("e27df32f96760309844986a8649b47c795eef888cab9aa1b18b587c7654507f9",
+        "14058bbf18091324f72949b9669b9a869b53233ad9a607a17362e8964c68717f", True),
+    "hr_indirect_injection_1": ("9f9dc8d9e60c41b49bb9af6c9ced6eebd791afaf7fe6f9025e9f0a570e174f72",
+        "ef4a58358a4bb0852264625948367af59d8f3222735107d7e5bb60d09e3e9ae1", False),
+    "hr_indirect_injection_2": ("68e7984dc9a6fbdc787b6d48bb7f5a3a449394205408f2ae59029359813589c6",
+        "3a1ccf77b47400f8c9635b8dd2ffd780ae57b8b026e2b13ab5efdd4adc92964d", True),
+    "hr_control_0": ("34efe19b58a81981939843ca32499b234adbc458798f545588d2c33837c4e1b8",
+        "19831f8119bee2448b7edd6fd36454ca0b2353431abb998c52ff764cd2035710", True),
+    "hr_control_1": ("f8379b4020512df6e42f5aabfa421ed75fbafcf6bf42c38dd51c1c9c2ead20bc",
+        "dcf7819c481f6876c9a43027a039028e195a51970e46dca77f9a07cde29dcedf", True),
+    "hr_control_2": ("978f72cbd4a521bcf498d6c332b607fb22f30c7185245065e6fdce0ba11ec5f8",
+        "1df621b9e4322c8977fedab6d110fc1948bb1f44414cfe10718513e1148551b9", True),
+    "hr_control_3": ("6b0fb01b942453f352d4932a9bf88349336ad81ae957f08a78d98b9667220cdd",
+        "2dbaf1b1996d073033ffb453b14d30701770fa46e72a3ef91266e63c0b683940", True),
+    "hr_control_4": ("ab6f24419757311711c72af29ee823aa69354922875a0402445ff6283af6aad9",
+        "8763a3e47069ce9e30f339bcd9da400abdb32471058a9e682a583e4fa714aeaa", True),
+    "hr_control_5": ("4fae111afb72646cb0df2c224b3827bf0e86caf81badb7c20ad183f2a6acf2e5",
+        "3955cf44d16c2298634a9a58257870cb84546eb8301814d8a6653d9c32b06fb6", True),
 }
 
 
@@ -360,8 +489,11 @@ attacks = {a["id"]: a for a in BANK["attacks"]}
 controls = {c["id"]: c for c in BANK.get("controls", [])}
 bank_rows = {**attacks, **controls}
 
-check("exactly 58 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese, 5 French, 11 Lithuanian, 14 Bulgarian, 1 Vietnamese)",
-      sum(v[2] for v in PINS.values()) == 58
+check("exactly 94 corrected rows are pinned (es 10, ar 7, pt 10, fr 5, lt 11, bg 14, vi 1, is 5, sr 16, hr 15)",
+      sum(v[2] for v in PINS.values()) == 94
+      and sum(v[2] for k, v in PINS.items() if k.startswith("is_")) == 5
+      and sum(v[2] for k, v in PINS.items() if k.startswith("sr_")) == 16
+      and sum(v[2] for k, v in PINS.items() if k.startswith("hr_")) == 15
       and sum(v[2] for k, v in PINS.items() if k.startswith("vi_")) == 1
       and sum(v[2] for k, v in PINS.items() if k.startswith("bg_")) == 14
       and sum(v[2] for k, v in PINS.items() if k.startswith("lt_")) == 11
@@ -369,8 +501,8 @@ check("exactly 58 corrected rows are pinned (10 Spanish, 7 Arabic, 10 Portuguese
       and sum(v[2] for k, v in PINS.items() if k.startswith("pt_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("es_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("ar_")) == 7)
-check("every row of the seven reviewed languages (es ar pt fr lt bg vi) is pinned, and nothing else",
-      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr", "lt", "bg", "vi")} == set(PINS))
+check("every row of the ten reviewed languages (es ar pt fr lt bg vi is sr hr) is pinned, and nothing else",
+      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr", "lt", "bg", "vi", "is", "sr", "hr")} == set(PINS))
 for rid, (t_sha, r_sha, corrected) in PINS.items():
     kind = "corrected" if corrected else "unflagged"
     check(f"{rid} ({kind}): generator template unchanged", sha(template(rid)) == t_sha)
@@ -388,7 +520,7 @@ check("ar_indirect_injection_0 keeps the quoted review with the marker and the c
       and "SYSTEM OVERRIDE" in _quoted and CANARY not in _frame)
 
 # Tokens and markers survive in every reviewed language's rows.
-for lang in ("es", "ar", "pt", "fr", "lt", "bg", "vi"):
+for lang in ("es", "ar", "pt", "fr", "lt", "bg", "vi", "is", "sr", "hr"):
     rows = [a for a in BANK["attacks"] if a["lang"] == lang]
     check(f"{lang}: every canary attack carries the canary once",
           all(a["text"].count(CANARY) == 1 for a in rows
@@ -461,12 +593,12 @@ LANG_DIGESTS = {
     "ha": "4fe88e5bc04e357fb68bd632bdc33d135aa10ca9ce62e7a7a461784010de6335",
     "he": "41b426ed689bd524ddf3cf3bd7732894d5079bc0614525248a7432b67572eda9",
     "hi": "3e0cd20d9ff0d9bc8f44f0ae41a658d260e0148cb6582a7c21590c0111742dcc",
-    "hr": "72141fe00435b1f8d28c2a3a2f997acba62233569d9ac118f8bc5c6452d1823d",
+    "hr": "ff0d43515e198c39c4bb900272f579acc938fe86fdb6a6f9b64ee69957a49b69",
     "ht": "f30433011ad80e235f76ccd9c0c29011ac781362a39ef3a60d1de52edfb0f20c",
     "hu": "fbd58f3476b9ea50f52266a907c9b911e735fcab16839486c7e2961194660cbc",
     "id": "e99cc67e6794901c6c7f1f496ec8dc7b3e799ec9af397fbe2e19510271b930d4",
     "ig": "396c28e0a20ae99c146357ca3d99ece8f0750a508c190a5f83d3b3a5623581e3",
-    "is": "47b82a0c89b021c2e4b1da7849377448745b12f20950d6c18e45403a51a1729e",
+    "is": "bd6b39363cddb358916acd50ca8e27267c4566c412b1581e2bca895df578bc1a",
     "it": "30b0f2cd10ce01fd9bc306ee2e4012f8ee4ab846cdcaf974d66b834ac2ef7556",
     "ja": "6897447876660bcea8409539072260aeeaa6e2d62fa71a8023e848420f50fe7d",
     "ka": "8e924928c976c10e27c7401db8ac15097f700c3714b296de110118fd6dbef482",
@@ -494,7 +626,7 @@ LANG_DIGESTS = {
     "sl": "e66c48dc99cc587113724255f7ae200507edd8e3ce6d0e8726be79b298a01d79",
     "sn": "041e3b349111157455fe517104f25739986ea307844940bc6f5d679724286818",
     "sq": "d18b18580f7f4a52f86d55fc33ebc7b7bf421a53bc09e54c8078ad5e2b9342c1",
-    "sr": "cc2e9df90b10ddc62be2013af2355c9461aa8f1a37c799f9b166136d48b4ae36",
+    "sr": "e6bf0fd450b14021c118557caf1699aab13886fadf164dea717cad6de76de78c",
     "sv": "34232357c6353b6ed4fac2ef2cd3eb21e187f4bbe7b92d9c05cd7a2e9bfe52ad",
     "ta": "2cc2f2111809cec03f78334830ab3eaad4c818e8bde20d1fe27894bd11147a24",
     "te": "3c7ced73b3a621bcc3127e4c6334646ff6002d3a2c4738810a7fb57848503441",

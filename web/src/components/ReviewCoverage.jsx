@@ -37,6 +37,9 @@ export default function ReviewCoverage({ onBack, onWhy }) {
             integrated is not a validation: no language is marked as reviewed in the bank, and the automated
             translation score sits beside every result either way.
           </p>
+          <p className="mt-4 max-w-2xl text-(--mute)" data-reviewers="15">
+            PolyGuard’s translated attack bank was shaped by 15 language professors and native speakers who helped review and advise on it. Ten of them sent review feedback (one covered two languages), which was received and integrated, in part for some languages where rows are held for confirmation; the other five advised, agreed to review, or connected us with reviewers.
+          </p>
           <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-3" aria-label="Totals">
             {ORDER.map((s) => (
               <li key={s}>

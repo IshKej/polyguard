@@ -10,20 +10,102 @@
     "requested": "Review requested, nothing returned yet"
   },
   "languages": {
-    "es": {"status": "integrated", "credit": "Native speaker (name withheld)", "returned": "2026-10-01", "integrated": "2026-10-02", "rows_changed": 10, "rows_held": 0},
-    "vi": {"status": "integrated", "credit": "Native speaker (name withheld)", "returned": "2026-10-01", "integrated": "2026-10-02", "rows_changed": 1, "rows_held": 0},
-    "ar": {"status": "integrated", "credit": "Native speaker (name withheld)", "returned": "2026-10-04", "integrated": "2026-10-04", "rows_changed": 7, "rows_held": 0,
-           "note": "Modern Standard Arabic only; the review does not establish coverage of Arabic dialects."},
-    "pt": {"status": "integrated", "credit": "UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching Professor Eduardo Viana da Silva, credited with his permission",
-           "returned": "2026-10-08", "integrated": "2026-10-12", "rows_changed": 10, "rows_held": 0},
-    "fr": {"status": "integrated", "credit": "Native speaker (name withheld)", "returned": "2026-10-14", "integrated": "2026-10-14", "rows_changed": 5, "rows_held": 0,
-           "note": "The reviewer found the register mixed; the five controls were moved to tu by the author. That wording is the author's, not the reviewer's."},
-    "lt": {"status": "integrated_in_part", "credit": "Native speaker (name withheld)", "returned": "2026-10-14", "integrated": "2026-10-14", "rows_changed": 11, "rows_held": 4},
-    "bg": {"status": "integrated_in_part", "credit": "Iliyana Dimitrova", "returned": "2026-10-14", "integrated": "2026-10-14", "rows_changed": 14, "rows_held": 2},
-    "ta": {"status": "feedback_no_corrections", "credit": "Native speaker (name withheld)", "returned": "2026-10-13", "rows_changed": 0, "rows_held": 0},
-    "sn": {"status": "under_way"},
-    "hr": {"status": "under_way"},
-    "sr": {"status": "under_way"},
-    "ja": {"status": "requested"}
+    "es": {
+      "status": "integrated",
+      "credit": "Native speaker (name withheld)",
+      "returned": "2026-10-01",
+      "integrated": "2026-10-02",
+      "rows_changed": 10,
+      "rows_held": 0
+    },
+    "vi": {
+      "status": "integrated",
+      "credit": "Native speaker (name withheld)",
+      "returned": "2026-10-01",
+      "integrated": "2026-10-02",
+      "rows_changed": 1,
+      "rows_held": 0
+    },
+    "ar": {
+      "status": "integrated",
+      "credit": "Native speaker (name withheld)",
+      "returned": "2026-10-04",
+      "integrated": "2026-10-04",
+      "rows_changed": 7,
+      "rows_held": 0,
+      "note": "Modern Standard Arabic only; the review does not establish coverage of Arabic dialects."
+    },
+    "pt": {
+      "status": "integrated",
+      "credit": "UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching Professor Eduardo Viana da Silva, credited with his permission",
+      "returned": "2026-10-08",
+      "integrated": "2026-10-12",
+      "rows_changed": 10,
+      "rows_held": 0
+    },
+    "fr": {
+      "status": "integrated",
+      "credit": "Native speaker (name withheld)",
+      "returned": "2026-10-14",
+      "integrated": "2026-10-14",
+      "rows_changed": 5,
+      "rows_held": 0,
+      "note": "The reviewer found the register mixed; the five controls were moved to tu by the author. That wording is the author's, not the reviewer's."
+    },
+    "lt": {
+      "status": "integrated_in_part",
+      "credit": "Native speaker (name withheld)",
+      "returned": "2026-10-14",
+      "integrated": "2026-10-14",
+      "rows_changed": 11,
+      "rows_held": 4
+    },
+    "bg": {
+      "status": "integrated_in_part",
+      "credit": "Iliyana Dimitrova",
+      "returned": "2026-10-14",
+      "integrated": "2026-10-14",
+      "rows_changed": 14,
+      "rows_held": 2
+    },
+    "ta": {
+      "status": "feedback_no_corrections",
+      "credit": "Native speaker (name withheld)",
+      "returned": "2026-10-13",
+      "rows_changed": 0,
+      "rows_held": 0
+    },
+    "sn": {
+      "status": "under_way"
+    },
+    "hr": {
+      "status": "integrated_in_part",
+      "credit": "Marko P. Milovanović",
+      "returned": "2026-10-16",
+      "integrated": "2026-10-21",
+      "rows_changed": 15,
+      "rows_held": 3,
+      "note": "Edits checked with a second Croatian speaker. The formal English task row is held, as for Serbian."
+    },
+    "sr": {
+      "status": "integrated_in_part",
+      "credit": "Marko P. Milovanović",
+      "returned": "2026-10-16",
+      "integrated": "2026-10-21",
+      "rows_changed": 16,
+      "rows_held": 2,
+      "note": "The translate into formal English task is kept the same in every language; that row is held."
+    },
+    "ja": {
+      "status": "requested"
+    },
+    "is": {
+      "status": "integrated_in_part",
+      "credit": "Finnur Friðriksson",
+      "returned": "2026-10-15",
+      "integrated": "2026-10-21",
+      "rows_changed": 5,
+      "rows_held": 1
+    }
   }
 }

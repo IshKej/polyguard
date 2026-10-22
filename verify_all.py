@@ -102,6 +102,9 @@ ck("2g. per row review scores reproduce the published mean and lowest score, bef
 _ACCEPTED = {
     "pt": "UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching Professor Eduardo Viana da Silva, credited with his permission",
     "bg": "Iliyana Dimitrova",
+    "is": "Finnur Friðriksson",
+    "sr": "Marko P. Milovanović",
+    "hr": "Marko P. Milovanović",
 }
 _credits_ok = all(s.get("credit") in (None, _ns["withheld"], _ACCEPTED.get(c))
                   and (s.get("credit") is None) == (s["status"] in ("under_way", "requested"))

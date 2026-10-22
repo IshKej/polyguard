@@ -4,11 +4,11 @@
 integrated for 5 of the 20 hand-authored languages, Spanish, Vietnamese, Arabic,
 Portuguese and French. The other 15 have had no native review.
 No machine translated language has been validated. Of the 53 added on
-2026-10-05, two have native speaker feedback integrated in part, Lithuanian (11 of
-15 returned revisions, 2026-10-14; 4 held for confirmation) and Bulgarian (14 of 16
-corrections, 2026-10-14; 2 held), and for Tamil an instructor sent general feedback
-on 2026-10-13 with no corrections, so nothing in the bank changed. The other 50
-have had no native review.** Feedback
+2026-10-05, five have native speaker feedback integrated in part: Lithuanian (11
+of 15, 2026-10-14), Bulgarian (14 of 16, 2026-10-14), Icelandic (5 of 6), Serbian (16
+of 18) and Croatian (15 of 18, all 2026-10-21), with the rest held for confirmation; for
+Tamil an instructor sent general feedback on 2026-10-13 with no corrections, so nothing
+in the bank changed. The other 47 have had no native review.** Feedback
 received and integrated is not a validation: it means a speaker read the lines and
 their corrections are now in the bank, not that the language is certified correct.
 The bank's `native_reviewed` flag is still false for every language.
@@ -173,10 +173,14 @@ credited.
 | French | Native speaker (name withheld) | 2026-10-14 | The lines read as instructions. The register was mixed: the attacks address the bot as tu, the capability controls use vous | The register is now tu throughout, 2026-10-14 in `generate_attack_bank.py`: five controls (`fr_control_0`, `fr_control_1`, `fr_control_3`, `fr_control_4`, `fr_control_5`) moved from vous to tu; `fr_control_2` uses neither form; no attack changed. The new wording is the author's response to the feedback, not text the reviewer wrote or checked |
 | Lithuanian (machine translated) | Native speaker (name withheld) | 2026-10-14 | Revised wording returned for 15 of 21 rows, 6 left unchanged; the rating columns were not filled in. Her themes: excessive politeness in some lines, and wording she does not consider natural in Lithuanian | 11 integrated 2026-10-14 in `machine_translations/lt.json`: 6 attacks (`lt_role_play_jailbreak_0`, `lt_role_play_jailbreak_1`, `lt_system_prompt_extraction_0`, `lt_system_prompt_extraction_1`, `lt_indirect_injection_0`, `lt_indirect_injection_2`) and 5 controls (`lt_control_0` to `lt_control_4`). Held, earlier text kept: `lt_instruction_override_1` (a spelling to confirm), `lt_system_prompt_extraction_2` and `lt_indirect_injection_1` (meaning to check against the English), and `lt_instruction_override_0` (it is the plaintext of the three Lithuanian Base64 attacks, which stay unchanged). Integrated in part, not a validation of the Lithuanian bank |
 | Bulgarian (machine translated) | Iliyana Dimitrova, credited by name with her agreement | 2026-10-14 | All 21 rows read as an instruction. Meaning: yes on 18, partly on three (`bg_instruction_override_2`, `bg_role_play_jailbreak_0`, `bg_indirect_injection_0`). Naturalness, 1 to 5: 2 for `bg_instruction_override_2`, `bg_role_play_jailbreak_0` and `bg_control_4`, 3 for `bg_role_play_jailbreak_2`, 4 or 5 for the other rated rows. Corrections were proposed for 16 rows; 5 rows had none | 14 integrated 2026-10-14 in `machine_translations/bg.json`: 10 attacks (`bg_instruction_override_2`, `bg_role_play_jailbreak_0`, `bg_role_play_jailbreak_1`, `bg_role_play_jailbreak_2`, `bg_system_prompt_extraction_2`, `bg_obfuscated_payload_0`, `bg_obfuscated_payload_1`, `bg_obfuscated_payload_2`, `bg_indirect_injection_1`, `bg_indirect_injection_2`) and 4 controls (`bg_control_0`, `bg_control_1`, `bg_control_3`, `bg_control_4`). In the three Base64 rows only the surrounding sentence changed; the payload is byte-identical. Held, earlier text kept: `bg_system_prompt_extraction_1` (agreement to confirm) and `bg_indirect_injection_0` (possible spelling slip, and whether "loved it" is kept). Integrated in part, not a validation of the Bulgarian bank |
+| Icelandic (machine translated) | Finnur Friðriksson, credited by name with his agreement | 2026-10-15 | All 21 rows: same meaning, reads as an instruction; naturalness 4 on 7 rows and 5 on 14; six wording suggestions | 5 integrated 2026-10-21 in `machine_translations/is.json`: `is_control_1`, `is_control_4`, `is_role_play_jailbreak_1`, `is_system_prompt_extraction_0`, `is_system_prompt_extraction_1`. Held: `is_instruction_override_0` (the plaintext of the three Base64 attacks). Integrated in part, not a validation |
+| Serbian (machine translated) | Marko P. Milovanović, credited by name with his agreement | 2026-10-16 | Rated with corrections, Serbian standard in Cyrillic. Raised two study design points: the translate into formal English task, and the Base64 rows | 16 integrated 2026-10-21 in `machine_translations/sr.json`: `sr_control_0`, `sr_control_1`, `sr_control_2`, `sr_control_3`, `sr_control_4`, `sr_control_5`, `sr_indirect_injection_0`, `sr_indirect_injection_2`, `sr_instruction_override_1`, `sr_instruction_override_2`, `sr_obfuscated_payload_2`, `sr_role_play_jailbreak_0`, `sr_role_play_jailbreak_1`, `sr_role_play_jailbreak_2`, `sr_system_prompt_extraction_0`, `sr_system_prompt_extraction_2`. Held: `sr_instruction_override_0` (Base64 plaintext) and `sr_indirect_injection_1` (the task stays translate into formal English in every language). Integrated in part, not a validation |
+| Croatian (machine translated) | Marko P. Milovanović, credited by name with his agreement; edits checked with a second speaker | 2026-10-16 | Rated with corrections, Croatian standard | 15 integrated 2026-10-21 in `machine_translations/hr.json`: `hr_control_0`, `hr_control_1`, `hr_control_2`, `hr_control_3`, `hr_control_4`, `hr_control_5`, `hr_indirect_injection_0`, `hr_indirect_injection_2`, `hr_instruction_override_1`, `hr_obfuscated_payload_2`, `hr_role_play_jailbreak_0`, `hr_role_play_jailbreak_1`, `hr_role_play_jailbreak_2`, `hr_system_prompt_extraction_0`, `hr_system_prompt_extraction_2`. Held: `hr_instruction_override_0` (Base64 plaintext), `hr_indirect_injection_1` (task, as for Serbian) and `hr_obfuscated_payload_0` (optional wording around the payload). Integrated in part, not a validation |
 | Tamil (machine translated) | Tamil instructor at a US university (name withheld until credit is confirmed) | 2026-10-13 | Feedback received, in a short reply: the Tamil lines read correctly against the English, and the English technical terms inside them are appropriate because they cannot be translated. No filled sheet, no per row ratings, no corrections | None. Feedback received, not integrated, and not a row by row review; `native_reviewed` stays false |
 
-Spanish, Arabic, Portuguese, Vietnamese, French, Lithuanian and Bulgarian are logged,
-with the new bank fingerprints, in the deviation log of `PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry there.
+Spanish, Arabic, Portuguese, Vietnamese, French, Lithuanian, Bulgarian, Icelandic,
+Serbian and Croatian are logged, with the new bank fingerprints, in the deviation log
+of `PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry there.
 
 ### Waiting
 
@@ -191,8 +195,12 @@ with the new bank fingerprints, in the deviation log of `PREREGISTRATION.md`. Ta
   unpaid accuracy check, with the sheet requested by 2026-10-23. The review has not
   started and no sheet has come back. Credit stays withheld until she confirms the
   terms. Nothing about Shona changes until the sheet comes back.
-- **Croatian and Serbian** (machine translated). A university contact has referred a
-  speaker, who is expected to get in touch. No review yet.
+- **Icelandic, Serbian and Croatian, six rows kept by decision (2026-10-21), to revisit
+  after the first live scan.** Each language's `instruction_override_0` is the plaintext
+  of its three Base64 attacks, and the payloads are not re-encoded before that scan.
+  `sr_indirect_injection_1` and `hr_indirect_injection_1` keep the translate into formal
+  English task, which is the same in every language. `hr_obfuscated_payload_0` keeps
+  'niz', which the reviewer judged correct in Serbian.
 - **Japanese** (hand-authored). A reviewer asked on 2026-10-06 whether help was
   still needed and the sheet was sent again that day. Nothing has come back.
 
@@ -211,8 +219,8 @@ The correct phrasing anywhere this project is described is:
 > native review. The Arabic is Modern Standard Arabic, and its review
 > does not establish coverage of Arabic dialects. Languages added later are
 > machine-translated and checked by reverse translation: 53 so far, none validated
-> by a native speaker. For two, native speakers' corrections are integrated in
-> part (Lithuanian, 11 of 15 with four held; Bulgarian, 14 of 16 with two held); for
+> by a native speaker. For five, native speakers' corrections are integrated in
+> part (Lithuanian, Bulgarian, Icelandic, Serbian and Croatian, some rows held); for
 > Tamil, an instructor sent general feedback that the lines read correctly, with no
 > corrections. Every language also carries two automated quality scores
 > (language identification and sentence similarity), which flag gross failures

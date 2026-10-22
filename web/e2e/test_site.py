@@ -395,7 +395,7 @@ def main() -> int:
 
             # --- the review pages: why native review matters, and coverage ----------------
             rd = json.loads((ROOT / "web" / "src" / "review-data.json").read_text(encoding="utf-8"))
-            accepted = {"Iliyana Dimitrova",
+            accepted = {"Iliyana Dimitrova", "Finnur Friðriksson", "Marko P. Milovanović",
                         "UW PORT 202, Intermediate Portuguese (University of Washington), led by Teaching "
                         "Professor Eduardo Viana da Silva, credited with his permission"}
             for width in (1280, 390, 320):
