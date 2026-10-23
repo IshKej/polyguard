@@ -39,6 +39,9 @@
     from { transform: perspective(240px) rotateX(-92deg); }
     to { transform: perspective(240px) rotateX(0); }
   }
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
   @keyframes pop {
     from { opacity: 0; transform: translateY(8px) scale(.96); }
     to { opacity: 1; transform: none; }
@@ -54,6 +57,10 @@
 }
 
 html { background: var(--color-ink); scroll-behavior: smooth; }
+/* Everything is sized in rem, so big monitors get a bigger page, not a small one
+   floating in the middle. */
+@media (min-width: 1700px) { html { font-size: 112.5%; } }
+@media (min-width: 2200px) { html { font-size: 137.5%; } }
 html.lenis-smooth { scroll-behavior: auto; }
 /* Anything clickable shows the pointer. Tailwind 4 resets buttons to the arrow. */
 button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, label[for], select { cursor: pointer; }
@@ -63,7 +70,7 @@ body {
   color: var(--color-ink);
   background: var(--color-paper);
   font-family: var(--font-sans);
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -141,6 +148,13 @@ body {
   .hl.drawn, .hl-hover:hover .hl, .hl-hover:focus-visible .hl { background-size: 100% 82%; }
   .ink .hl.drawn, .ink .hl-hover:hover .hl { color: var(--color-ink); }
 
+  /* A red pen loop drawn by hand around something the grader wants you to see. */
+  .pen-ring { position: relative; }
+  .pen-ring::after {
+    content: ""; position: absolute; inset: -9px -12px; pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 120' preserveAspectRatio='none'%3E%3Cpath d='M58 14C150 2 318 4 380 30C410 50 372 106 214 110C78 114 4 98 12 60C18 30 70 14 150 12' fill='none' stroke='%23ff5a3d' stroke-width='5' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  }
+
   /* Buttons: square shouldered, sentence case, the colour comes from the ground. */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
@@ -176,6 +190,25 @@ body {
   /* Below the fold: the browser skips laying out and painting a section until it
      is near the screen, so the hero paints sooner on a slow phone. */
   .cv { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+
+  /* The pinned scroll story (ScrollStory.jsx). On a short screen the column
+     tightens so the progress ruler stays on screen; shorter still (a zoomed in
+     browser), only the step on show keeps its description. */
+  .story-grid { padding-top: 5rem; padding-bottom: 4rem; }
+  .story-title { font-size: clamp(2.2rem, 5vw, 4.6rem); }
+  .story-steps { margin-top: 2rem; }
+  .story-desc { display: block; }
+  @media (min-width: 1024px) {
+    .story-grid { padding-top: 6rem; }
+  }
+  @media (min-width: 1024px) and (max-height: 840px) {
+    .story-grid { padding-top: 4rem; padding-bottom: 1rem; }
+    .story-title { font-size: clamp(2rem, 4vw, 3.4rem); }
+    .story-steps { margin-top: 1.25rem; }
+  }
+  @media (min-width: 1024px) and (max-height: 900px) {
+    .story-steps .story-desc:not([data-on]) { display: none; }
+  }
 
   /* Ruler ticks along the top of a paper section: PolyGuard measures. */
   .ruler {

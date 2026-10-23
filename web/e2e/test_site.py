@@ -115,7 +115,7 @@ def main() -> int:
             check("and nothing on it animates on its own: no running animations, the hero's four steps all shown at once",
                   page.evaluate("document.getAnimations().filter(a => a.playState === 'running').length") == 0
                   and page.locator("figure[data-played]").get_attribute("data-played") == "4")
-            check("the page never captures the scroll: the How a scan works section is not pinned",
+            check("with motion off, How a scan works is still steps, not a pinned scroll story",
                   page.locator("#how").get_attribute("style") is None)
             axe(page, "the landing page")
 
@@ -130,8 +130,9 @@ def main() -> int:
             page.locator("figure[data-played]").scroll_into_view_if_needed()
             page.wait_for_timeout(3200)
             check("with motion turned on, the hero's four steps play in order once (input, boundary, reply, verdict)",
-                  early != "4" and page.locator("figure[data-played]").get_attribute("data-played") == "4"
-                  and page.locator("#how").get_attribute("style") is None)
+                  early != "4" and page.locator("figure[data-played]").get_attribute("data-played") == "4")
+            check("with motion on, How a scan works is the pinned scroll story (a tall section that plays as you scroll)",
+                  "height" in (page.locator("#how").get_attribute("style") or ""))
             page.reload(wait_until="networkidle")
             check("that choice is remembered across a reload",
                   page.evaluate("document.documentElement.dataset.motion") == "on")

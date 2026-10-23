@@ -46,7 +46,7 @@ export default function HeroBubbles({ code, name, native, animate }) {
   const { word, lead, broke, plain } = bubbleWords(code)
   const l = LOCAL.languages[code]
   return (
-    <figure className="relative mx-auto w-full max-w-[34rem] select-none" aria-labelledby="bubbles-caption">
+    <figure className="relative mx-auto w-full max-w-[min(34rem,62svh)] select-none" aria-labelledby="bubbles-caption">
       <Bubble label="English" labelLang="en" className="w-[62%]">
         <span lang="en" className={`font-display font-extrabold leading-none tracking-tight ${fit('No.')}`}>No.</span>
       </Bubble>

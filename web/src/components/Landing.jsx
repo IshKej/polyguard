@@ -2,6 +2,7 @@ import BANK_COUNTS from '../bank-counts.json'
 import LOCAL from '../local-example.json'
 import LocalEvidence, { REPORT_URL } from './LocalEvidence'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { firstSentence } from '../api'
 import { MotionSwitch } from './Chrome'
 import HeroBubbles from './HeroBubbles'
 import Chapter from './Chapter'
@@ -65,6 +66,10 @@ function Marked({ children, again, className = '', ...rest }) {
 
 export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
   const others = useMemo(() => (meta?.languages || []).filter((l) => l.code !== 'en'), [meta])
+  const lines = useMemo(
+    () => others.map((l) => ({ code: l.code, text: firstSentence(meta?.hero_line?.[l.code]) })).filter((l) => l.text),
+    [others, meta],
+  )
   // Until /api/meta answers (or if it fails), the counts the build wrote from the
   // bank itself: never a hard-coded number that goes stale.
   const count = meta?.languages?.length ?? BANK_COUNTS.languages
@@ -116,10 +121,10 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
   return (
     <main>
       {/* Hero: the question in three voices, and the answer from the real scan. */}
-      <section data-surface="paper" className="paper relative flex min-h-[min(100svh,980px)] flex-col">
-        <div className="mx-auto grid w-full max-w-7xl flex-1 content-center gap-x-12 gap-y-9 px-5 pb-10 pt-28 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,.88fr)] lg:pt-28">
+      <section data-surface="paper" className="paper relative flex min-h-[max(100svh,600px)] flex-col">
+        <div className="mx-auto grid w-full max-w-7xl flex-1 content-center gap-x-12 gap-y-[clamp(1.25rem,3.5svh,2.25rem)] px-5 pb-[clamp(1.5rem,4svh,2.5rem)] pt-[clamp(5.5rem,13svh,8rem)] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,.8fr)]">
           <div className="self-end">
-            <h1 className="display display-caps text-[clamp(2.3rem,5vw,4.6rem)]">
+            <h1 className="display display-caps text-[clamp(2.3rem,min(4.6vw,8.2svh),5.4rem)]">
               Your chatbot says <span className="serif text-[1.08em]">no</span> in English.
               <br className="hidden sm:block" />{' '}
               Does it say <span className="serif text-[1.08em]">no</span> in{' '}
@@ -127,7 +132,7 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
                 <Marked again={code} dir="auto" lang={code} className="serif inline-block text-[1.08em] normal-case leading-[1.3]">{lang.native}</Marked>?
               </span>
             </h1>
-            <p className="mt-7 max-w-lg text-lg text-(--mute)">
+            <p className="mt-[clamp(1rem,3svh,1.75rem)] max-w-lg text-lg text-(--mute)">
               PolyGuard sends the same attacks in {count} languages and marks the exact place where a chatbot’s rules
               give way.
             </p>
@@ -139,7 +144,7 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
             <div className="flex flex-wrap gap-3">
               {onTry && (
                 <button type="button" onClick={onTry} disabled={!meta?.examples?.length} className="btn btn-solid">
-                  Watch a scan <span className="tag bg-(--btn-text) text-(--btn)">Simulated</span>
+                  Watch a scan <span className="tag -rotate-3 bg-(--btn-text) text-(--btn)">Simulated</span>
                 </button>
               )}
               <button type="button" onClick={onStart} className="btn btn-line">Scan your own bot</button>
@@ -249,7 +254,7 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
       </section>
 
       {/* 03: how a scan works, in four steps beside a finished board. */}
-      <ScrollStory languages={others} chapter="03" />
+      <ScrollStory lines={lines} prompt={meta?.examples?.[0]?.prompt} chapter="03" />
 
       {/* 04: the question every result raises, on the highlighter. */}
       <section data-surface="on-hi" className="on-hi cv">

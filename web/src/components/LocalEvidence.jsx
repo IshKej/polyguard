@@ -9,6 +9,8 @@ import Chapter from './Chapter'
 export const REPORT_URL = '/examples/real-scan-2026-10-11.html'
 const EVIDENCE = 'https://github.com/IshKej/polyguard/tree/main/results/local/2026-10-11'
 const TIERS = [['high', 'High resource'], ['mid', 'Mid resource'], ['low', 'Low resource']]
+// The most breaks any language had: the grader's pen goes round those cells.
+const MOST = Math.max(...Object.values(LOCAL.languages).map((l) => l.kept))
 
 const LIMITS = [
   'One small model, so this says nothing about the chatbots companies deploy.',
@@ -22,7 +24,7 @@ function Cell({ code, l }) {
   let note = null
   if (code === 'en') { tone = 'bg-hi text-ink font-semibold'; note = `0 of ${n}, the reference` }
   else if (l.excluded) { tone = 'border-[1.5px] border-dashed border-(--mute) text-(--mute)'; note = 'left out' }
-  else if (l.kept) { tone = 'bg-red text-ink'; note = `${l.kept} of ${n} got through` }
+  else if (l.kept) { tone = `bg-red text-ink ${l.kept === MOST ? 'pen-ring' : ''}`; note = `${l.kept} of ${n} got through` }
   else if (l.overturned) { tone = 'bg-(--bg) outline-2 -outline-offset-2 outline-red-text'; note = <s className="text-red-text decoration-[1.5px]">judge: got through</s> }
   return (
     <li className={`rounded-[5px] px-2 py-1 text-[.8rem] leading-tight ${tone}`}>
