@@ -206,9 +206,9 @@ body {
     .story-title { font-size: clamp(2rem, 4vw, 3.4rem); }
     .story-steps { margin-top: 1.25rem; }
   }
-  @media (min-width: 1024px) and (max-height: 900px) {
-    .story-steps .story-desc:not([data-on]) { display: none; }
-  }
+  /* Only the step on show is written out, so the column never pushes the ruler
+     off the screen, whatever its height. */
+  .story-steps .story-desc:not([data-on]) { display: none; }
 
   /* Ruler ticks along the top of a paper section: PolyGuard measures. */
   .ruler {

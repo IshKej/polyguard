@@ -152,11 +152,11 @@ function Fix({ local }) {
   const rise = clamp((local - 0.38) * 4)
   return (
     <div
-      className="paper absolute bottom-0 right-0 w-[min(100%,25rem)] rounded-[18px] p-5 shadow-[0_18px_40px_-12px_rgba(0,0,0,.6)] ring-2 ring-ink"
-      style={{ transform: `translateY(${(1 - rise) * 115}%)`, opacity: rise }}
+      className="paper relative z-20 rounded-[18px] px-5 py-4 ring-2 ring-ink"
+      style={{ transform: `translateY(${(1 - rise) * 24}px)`, opacity: rise }}
     >
-      <div className="display display-caps text-[1.6rem]">Fix <span className="serif">it.</span></div>
-      <ul className="mt-3 space-y-2.5 text-[.95rem] leading-snug">
+      <div className="display display-caps text-[1.35rem]">Fix <span className="serif">it.</span></div>
+      <ul className="mt-2.5 space-y-1.5 text-[.9rem] leading-snug">
         {RULES.map((rule, n) => (
           <li key={rule} className="flex gap-2.5">
             <span aria-hidden="true" className="mt-[.4rem] h-2.5 w-4 shrink-0 rounded-sm bg-hi ring-1 ring-ink" />
@@ -270,9 +270,9 @@ export default function ScrollStory({ lines = [], prompt = '', chapter }) {
               <Typing key="type" text={text} local={step === 0 ? local : 1} />,
               <Chat key="chat" pairs={pairs} local={step === 1 ? local : step > 1 ? 1 : 0} />,
               <div key="board" className="h-full">{done}</div>,
-              <div key="fix" className="relative h-full overflow-hidden rounded-[14px]">
-                <Board languages={board} outcomes={outcomes} expected={PER} compact={!wide} mark={worst} markProgress={clamp(local * 2.4)}
-                  caption="The red pen marks the most breaks. Whether that is more than chance is the next question." />
+              // The board stays whole and the fix sits under it: nothing covers the circled row.
+              <div key="fix" className="flex h-full flex-col justify-center gap-3">
+                <Board languages={board} outcomes={outcomes} expected={PER} compact mark={worst} markProgress={clamp(local * 2.4)} />
                 <Fix local={local} />
               </div>,
             ].map((scene, n) => (
