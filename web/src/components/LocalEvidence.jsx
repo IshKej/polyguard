@@ -1,4 +1,5 @@
 import LOCAL from '../local-example.json'
+import Chapter from './Chapter'
 
 // The one real result the site can show today, as a graded sheet: every
 // language, every break the review kept, every judge call it overturned, and the
@@ -31,7 +32,7 @@ function Cell({ code, l }) {
   )
 }
 
-export default function LocalEvidence({ className = '' }) {
+export default function LocalEvidence({ className = '', chapter }) {
   const langs = Object.entries(LOCAL.languages)
   const ex = LOCAL.excluded[0]
   const notes = [
@@ -43,10 +44,17 @@ export default function LocalEvidence({ className = '' }) {
   return (
     <section data-surface="paper" className={`paper ${className}`} aria-labelledby="local-evidence">
       <div className="mx-auto max-w-7xl px-5 py-16 sm:py-20">
+        {chapter && <Chapter n={chapter}>The result</Chapter>}
         <p className="caption text-(--mute)">Real local diagnostic, not the simulated demo</p>
-        <h2 id="local-evidence" className="mt-2 max-w-3xl text-[clamp(1.6rem,3vw,2.3rem)] font-bold leading-tight">
-          One real scan so far, graded language by language.
-        </h2>
+        {chapter ? (
+          <h2 id="local-evidence" className="display display-caps mt-3 max-w-5xl text-[clamp(2.2rem,4.6vw,4.2rem)]">
+            {LOCAL.kept} breaks in {LOCAL.attacks.toLocaleString('en-US')} attacks. <span className="serif">One real scan, graded.</span>
+          </h2>
+        ) : (
+          <h2 id="local-evidence" className="mt-2 max-w-3xl text-[clamp(1.6rem,3vw,2.3rem)] font-bold leading-tight">
+            One real scan so far, graded language by language.
+          </h2>
+        )}
         <p className="mt-3 max-w-3xl text-(--mute)">
           {LOCAL.model} on a laptop, behind the example store support bot, scanned {LOCAL.scanned}: {LOCAL.per_language}{' '}
           attacks in each of {langs.length} languages, judged by {LOCAL.judge}. Not a production chatbot.

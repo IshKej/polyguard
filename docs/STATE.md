@@ -18,6 +18,16 @@ not reported anywhere until reviewed. Demo results in the app are simulated and 
 page also shows the 2026-10-11 local diagnostic, labelled as a real scan of a small
 open model on a laptop, not a production chatbot.
 
+**2026-10-22: home page redesign (branch `batch-11-design`).** The hero answers with
+two flat speech bubbles: English says no, and the other language shows its real result
+from the 2026-10-11 local scan (Welsh: the reply that printed the code word), walking
+through the scan's languages with motion on and staying on Welsh with motion off. A
+strip of all 73 languages marks the 8 that let an attack through. Below: a numbers
+strip, six numbered chapters (the worked attack, the gap, the scan, the proof, the
+result, the people), the mixed capitals and serif voice back in headings. A simulated
+results page leads with its counts and "All of it chance." Fonts are served from the
+site. No Three.js.
+
 **2026-10-15: redesign and review work deployed.** `main` at `01343f3`: the hero
 works one real attack from the local scan through step by step, the local scan is
 shown as a graded sheet of all 73 languages, the type is sentence case, the 3D

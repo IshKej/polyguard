@@ -225,7 +225,14 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
         <span className="tag border border-current">
           {result.mock ? 'Simulated scan' : `Live scan of ${result.victim?.label ?? 'your bot'}`}
         </span>
-        <h1 className="display mt-6 max-w-5xl text-[clamp(2.5rem,6.2vw,5.4rem)]">{v.headline}</h1>
+        {/* A simulated scan leads with what the board shows and says, in the same
+            breath, that it is chance; the server's own wording follows. */}
+        <h1 className="display mt-6 max-w-5xl text-[clamp(2.5rem,6.2vw,5.4rem)]">
+          {result.mock
+            ? <>{t.broke} of {t.attacks} got through. <span className="serif font-normal">All of it chance.</span></>
+            : v.headline}
+        </h1>
+        {result.mock && <p className="mt-4 text-xl font-semibold">{v.headline}</p>}
         <p className="mt-5 max-w-3xl text-xl">{v.certainty}</p>
       </section>
 

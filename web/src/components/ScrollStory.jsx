@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import Board from './Board'
+import Chapter from './Chapter'
 
 // How a scan works: four steps beside a finished board. It used to pin the page
 // and play by scrolling; the page no longer captures the scroll, so this is the
@@ -14,7 +15,7 @@ const STEPS = [
 const EXPECTED = 10
 const outcomeFor = (li, ai) => ((li * 7 + ai * 13 + li * ai) % 10 < 3 ? 'broke' : 'held')
 
-export default function ScrollStory({ languages }) {
+export default function ScrollStory({ languages, chapter }) {
   const board = useMemo(() => languages.slice(0, 7), [languages])
   const outcomes = useMemo(() => {
     const m = {}
@@ -26,7 +27,8 @@ export default function ScrollStory({ languages }) {
     <section id="how" data-surface="ink" className="ink scroll-mt-16">
       <div className="mx-auto grid max-w-7xl items-start gap-14 px-5 py-20 sm:py-28 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
         <div>
-          <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">How a scan works</h2>
+          {chapter && <Chapter n={chapter}>The scan</Chapter>}
+          <h2 className="display display-caps text-[clamp(2.2rem,4.6vw,4.2rem)]">How a scan <span className="serif">works.</span></h2>
           <ol className="mt-10 space-y-5">
             {STEPS.map(([title, body], n) => (
               <li key={title} className="grid grid-cols-[3rem_1fr] gap-x-4">

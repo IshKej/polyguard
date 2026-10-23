@@ -126,6 +126,8 @@ def main() -> int:
                   page.evaluate("document.documentElement.dataset.motion") == "on")
             page.evaluate("window.scrollTo(0, 0)")
             early = page.locator("figure[data-played]").get_attribute("data-played")
+            # The worked attack is chapter 01, below the hero: it plays when it comes into view.
+            page.locator("figure[data-played]").scroll_into_view_if_needed()
             page.wait_for_timeout(3200)
             check("with motion turned on, the hero's four steps play in order once (input, boundary, reply, verdict)",
                   early != "4" and page.locator("figure[data-played]").get_attribute("data-played") == "4"
@@ -262,7 +264,7 @@ def main() -> int:
                   and "not a production chatbot" in fig.inner_text())
             check("no attack text sits behind the hero heading, copy or buttons",
                   page.locator("h1").first.evaluate("e => !e.closest('section').querySelector('[aria-hidden=true] [lang]')"))
-            page.get_by_role("button", name="Try the illustrative demo").click()
+            page.get_by_role("button", name="Watch a scan").click()
             page.wait_for_url("**/scan/results", timeout=60000)
             page.wait_for_timeout(800)
             check("one press on the home page runs a simulated scan of an example bot to its results",
@@ -318,7 +320,7 @@ def main() -> int:
                     p2.wait_for_timeout(1200)
                     check("failed metadata: Try again loads it and the notice goes away",
                           p2.get_by_role("status").filter(has_text="reach its server").count() == 0
-                          and p2.get_by_role("button", name="Try the illustrative demo").is_enabled())
+                          and p2.get_by_role("button", name="Watch a scan").is_enabled())
                 c2.close()
             page.goto(base + "/", wait_until="networkidle")
             settled = hero_counts(page)
@@ -351,10 +353,9 @@ def main() -> int:
                   not m.locator("#site-menu").count()
                   and m.evaluate("document.activeElement.textContent") == "Menu")
             axe(m, "the phone home page with its menu")
-            ar = m.locator('article [lang="ar"].text-left')
-            check("the Arabic card's label starts at the left like every other card, its text still right to left",
-                  ar.count() == 1 and ar.evaluate("e => getComputedStyle(e).direction") == "rtl"
-                  and ar.evaluate("e => getComputedStyle(e).textAlign") == "left")
+            ar = m.locator('[data-code="ar"] [lang="ar"]')
+            check("in the hero's language strip, Arabic is its own chip and reads right to left",
+                  ar.count() == 1 and ar.evaluate("e => getComputedStyle(e).direction") == "rtl")
             m.goto(base + "/scan", wait_until="networkidle")
             m.wait_for_timeout(800)
             bar = m.locator("main > div.fixed").bounding_box()
