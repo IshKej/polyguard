@@ -93,7 +93,7 @@ export default function SpotTheAttack({ languages, onStart }) {
     <section ref={section} data-surface="paper" className="paper relative" onKeyDown={onKey}>
       <div className="mx-auto grid max-w-7xl items-start gap-12 px-5 py-20 sm:py-28 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
         <div>
-          <h2 className="display display-caps text-[clamp(2.2rem,4.6vw,4.2rem)]">Your turn. <span className="serif">Spot the attack.</span></h2>
+          <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">Your turn. Spot the attack.</h2>
           <p className="mt-6 max-w-md text-(--mute)">
             Six messages, each in a different language. Some are attacks, some are ordinary requests. A chatbot has to
             tell them apart every time, in every language.

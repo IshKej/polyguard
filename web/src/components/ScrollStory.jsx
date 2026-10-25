@@ -155,7 +155,7 @@ function Fix({ local }) {
       className="paper relative z-20 rounded-[18px] px-5 py-4 ring-2 ring-ink"
       style={{ transform: `translateY(${(1 - rise) * 24}px)`, opacity: rise }}
     >
-      <div className="display display-caps text-[1.35rem]">Fix <span className="serif">it.</span></div>
+      <div className="display text-[1.35rem]">Fix it.</div>
       <ul className="mt-2.5 space-y-1.5 text-[.9rem] leading-snug">
         {RULES.map((rule, n) => (
           <li key={rule} className="flex gap-2.5">
@@ -210,7 +210,7 @@ export default function ScrollStory({ lines = [], prompt = '', chapter }) {
     glideTo(top + ((n + 0.4) / 4) * run)
   }
 
-  const title = <>How a scan <span className="serif">works.</span></>
+  const title = <>How a scan works.</>
   const steps = (
     <ol className="space-y-2">
       {STEPS.map(([name, body], n) => {
@@ -241,7 +241,7 @@ export default function ScrollStory({ lines = [], prompt = '', chapter }) {
         <div className="mx-auto grid max-w-7xl items-start gap-14 px-5 py-20 sm:py-28 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
           <div>
             {chapter && <Chapter n={chapter}>The scan</Chapter>}
-            <h2 className="display display-caps text-[clamp(2.2rem,4.6vw,4.2rem)]">{title}</h2>
+            <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">{title}</h2>
             <div className="mt-10">{steps}</div>
           </div>
           <Board languages={board} outcomes={outcomes} expected={PER} compact caption={CAPTION} />
@@ -256,7 +256,7 @@ export default function ScrollStory({ lines = [], prompt = '', chapter }) {
         <div className="story-grid mx-auto grid w-full max-w-7xl flex-1 items-center gap-6 px-5 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] lg:gap-14">
           <div>
             {chapter && <div className="hidden lg:block"><Chapter n={chapter}>The scan</Chapter></div>}
-            <h2 className="display display-caps story-title">{title}</h2>
+            <h2 className="display story-title">{title}</h2>
             <div className="story-steps hidden lg:block">{steps}</div>
             {/* On a phone only the step being shown is written out. */}
             <div className="mt-4 lg:hidden">

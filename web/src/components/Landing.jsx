@@ -219,8 +219,8 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
         <div className="mx-auto grid max-w-7xl items-start gap-12 px-5 py-20 sm:py-24 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
           <div className="lg:sticky lg:top-28">
             <Chapter n="01">One attack</Chapter>
-            <h2 className="display display-caps text-[clamp(2.2rem,4.6vw,4.2rem)]">
-              Same question. <span className="serif">Two answers.</span>
+            <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">
+              Same question. Two answers.
             </h2>
             <p className="mt-6 max-w-md text-lg text-(--mute)">
               The attack is a customer message telling the bot to drop its rules and print a code word. In English the bot
@@ -235,8 +235,8 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
       <section data-surface="ink" className="cv ink">
         <div className="mx-auto max-w-7xl px-5 py-20 sm:py-28">
           <Chapter n="02">The gap</Chapter>
-          <h2 className="display display-caps max-w-5xl text-[clamp(2.2rem,5.2vw,4.8rem)]">
-            Most guardrail testing <span className="serif">happens in English.</span>
+          <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">
+            Most guardrail testing happens in English.
           </h2>
           <p className="mt-6 max-w-2xl text-lg text-(--mute)">
             A school, a clinic or a bank serves families who type in Hindi, Tagalog, Vietnamese and Spanish, and the same
@@ -261,8 +261,8 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
         <div className="mx-auto grid max-w-7xl items-end gap-10 px-5 py-20 sm:py-24 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,.7fr)]">
           <div>
             <Chapter n="04">The proof</Chapter>
-            <h2 className="display display-caps text-[clamp(2.2rem,5.2vw,4.8rem)]">
-              Some language always comes out worst. <span className="serif">Is the gap real?</span>
+            <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">
+              Some language always comes out worst. Is the gap real?
             </h2>
           </div>
           <div>
@@ -282,8 +282,8 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
       <section data-surface="ink" className="cv ink">
         <div className="mx-auto max-w-7xl px-5 py-20 sm:py-28">
           <Chapter n="06">The people</Chapter>
-          <h2 className="display display-caps max-w-5xl text-[clamp(2.2rem,5.2vw,4.8rem)]">
-            {REVIEWERS} professors and native speakers. <span className="serif">One attack bank.</span>
+          <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">
+            {REVIEWERS} professors and native speakers. One attack bank.
           </h2>
           <p className="mt-6 max-w-2xl text-lg text-(--mute)">{PEOPLE_LINE} {PEOPLE_DETAIL}</p>
           <ul className="mt-12 grid gap-px overflow-hidden rounded-[10px] border border-(--line) bg-(--line) sm:grid-cols-2 lg:grid-cols-3" aria-label="Reviewers credited by name, with their agreement">
@@ -301,7 +301,7 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
             </li>
           </ul>
           {onReview && (
-            <button type="button" onClick={onReview} className="btn btn-line mt-10">Review coverage, language by language</button>
+            <button type="button" onClick={onReview} className="btn btn-line mt-10 whitespace-normal text-left">Review coverage, language by language</button>
           )}
         </div>
       </section>
@@ -318,8 +318,8 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
           <svg viewBox="0 0 240 40" className="absolute -top-[39px] left-1/2 h-10 w-60 -translate-x-1/2 fill-ink" aria-hidden="true">
             <path d="M0 40 C 40 40, 50 0, 90 0 L 150 0 C 190 0, 200 40, 240 40 Z" />
           </svg>
-          <h2 className="display display-caps mx-auto max-w-5xl text-[clamp(2.2rem,5.4vw,4.8rem)]">
-            Find out where your bot <span className="serif">says yes.</span>
+          <h2 className="display text-[clamp(1.9rem,3.6vw,3rem)]">
+            Find out where your bot says yes.
           </h2>
           <p className="mx-auto mt-5 max-w-lg text-(--mute)">
             {meta?.examples?.length ? `${meta.examples.length} example chatbots are ready` : 'Example chatbots are ready'}, or paste the instructions your own bot runs on.

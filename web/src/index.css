@@ -195,7 +195,7 @@ body {
      tightens so the progress ruler stays on screen; shorter still (a zoomed in
      browser), only the step on show keeps its description. */
   .story-grid { padding-top: 5rem; padding-bottom: 4rem; }
-  .story-title { font-size: clamp(2.2rem, 5vw, 4.6rem); }
+  .story-title { font-size: clamp(1.9rem, 3.6vw, 3rem); }
   .story-steps { margin-top: 2rem; }
   .story-desc { display: block; }
   @media (min-width: 1024px) {
@@ -203,7 +203,7 @@ body {
   }
   @media (min-width: 1024px) and (max-height: 840px) {
     .story-grid { padding-top: 4rem; padding-bottom: 1rem; }
-    .story-title { font-size: clamp(2rem, 4vw, 3.4rem); }
+    .story-title { font-size: clamp(1.8rem, 3vw, 2.6rem); }
     .story-steps { margin-top: 1.25rem; }
   }
   /* Only the step on show is written out, so the column never pushes the ruler

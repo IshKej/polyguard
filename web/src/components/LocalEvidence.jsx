@@ -49,8 +49,8 @@ export default function LocalEvidence({ className = '', chapter }) {
         {chapter && <Chapter n={chapter}>The result</Chapter>}
         <p className="caption text-(--mute)">Real local diagnostic, not the simulated demo</p>
         {chapter ? (
-          <h2 id="local-evidence" className="display display-caps mt-3 max-w-5xl text-[clamp(2.2rem,4.6vw,4.2rem)]">
-            {LOCAL.kept} breaks in {LOCAL.attacks.toLocaleString('en-US')} attacks. <span className="serif">One real scan, graded.</span>
+          <h2 id="local-evidence" className="display text-[clamp(1.9rem,3.6vw,3rem)]">
+            {LOCAL.kept} breaks in {LOCAL.attacks.toLocaleString('en-US')} attacks. One real scan, graded.
           </h2>
         ) : (
           <h2 id="local-evidence" className="mt-2 max-w-3xl text-[clamp(1.6rem,3vw,2.3rem)] font-bold leading-tight">
