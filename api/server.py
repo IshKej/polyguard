@@ -63,6 +63,7 @@ import defenses  # noqa: E402
 import engine  # noqa: E402
 import providers  # noqa: E402
 import report_html  # noqa: E402
+import sdk_gate  # noqa: E402
 import tq_report  # noqa: E402
 from api import guard  # noqa: E402
 from api.store import StoreError, expires_in, get_store  # noqa: E402
@@ -218,6 +219,17 @@ def _live_available() -> bool:
         return False
 
 
+def _sdk_blocked() -> bool:
+    """A key is set, but sdk_gate refuses the installed SDK (see sdk_gate.py)."""
+    try:
+        providers.judge_client()
+    except sdk_gate.SDKMismatch:
+        return True
+    except Exception:
+        pass
+    return False
+
+
 def _passcode_ok(given: str | None) -> bool:
     """Fails closed: with no passcode configured, nobody gets a live scan."""
     need = providers.resolve_key("POLYGUARD_PASSCODE")
@@ -227,7 +239,7 @@ def _passcode_ok(given: str | None) -> bool:
 def _live_state(given: str | None) -> tuple[bool, str]:
     """Whether this caller would get a live scan, and if not, the first reason why."""
     if not _live_available():
-        return False, "no_key"
+        return False, "sdk_mismatch" if _sdk_blocked() else "no_key"
     if not providers.resolve_key("POLYGUARD_PASSCODE"):
         return False, "no_passcode_configured"
     if get_store() is None:

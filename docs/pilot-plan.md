@@ -111,6 +111,13 @@ the spend can be re-checked. Every paid run from now on:
    Never a temporary folder alone.
 3. Runs only once the money already spent can be shown from those logs, and with explicit
    clearance for that run.
+4. Runs only on the Anthropic SDK that `requirements.lock` pins, after its request
+   contract passes. `sdk_gate.py` enforces this before any client exists: a different
+   installed version, or one that changes the judge's `temperature` and `output_config`
+   or a victim's request on the way out, stops the run before its first call
+   (`python test_sdk_gate.py`; preflight checks the same). Upgrading the SDK means
+   changing the pin and passing the contract on the new version, never finding out
+   from a paid call.
 
 ## Spending cap
 

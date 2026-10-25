@@ -17,6 +17,9 @@ This checks the things that actually break that step:
              requirements.txt
   BOOT       the app imports cleanly with no API key set, which is exactly the
              state a fresh deployment starts in
+  SDK        the installed anthropic SDK is the locked one and passes the
+             request contract in sdk_gate.py, so no paid call meets an SDK
+             that would refuse the judge's request
 
 Exit code is non-zero if anything would break the deploy.
 
@@ -43,7 +46,7 @@ REQUIRED = [
     "review_sheet.py", "rehearsal.py", "consistency.py",
     "cli.py", "report_html.py",
     "test_engine.py", "verify_all.py",
-    "preflight.py",
+    "preflight.py", "sdk_gate.py", "test_sdk_gate.py",
     "requirements.txt", "README.md", "docs/DEPLOY.md", "docs/AUDIT.md",
     "docs/PREREGISTRATION.md", "docs/RELATED_WORK.md", "docs/NATIVE_REVIEW.md", "docs/STATE.md",
     ".streamlit/config.toml", ".gitignore",
@@ -54,8 +57,8 @@ MUST_NOT_SHIP = [".streamlit/secrets.toml"]
 # Modules that ship with Python, so they never belong in requirements.txt.
 STDLIB = set(sys.stdlib_module_names) | {"__future__"}
 
-# Local modules, resolved from the .py files actually present.
-LOCAL = {p.stem for p in HERE.glob("*.py")}
+# Local modules, resolved from the .py files and packages actually present.
+LOCAL = {p.stem for p in HERE.glob("*.py")} | {p.parent.name for p in HERE.glob("*/__init__.py")}
 
 # A real Anthropic key starts sk-ant- and is long. The pattern deliberately
 # requires length so that the placeholder "sk-ant-..." in docs does not trip it.
@@ -199,6 +202,26 @@ def check_boots_without_key() -> None:
                 os.environ[k] = v
 
 
+def check_sdk() -> None:
+    """
+    The installed anthropic SDK is the one requirements.lock pins, and the judge's
+    and victims' requests survive it intact (sdk_gate.py). Fails closed: a live
+    scan on this machine would be refused for the same reason.
+    """
+    try:
+        import sdk_gate
+        pins = sdk_gate.lock_pins()
+        check("requirements.lock and uv.lock pin the same anthropic SDK",
+              len(set(pins.values())) == 1 and len(pins) == 2,
+              ", ".join(f"{k} {v}" for k, v in pins.items()) or "no pin found")
+        ok, detail = sdk_gate.status()
+        check("the installed anthropic SDK matches the lock and passes the request contract",
+              ok, detail)
+    except Exception as e:
+        check("the installed anthropic SDK matches the lock and passes the request contract",
+              False, repr(e))
+
+
 def main() -> int:
     print("PolyGuard deployment preflight")
     print("Simulating what Streamlit Cloud does: clean checkout, no environment.\n")
@@ -206,6 +229,7 @@ def main() -> int:
     check_no_committed_keys()
     check_requirements()
     check_boots_without_key()
+    check_sdk()
 
     width = max(len(n) for n, _, _ in results)
     failed = 0

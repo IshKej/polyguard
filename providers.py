@@ -801,6 +801,8 @@ def build_victim(model_key: str, max_tokens: int = 300) -> VictimClient:
         raise RuntimeError(f"{spec.label} needs {spec.api_key_env} in the environment "
                            f"or in Streamlit secrets.")
     if spec.provider == "anthropic":
+        import sdk_gate
+        sdk_gate.require()                       # an unchecked SDK never gets a client
         import anthropic
         client = MeteredAnthropic(anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES,
                                                       timeout=CALL_TIMEOUT), "victim")
@@ -840,6 +842,8 @@ def judge_client():
     key = resolve_key("ANTHROPIC_API_KEY")
     if key is None:
         return None
+    import sdk_gate
+    sdk_gate.require()                           # raises SDKMismatch: see sdk_gate.py
     import anthropic
     return MeteredAnthropic(anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES, timeout=CALL_TIMEOUT),
                             "judge")
