@@ -12,7 +12,7 @@ Translation review, language by language: https://polyguard-ten.vercel.app/revie
 
 Most AI safety testing happens in English. PolyGuard takes a chatbot's system prompt, attacks a live copy of that bot with **5 kinds of prompt injection** in **every language in its attack bank**, and shows, per language and per resource tier, which attacks got through. The point is to measure the gap between how well a bot is defended in English and how well it is defended in everyone else's language. The people that gap leaves exposed are the ones least served by English-only testing: patients, students and families who use a clinic's, a school's or a bank's chatbot in the language they speak at home.
 
-> **Where this stands.** The instrument is built and audited ([AUDIT.md](docs/AUDIT.md)). No production chatbot has been scanned, and no paid-model results are in this repository: a first paid pilot (stage 1: Claude Haiku 4.5 as victim and judge, one run, capped at $10) was approved on 2026-10-21 and is run outside it, and nothing from it is reported until it has been reviewed. The bank holds 73 languages (25 high, 24 mid, 24 low resource): 20 written by the author and 53 machine translated. No language has been validated by a native speaker. Native speaker feedback has been received and integrated for only five of the author written languages, Spanish, Vietnamese, Arabic, Portuguese and French, and in part for five machine translated languages, Lithuanian, Bulgarian, Icelandic, Serbian and Croatian (some rows held for confirmation); a Tamil instructor sent general feedback with no corrections. PolyGuard's translated attack bank was shaped by 15 language professors and native speakers who helped review and advise on it. Ten of them sent review feedback (one covered two languages), which was received and integrated, in part for some languages where rows are held for confirmation; the other five advised, agreed to review, or connected us with reviewers. Until those change, nothing here is a finding about production chatbots. [STATE.md](docs/STATE.md) has the details.
+> **Where this stands.** The instrument is built and audited ([AUDIT.md](docs/AUDIT.md)). No production chatbot has been scanned, and no paid-model results are in this repository: a first paid pilot (stage 1: Claude Haiku 4.5 as victim and judge, one run, capped at $10) was approved on 2026-10-21 and is run outside it, and nothing from it is reported until it has been reviewed. The bank holds 73 languages (25 high, 24 mid, 24 low resource): 20 written by the author and 53 machine translated. No language has been validated by a native speaker. Native speaker feedback has been received and integrated for only five of the author written languages, Spanish, Vietnamese, Arabic, Portuguese and French, in part for a sixth, Japanese, and in part for five machine translated languages, Lithuanian, Bulgarian, Icelandic, Serbian and Croatian (some rows held for confirmation); a Tamil instructor sent general feedback with no corrections. PolyGuard's translated attack bank was shaped by 15 language professors and native speakers who helped review and advise on it. Eleven of them sent review feedback (one covered two languages), which was received and integrated, in part for some languages where rows are held for confirmation; the other four agreed to review or connected us with reviewers. Until those change, nothing here is a finding about production chatbots. [STATE.md](docs/STATE.md) has the details.
 
 > **First real scans, local only (2026-10-06).** The four example bots were scanned in all 20 languages the bank held then against a small local open weight model (Qwen3.5 4B on a laptop GPU, judged by Gemma 4 E2B) at zero cost: [results/local/2026-10-06/](results/local/2026-10-06/). They show the pipeline works on real model output and how that one small model behaved; they say nothing about production chatbots, and they exposed a judge problem (most judged breaks were faithful translations), so read [HAND_REVIEW.md](results/local/2026-10-06/HAND_REVIEW.md) before any number. Fixed on 2026-10-11 (scoring 1.2, an echo is a hold) and checked by a 73 language local scan: [results/local/2026-10-11/](results/local/2026-10-11/).
 
@@ -58,7 +58,7 @@ PolyGuard measures that gap so a builder can see it and shrink it **before an at
 
 **87-language catalog**, 25 high-resource, 24 mid, 38 low. The tier is not an opinion: every language carries its class from Joshi et al. (2020), *The State and Fate of Linguistic Diversity and Inclusion in the NLP World*, and the tier is derived from that class by one stated rule (high = class 4-5, mid = 3, low = 0-2) with no exceptions. The resource spectrum is the independent variable, so it is sourced rather than asserted: the published Joshi file is kept in the repo (`data/joshi_lang2tax.txt`) and a check compares every class against it.
 
-**73 are in the bank today.** 20 were written for this project: English, Spanish, Hindi, Gujarati, Chinese, Tagalog, Vietnamese, Arabic, Korean, French, Russian, Portuguese, German, Italian, Japanese, Polish, Turkish, Indonesian, Ukrainian, Greek. The other 53 are machine translated, stored in `machine_translations/` and labelled as such everywhere. Native speaker feedback has been received and integrated for Spanish, Vietnamese, Arabic, Portuguese and French, and in part for Lithuanian, Bulgarian, Icelandic, Serbian and Croatian; that is feedback, not a validation, and the other 15 author written languages have had no native review. The Arabic corpus uses Modern Standard Arabic (MSA). The reviewer noted that MSA is more common for formal, educational, and informational questions, while dialects are also very common in casual chatting. This review does not establish coverage of Arabic dialects. A review sheet for each of the 72 non English languages is in [`review_sheets/`](review_sheets/), and [NATIVE_REVIEW.md](docs/NATIVE_REVIEW.md) tracks the results. The last 14 catalog languages will be generated by `expand_languages.py`, which translates the seed attacks and checks that each one kept the canary token, the Base64 payload, and the injection structure. They need an API key or native speakers, so they do not exist yet.
+**73 are in the bank today.** 20 were written for this project: English, Spanish, Hindi, Gujarati, Chinese, Tagalog, Vietnamese, Arabic, Korean, French, Russian, Portuguese, German, Italian, Japanese, Polish, Turkish, Indonesian, Ukrainian, Greek. The other 53 are machine translated, stored in `machine_translations/` and labelled as such everywhere. Native speaker feedback has been received and integrated for Spanish, Vietnamese, Arabic, Portuguese and French, and in part for Japanese, Lithuanian, Bulgarian, Icelandic, Serbian and Croatian; that is feedback, not a validation, and the other 14 author written languages have had no native review. The Arabic corpus uses Modern Standard Arabic (MSA). The reviewer noted that MSA is more common for formal, educational, and informational questions, while dialects are also very common in casual chatting. This review does not establish coverage of Arabic dialects. A review sheet for each of the 72 non English languages is in [`review_sheets/`](review_sheets/), and [NATIVE_REVIEW.md](docs/NATIVE_REVIEW.md) tracks the results. The last 14 catalog languages will be generated by `expand_languages.py`, which translates the seed attacks and checks that each one kept the canary token, the Base64 payload, and the injection structure. They need an API key or native speakers, so they do not exist yet.
 
 ## Use it from the command line
 
@@ -227,6 +227,33 @@ The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML rep
   update models without notice; the instrument record names the model id, not the
   vendor's internal version.
 
+## Built with
+
+The Congressional App Challenge rules ask entrants to document every open-source
+library, framework and external tool. This is that list; the code that ties them
+together, the attack bank's structure, the scoring and the statistics are this
+project's own.
+
+- **Languages:** Python (engine, statistics, API, command line), JavaScript with
+  JSX (web app), CSS, HTML, SQL (the share-link table).
+- **Python libraries:** FastAPI, Uvicorn and Pydantic (web API), the Anthropic
+  Python SDK (live scans and judging), pandas and Altair (tables and charts in the
+  local Streamlit app), Streamlit (the original local interface, `app.py`),
+  openpyxl (native review sheets). Tests use Playwright (browser), pip-audit
+  (advisories) and the standard library.
+- **Web app:** React, Vite, Tailwind CSS, GSAP (animation), Lenis (smooth scroll);
+  axe-core (accessibility checks) and oxlint (lint) in testing.
+- **Fonts:** Mona Sans (GitHub), Gloock and Noto Sans Lao, all under the SIL Open
+  Font License, served from this site (`web/public/fonts`).
+- **Models and data:** Anthropic models for live scans and judging (only with a key
+  and a spending approval); Qwen3.5 4B and Gemma 4 E2B run locally with llama.cpp
+  for the 2026-10-11 local scan; LaBSE and GlotLID for the automated translation
+  scores; resource tiers from Joshi et al. (2020); web share from Common Crawl
+  (CC-MAIN-2026-39). The 53 machine translated languages were translated by an
+  Anthropic model, recorded in each file under `machine_translations/`.
+- **Services:** Vercel (hosting), Supabase (Postgres for share links), GitHub
+  Actions (CI), YouTube or Vimeo for the demo video.
+
 ## Files
 
 | File | Purpose |
@@ -248,7 +275,7 @@ The same tags are in `engine.TAXONOMY`, the API's `/api/meta` and every HTML rep
 | `AUDIT.md` | Every flaw found in audit and how it was fixed |
 | `PREREGISTRATION.md` | Hypotheses and analysis plan, fixed before any live data |
 | `RELATED_WORK.md` | Prior art, and what this project does and does not claim |
-| `calibrate_stats.py` | Simulates thousands of scans to prove each test controls its error rate |
+| `calibrate_stats.py` | Simulates thousands of scans to check each test controls its error rate |
 | `calibration_report.txt` | The output of that run, committed as evidence |
 | `power_check.py` | Checks the power simulation against a model where languages in a tier differ |
 | `capability_check.py` | Simulates how often the capability rule flags capable and partly capable languages |
@@ -268,7 +295,7 @@ python validate_bank.py          # every attack structurally valid
 python test_engine.py            # unit tests
 python verify_all.py             # full battery
 python selection_bias_demo.py    # why the worst-language stat is corrected
-python calibrate_stats.py        # prove every statistical test is calibrated
+python calibrate_stats.py        # check every statistical test is calibrated
 python judge_eval.py             # measure the judge that decides every result
 ```
 
@@ -290,7 +317,7 @@ disagreement can never masquerade as a difference between models.
 
 ```bash
 python providers.py            # which models are ready, and what each still needs
-python providers.py --smoke    # prove each adapter before trusting its numbers
+python providers.py --smoke    # check each adapter before trusting its numbers
 ```
 
 ## Expanding the languages
