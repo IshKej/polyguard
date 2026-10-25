@@ -327,14 +327,15 @@ def print_summary(out: dict) -> None:
         print(f"  controls  neutral prompt {follow(cap)} followed (the capability flag); "
               f"bot prompt {follow(capb)} followed (what the bot allows)")
     if capb.get("per_lang"):
-        print(f"  harmless  {follow(capb)} ordinary requests followed under the bot's prompt, "
+        print(f"  harmless  {follow(capb)} harmless checks followed under the bot's prompt, "
               f"beside {out['n_broke']} break(s). {engine.REFUSES_EVERYTHING}")
     orf = out.get("over_refusal") or {}
     if orf.get("flagged"):
-        print(f"  WARNING   the bot refuses ordinary requests the model follows under a neutral "
-              f"prompt ({orf['bot_followed']}/{orf['bot_n']} against "
-              f"{orf['reference_followed']}/{orf['reference_n']}, p={orf['p']:.3g}), so its "
-              f"break rate is not evidence that it resists attacks")
+        print(f"  WARNING   under its own prompt the bot followed far fewer of the harmless checks "
+              f"than the model did under a neutral prompt ({orf['bot_followed']}/{orf['bot_n']} against "
+              f"{orf['reference_followed']}/{orf['reference_n']}, p={orf['p']:.3g}). That can mean "
+              f"over-refusal or a bot scoped away from the checks; either way its break rate alone "
+              f"is not evidence that it resists attacks")
     stopped = sum((c.get("n_blocked") or 0) for c in (cap, capb) if c)
     empty = sum((c.get("n_empty") or 0) for c in (cap, capb) if c)
     if stopped or empty:
@@ -344,9 +345,10 @@ def print_summary(out: dict) -> None:
     cr = out.get("code_repeats") or {}
     if cr.get("n"):
         labels = ", ".join(f"{k} {v}" for k, v in cr["judge_labels"].items())
+        why = ("the scanned prompt allows only a refusal, so this breaks its format rule"
+               if cr.get("refusal_only_rule") else "reported as a format observation")
         print(f"  format    {cr['n']} reply(ies) repeated the attack's code without obeying it: "
-              f"not a break and not a leak (the attack supplied the code), but a reply policy "
-              f"that allows only a refusal forbids it. Judge labels: {labels}"
+              f"not a break and not a leak (the attack supplied the code); {why}. Judge labels: {labels}"
               f"{'' if cr['judge_consistent'] else ' (the judge labelled the same pattern differently)'}")
     if cap.get("capability_limited"):
         print(f"  WARNING   the model cannot follow ordinary instructions in "
@@ -392,12 +394,13 @@ def print_comparison(cmp: dict) -> None:
     ctl = cmp.get("controls")
     if ctl:
         b, a = ctl["before"], ctl["after"]
-        print(f"  harmless {b['followed']}/{b['n']} -> {a['followed']}/{a['n']} ordinary requests "
+        print(f"  harmless {b['followed']}/{b['n']} -> {a['followed']}/{a['n']} harmless checks "
               f"followed under each scan's bot prompt. {engine.REFUSES_EVERYTHING}")
         orf = ctl.get("over_refusal") or {}
         if orf.get("flagged"):
-            print(f"  WARNING  the second bot refuses far more ordinary requests (p={orf['p']:.3g}), "
-                  f"so fewer breaks may only mean more refusals, not a better defence")
+            print(f"  WARNING  the second scan's bot followed far fewer of the harmless checks "
+                  f"(p={orf['p']:.3g}), which can mean more refusals or a narrower scope, so fewer "
+                  f"breaks alone do not show a better defence")
     else:
         print(f"  harmless not compared: a scan has no controls under the bot's prompt. "
               f"{engine.REFUSES_EVERYTHING}")
@@ -614,10 +617,10 @@ def arm_over_refusal(table: list[dict]) -> list[str]:
             continue
         if engine.capability_flag(r["benign_followed"], r["benign_scored"],
                                   ref["benign_followed"], ref["benign_scored"]):
-            out.append(f"{r['arm']} follows far fewer benign requests than {ref['arm']} "
+            out.append(f"{r['arm']} followed far fewer of the benign checks than {ref['arm']} "
                        f"({r['benign_followed']}/{r['benign_scored']} against "
-                       f"{ref['benign_followed']}/{ref['benign_scored']}): its break rate may be "
-                       f"lower only because it refuses more")
+                       f"{ref['benign_followed']}/{ref['benign_scored']}): a lower break rate there "
+                       f"may come from refusing more, not from resisting attacks")
     return out
 
 
