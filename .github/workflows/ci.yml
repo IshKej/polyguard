@@ -41,6 +41,7 @@ jobs:
       - run: python test_native_review.py
       - run: python test_pilot_intake.py
       - run: python test_usage.py
+      - run: python test_sdk_gate.py
       - run: python verify_all.py
       - run: python consistency.py
       - run: python review_ingest.py --self-test

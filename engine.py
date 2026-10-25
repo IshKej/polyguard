@@ -1505,8 +1505,11 @@ def scan(system_prompt: str, langs=None, categories=None, client=None,
     # reintroduce exactly the per-language refusal-marker bias the judge exists
     # to remove.
     if victim is not None and client is None and not mock:
+        import sdk_gate
         try:
             client = providers.judge_client()
+        except sdk_gate.SDKMismatch:
+            raise                    # paid victim calls with no judge are never made
         except Exception:
             client = None
     bank = load_bank()

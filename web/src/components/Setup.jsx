@@ -38,6 +38,7 @@ const LIVE_OFF = {
   no_key: 'No model is connected to this site yet, so every scan is simulated.',
   no_passcode_configured: 'Live scans are switched off: the owner has not set a passcode, and without one they stay off.',
   no_guard: 'Live scans are switched off: the spend guard that limits them is not set up.',
+  sdk_mismatch: 'Live scans are switched off: the server runs a version of the Anthropic SDK this project has not checked, so no call is made.',
 }
 
 // An upper bound on what a live scan can cost, never an estimate of a typical one:

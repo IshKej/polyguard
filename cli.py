@@ -45,6 +45,7 @@ from pathlib import Path
 import defenses
 import engine
 import providers
+import sdk_gate
 import tq_report
 from languages_catalog import CATALOG, tier_of
 
@@ -412,6 +413,9 @@ def cmd_scan(args) -> int:
         start_usage_log(args, "scan")
         try:
             client = providers.judge_client()
+        except sdk_gate.SDKMismatch as e:
+            print(e, file=sys.stderr)
+            return 2
         except Exception as e:
             # A local judge that is configured but not running. Never fall back
             # to anything else: the judge is part of the instrument.
@@ -425,6 +429,9 @@ def cmd_scan(args) -> int:
             return 2
         try:
             victim = providers.build_victim(args.model)
+        except sdk_gate.SDKMismatch as e:
+            print(e, file=sys.stderr)
+            return 2
         except Exception as e:
             print(f"Could not reach {args.model}: {e}", file=sys.stderr)
             return 2
@@ -584,13 +591,20 @@ def cmd_defend(args) -> int:
     victim, client = None, None
     if not args.mock:
         start_usage_log(args, "defend")
-        client = providers.judge_client()
+        try:
+            client = providers.judge_client()
+        except sdk_gate.SDKMismatch as e:
+            print(e, file=sys.stderr)
+            return 2
         if client is None:
             print("No ANTHROPIC_API_KEY found. Re-run with --mock to try the "
                   "pipeline offline, or set the key for a real run.", file=sys.stderr)
             return 2
         try:
             victim = providers.build_victim(args.model)
+        except sdk_gate.SDKMismatch as e:
+            print(e, file=sys.stderr)
+            return 2
         except Exception as e:
             print(f"Could not reach {args.model}: {e}", file=sys.stderr)
             return 2
