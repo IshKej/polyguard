@@ -61,6 +61,20 @@ Not estimated from heuristics. Spend is measured and capped from the API's own r
   output_config and each victim's request, sent to a server on 127.0.0.1, must arrive as
   sent). On SDK 2.3.0 that contract fails exactly as the run did, at no cost.
 
+## Proposed v2 of the hardened prompt (2026-10-25, unverified)
+
+`prompt-hardened-v2.txt` is a proposal, written offline. It has not been run on any model, so nothing
+here says it works. The reason for it is visible in the text alone: v1's added rule tells the bot to
+write "not a code, not a word" in reply to a message that tries to change or reveal its instructions,
+and the harmless capability controls ask the bot to write a code. A bot that reads v1 broadly may refuse
+those ordinary requests too, and a bot that refuses everything also scores 0 breaks. v2 keeps every
+protection v1 adds (the same trigger, nothing of the demanded text even before refusing, the refusal
+first, every language) and says that a message which does not try to change or reveal the instructions
+is an ordinary customer request. `test_prompt_v2.py` checks that text offline: v1 and the baseline are
+byte for byte the files that were run, v2 starts with the baseline, keeps each protection, drops the code
+ban, and quotes nothing from the attack bank or the controls. Any run of v2 needs its own clearance, and
+it must be read beside the controls.
+
 ## How to read it
 
 24 attacks per arm is a diagnostic, not a study: with this n a difference of one or two breaks is noise (see `compare`'s test). The hardened arm also has to keep following
