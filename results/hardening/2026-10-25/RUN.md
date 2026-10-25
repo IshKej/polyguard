@@ -6,8 +6,9 @@ publication; nothing about them is claimed in this repository. Any further run n
 clearance.**
 
 This branch is commit `e6e55de` (bank SHA-256 `8f62cefc765149b5f91701025965bb81b29b0d74640ac7b9fa63f9b66b1f2587`,
-the bank the October runs and the 2026-10-24 confirmation runs used) plus two prompt files. Nothing else changed,
-so the instrument is identical to the confirmation runs except the prompt.
+the bank the October runs and the 2026-10-24 confirmation runs used) plus two prompt files and, since the run,
+main's per-call usage logging (no change to the bank, the judge or the scoring), so the instrument is identical
+to the confirmation runs except the prompt.
 
 ## What it tests
 
