@@ -29,9 +29,9 @@
   --color-rule: #cfcfc2;
   --color-amber: #ffb020;
 
-  --font-display: "Mona Sans", "Noto Sans Lao", "Arial Black", sans-serif;
+  --font-display: "Mona Sans", "Noto Sans Lao", "Noto Sans Arabic", "Arial Black", sans-serif;
   --font-serif: "Gloock", Georgia, serif;
-  --font-sans: "Mona Sans", "Noto Sans Lao", system-ui, sans-serif;
+  --font-sans: "Mona Sans", "Noto Sans Lao", "Noto Sans Arabic", system-ui, sans-serif;
 
   --animate-flap: flap .34s cubic-bezier(.3, .7, .3, 1) both;
 
@@ -77,6 +77,10 @@ body {
 }
 ::selection { background: var(--color-hi); color: var(--color-ink); }
 :focus-visible { outline: 3px solid var(--fg, var(--color-ink)); outline-offset: 3px; }
+/* Arabic-script and right-to-left text never takes letter-spacing: any tracking,
+   positive or negative, breaks the joins between Arabic letters. The display and
+   caption styles track Latin text, so this has to win over them. */
+:lang(ar), :lang(fa), :lang(ur), :lang(ps), :dir(rtl), [dir="rtl"] { letter-spacing: 0 !important; }
 
 @layer components {
   /* The two grounds. */
