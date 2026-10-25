@@ -179,7 +179,7 @@ export default function Setup({ meta, initial, onLaunch, onBack, onUnlock, onOpe
                       {NO[l.code] || 'No.'}
                     </span>
                     {on && <span aria-hidden="true" className="absolute right-2.5 top-2.5 size-2 rounded-full bg-hi" />}
-                    <div dir="auto" lang={l.code} className="truncate pr-4 font-semibold">{on ? l.native : <span className="hl">{l.native}</span>}</div>
+                    <div dir="auto" lang={l.code} className="truncate-x pr-4 font-semibold">{on ? l.native : <span className="hl">{l.native}</span>}</div>
                     {l.native !== l.name && <div className={`caption mt-0.5 ${on ? 'text-mute-ink' : ''}`}>{l.name}</div>}
                   </button>
                 )

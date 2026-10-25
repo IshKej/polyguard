@@ -14,3 +14,4 @@ web/dist/
 
 # local AI tooling, never part of the project
 skills-lock.json
+web/e2e/artifacts/

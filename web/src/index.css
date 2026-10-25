@@ -29,9 +29,16 @@
   --color-rule: #cfcfc2;
   --color-amber: #ffb020;
 
-  --font-display: "Mona Sans", "Noto Sans Lao", "Noto Sans Arabic", "Arial Black", sans-serif;
+  /* Every bank script after Mona Sans, self-hosted (public/fonts/fonts.css), so a
+     language never falls to whatever the visitor's system has installed. */
+  --font-scripts: "Noto Sans", "Noto Sans Lao", "Noto Sans Arabic", "Noto Sans Hebrew",
+    "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Gurmukhi", "Noto Sans Gujarati",
+    "Noto Sans Oriya", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Kannada",
+    "Noto Sans Malayalam", "Noto Sans Thai", "Noto Sans Georgian", "Noto Sans SC",
+    "Noto Sans JP", "Noto Sans KR";
+  --font-display: "Mona Sans", var(--font-scripts), "Arial Black", sans-serif;
   --font-serif: "Gloock", Georgia, serif;
-  --font-sans: "Mona Sans", "Noto Sans Lao", "Noto Sans Arabic", system-ui, sans-serif;
+  --font-sans: "Mona Sans", var(--font-scripts), system-ui, sans-serif;
 
   --animate-flap: flap .34s cubic-bezier(.3, .7, .3, 1) both;
 
@@ -81,6 +88,23 @@ body {
    positive or negative, breaks the joins between Arabic letters. The display and
    caption styles track Latin text, so this has to win over them. */
 :lang(ar), :lang(fa), :lang(ur), :lang(ps), :dir(rtl), [dir="rtl"] { letter-spacing: 0 !important; }
+/* The same for the Indic and Thai scripts: tracking cuts the headstroke that joins
+   Devanagari, Bengali and Gurmukhi letters and pulls vowel signs off their consonants. */
+:lang(hi), :lang(mr), :lang(bn), :lang(pa), :lang(gu), :lang(or), :lang(ta), :lang(te),
+:lang(kn), :lang(ml), :lang(th), :lang(lo) { letter-spacing: 0 !important; }
+/* Truncation that cuts sideways only. `truncate` is overflow: hidden, which also cuts
+   off whatever a script draws above or below the line: the stacked consonant in
+   Kannada's ನ್ನ, Tamil's vowel signs, a cedilla. Not a scroll container, so a flex
+   item using it still needs min-w-0 to shrink. */
+@utility truncate-x {
+  overflow-x: clip;
+  overflow-y: visible;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Chinese and Japanese share characters but not glyph shapes: Japanese text takes the
+   Japanese face first, everything else the Chinese one. */
+:lang(ja) { font-family: "Mona Sans", "Noto Sans JP", var(--font-scripts), system-ui, sans-serif; }
 
 @layer components {
   /* The two grounds. */

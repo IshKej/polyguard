@@ -84,7 +84,7 @@ export default function LiveScan({ languages, outcomes, expected, done, total, b
             <>
               <span className={`tag shrink-0 ${VERDICT(latest)[1]}`}>{VERDICT(latest)[0]}</span>
               <span className="shrink-0 font-semibold text-paper">{latest.name}</span>
-              <span dir="auto" lang={latest.lang} className="truncate">{firstSentence(latest.attack)}</span>
+              <span dir="auto" lang={latest.lang} className="min-w-0 truncate-x">{firstSentence(latest.attack)}</span>
             </>
           )}
         </div>

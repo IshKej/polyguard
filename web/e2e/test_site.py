@@ -239,6 +239,44 @@ def main() -> int:
             check("Lao in the chart has a font that covers it (Noto Sans Lao is in the stack and loaded)",
                   lao.count() == 1 and "Noto Sans Lao" in lao.evaluate("e => getComputedStyle(e).fontFamily")
                   and page.evaluate("document.fonts.check('16px \"Noto Sans Lao\"', 'ລາວ')"))
+            # Every script in the chart from a face the site serves, on the Latin rows' box and
+            # baseline, never clipped top or bottom. In CI this runs on Linux, which has almost
+            # none of the system fonts a Mac or Windows machine would quietly fall back to.
+            page.evaluate("""() => document.fonts.ready.then(() => Promise.all([...document.fonts]
+                .filter(f => f.status === 'loading').map(f => f.loaded.catch(() => null))))""")
+            page.wait_for_timeout(500)
+            cdp = ctx.new_cdp_session(page)
+            cdp.send("DOM.enable")
+            cdp.send("CSS.enable")
+            doc = cdp.send("DOM.getDocument", {"depth": -1})["root"]["nodeId"]
+            label_ids = cdp.send("DOM.querySelectorAll", {"nodeId": doc, "selector": "#rates-list > li span[lang]"})["nodeIds"]
+            system_drawn = []
+            for nid in label_ids:
+                fonts = cdp.send("CSS.getPlatformFontsForNode", {"nodeId": nid})["fonts"]
+                if not fonts or any(not f["isCustomFont"] for f in fonts):
+                    lang = cdp.send("DOM.getAttributes", {"nodeId": nid})["attributes"]
+                    system_drawn.append((lang[lang.index("lang") + 1] if "lang" in lang else "?",
+                                         [f["familyName"] for f in fonts]))
+            cdp.detach()
+            check(f"every one of the {n_langs} languages in the chart is drawn by a font the site serves, none by the system",
+                  len(label_ids) == n_langs and not system_drawn)
+            if system_drawn:
+                print("    drawn by a system font:", system_drawn)
+            boxes = page.evaluate("""() => [...document.querySelectorAll('#rates-list > li')].map(li => {
+                const span = li.querySelector('span[lang]'), cell = span.parentElement, s = getComputedStyle(span)
+                const mark = document.createElement('span'); mark.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'
+                span.after(mark); const base = mark.getBoundingClientRect().top - li.getBoundingClientRect().top; mark.remove()
+                const c = getComputedStyle(cell)
+                return [s.fontSize, c.lineHeight, Math.round(span.getBoundingClientRect().height * 4) / 4,
+                        Math.round(base * 4) / 4, c.overflowY, c.textOverflow, s.letterSpacing] })""")
+            check("every script sits in the English row's box: same size, line height and baseline, letter-spacing off",
+                  len({tuple(b[:4]) for b in boxes}) == 1 and all(b[6] in ("normal", "0px") for b in boxes))
+            check("a label is cut short sideways with an ellipsis but never clipped above or below",
+                  all(b[4] == "visible" and b[5] == "ellipsis" for b in boxes))
+            if os.environ.get("GITHUB_ACTIONS"):
+                shots = ROOT / "web" / "e2e" / "artifacts"
+                shots.mkdir(exist_ok=True)
+                page.locator("#rates-list").screenshot(path=str(shots / "how-chart-all-languages.png"))
             page.get_by_role("button", name="Show the top 10 only").click()
             axe(page, "the How we know page")
             page.go_back()

@@ -89,6 +89,13 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: End to end, with accessibility checks
         run: python web/e2e/test_site.py
+      - name: The chart as Linux renders it (every bank script, from the site's own fonts)
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: how-chart-linux
+          path: web/e2e/artifacts/
+          if-no-files-found: ignore
 
   secrets:
     name: No secrets in the history

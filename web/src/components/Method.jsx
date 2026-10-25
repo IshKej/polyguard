@@ -122,7 +122,7 @@ function RatesChart({ rows, worst }) {
           const isEn = row.code === 'en'
           return (
             <li key={row.code} className="grid grid-cols-[7.5rem_1fr] items-center gap-x-4 sm:grid-cols-[10rem_1fr]">
-              <div className="min-w-0 truncate text-sm leading-tight">
+              <div className="min-w-0 truncate-x text-sm leading-tight">
                 <span dir="auto" lang={row.code} className={`font-semibold ${isWorst || isEn ? 'text-ink' : 'text-(--mute)'}`}>{row.native}</span>
                 <span className="caption ml-1.5 text-(--mute)">{isEn ? 'baseline' : row.name}</span>
               </div>
