@@ -43,10 +43,12 @@ import json
 import os
 import random
 import socket
+import threading
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -512,7 +514,8 @@ def local_provenance(base_url: str, name: str) -> dict:
 
 
 def local_chat(base_url: str, model: str, system_prompt: str, user_text: str,
-               max_tokens: int, response_format: dict | None = None) -> tuple[str, str | None]:
+               max_tokens: int, response_format: dict | None = None,
+               role: str = "victim") -> tuple[str, str | None]:
     """One chat completion from llama-server. Returns (text, finish_reason).
 
     Thinking is switched off on every call: Qwen3.5 models think by default and
@@ -527,6 +530,8 @@ def local_chat(base_url: str, model: str, system_prompt: str, user_text: str,
     if response_format is not None:
         body["response_format"] = response_format
     resp = _local_request(base_url, "/v1/chat/completions", body)
+    u = resp.get("usage") if isinstance(resp, dict) else None
+    USAGE.record(role, "local", model, (u or {}).get("prompt_tokens"), (u or {}).get("completion_tokens"))
     try:
         choice = resp["choices"][0]
     except (KeyError, IndexError, TypeError):
@@ -561,7 +566,7 @@ class _LocalMessages:
                 "json_schema": {"name": "verdict", "strict": True, "schema": schema}}
                if schema else None)
         user = "\n\n".join(m["content"] for m in messages if m.get("role") == "user")
-        text, finish = local_chat(self._url, self._name, system, user, max_tokens, fmt)
+        text, finish = local_chat(self._url, self._name, system, user, max_tokens, fmt, role="judge")
         if not text.strip():
             # An empty verdict must not parse as anything. Raising makes the
             # attack missing data, never a guess.
@@ -607,6 +612,91 @@ MODELS["local"] = local_spec()
 
 
 # --------------------------------------------------------------------------- #
+# Token usage
+#
+# Every API response's token counts, victim and judge, written to a log file as it
+# arrives, so the spend of a run can be proven from its own record afterwards (the
+# APIs have no balance endpoint). A crash loses nothing already written. Dollars
+# are not computed here: prices change, token counts do not.
+# --------------------------------------------------------------------------- #
+class UsageLog:
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.path: Path | None = None
+        self.records: list[dict] = []
+
+    def start(self, path: str | Path) -> Path:
+        """Record from now on, appending one JSON line per call to `path`."""
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with self._lock:
+            self.path, self.records = p, []
+        return p
+
+    def record(self, role: str, provider: str, model: str | None,
+               input_tokens, output_tokens, **extra) -> None:
+        rec = {"t": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+               "role": role, "provider": provider, "model": model,
+               "input_tokens": input_tokens, "output_tokens": output_tokens}
+        rec.update({k: v for k, v in extra.items() if v is not None})
+        with self._lock:
+            if self.path is None:
+                return  # not started: the hosted API never keeps a growing list in memory
+            self.records.append(rec)
+            with self.path.open("a", encoding="utf-8", newline="\n") as f:
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+    def totals(self) -> list[dict]:
+        """Calls and tokens per role and model, in first-seen order. A call whose
+        response carried no usage counts as a call with unknown tokens."""
+        out: dict[tuple, dict] = {}
+        with self._lock:
+            for r in self.records:
+                k = (r["role"], r["provider"], r["model"])
+                s = out.setdefault(k, {"role": k[0], "provider": k[1], "model": k[2], "calls": 0,
+                                       "input_tokens": 0, "output_tokens": 0, "calls_without_usage": 0})
+                s["calls"] += 1
+                if r["input_tokens"] is None or r["output_tokens"] is None:
+                    s["calls_without_usage"] += 1
+                else:
+                    s["input_tokens"] += r["input_tokens"]
+                    s["output_tokens"] += r["output_tokens"]
+        return list(out.values())
+
+
+USAGE = UsageLog()
+
+
+class _MeteredMessages:
+    def __init__(self, inner, role: str):
+        self._inner, self._role = inner, role
+
+    def create(self, **kwargs):
+        resp = self._inner.create(**kwargs)
+        u = getattr(resp, "usage", None)
+        USAGE.record(self._role, "anthropic", kwargs.get("model"),
+                     getattr(u, "input_tokens", None), getattr(u, "output_tokens", None),
+                     cache_creation_input_tokens=getattr(u, "cache_creation_input_tokens", None),
+                     cache_read_input_tokens=getattr(u, "cache_read_input_tokens", None))
+        return resp
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class MeteredAnthropic:
+    """An Anthropic client whose messages.create records each response's usage.
+    Everything else passes straight through."""
+
+    def __init__(self, client, role: str):
+        self._client = client
+        self.messages = _MeteredMessages(client.messages, role)
+
+    def __getattr__(self, name):
+        return getattr(self._client, name)
+
+
+# --------------------------------------------------------------------------- #
 # Victim clients
 #
 # Each adapter takes the target bot's system prompt as the system message and
@@ -649,6 +739,9 @@ class VictimClient:
         if self.spec.supports_temperature:
             kwargs["temperature"] = 0
         resp = self._client.chat.completions.create(**kwargs)
+        u = getattr(resp, "usage", None)
+        USAGE.record("victim", self.spec.provider, self.spec.model_id,
+                     getattr(u, "prompt_tokens", None), getattr(u, "completion_tokens", None))
         choice = resp.choices[0]
         if getattr(choice, "finish_reason", None) == "content_filter":
             return BLOCKED_SENTINEL
@@ -676,6 +769,9 @@ class VictimClient:
         )
         resp = self._client.models.generate_content(
             model=self.spec.model_id, contents=user_text, config=cfg)
+        u = getattr(resp, "usage_metadata", None)
+        USAGE.record("victim", "google", self.spec.model_id,
+                     getattr(u, "prompt_token_count", None), getattr(u, "candidates_token_count", None))
         # A safety block yields no candidate text. That is the model declining,
         # which is a non-break, so it must not surface as a scan error.
         try:
@@ -706,7 +802,8 @@ def build_victim(model_key: str, max_tokens: int = 300) -> VictimClient:
                            f"or in Streamlit secrets.")
     if spec.provider == "anthropic":
         import anthropic
-        client = anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES, timeout=CALL_TIMEOUT)
+        client = MeteredAnthropic(anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES,
+                                                      timeout=CALL_TIMEOUT), "victim")
     elif spec.provider == "openai":
         import openai
         client = openai.OpenAI(api_key=key, max_retries=MAX_RETRIES, timeout=CALL_TIMEOUT)
@@ -744,7 +841,8 @@ def judge_client():
     if key is None:
         return None
     import anthropic
-    return anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES, timeout=CALL_TIMEOUT)
+    return MeteredAnthropic(anthropic.Anthropic(api_key=key, max_retries=MAX_RETRIES, timeout=CALL_TIMEOUT),
+                            "judge")
 
 
 # --------------------------------------------------------------------------- #

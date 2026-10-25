@@ -1,6 +1,8 @@
 # Live pilot: bounded call plan
 
-**Status: PLAN ONLY. Not run. No paid call has ever been made.**
+**Status: a first paid pilot (stage 1) was approved on 2026-10-21 and paid calls have been made
+outside this repository since then; no result from them is published here until it has been
+reviewed (README, "Where this stands"). The stages below are the plan.**
 
 Nothing in this file runs until both of these are true:
 
@@ -93,6 +95,22 @@ calls, $6.98 worst case.
 The SDK retries transient errors up to 5 times. Even if every single call were
 retried 5 times, Pilot A would stay under $1.80 and Pilot B under $11.40, which is
 above the $10 cap below; the cap on the key is what holds.
+
+## Before any paid run (added 2026-10-24)
+
+The paid runs of 2026-10-21 and 2026-10-22 kept their replies in a temporary workspace
+that was not saved, and no run recorded its own token usage, so neither the replies nor
+the spend can be re-checked. Every paid run from now on:
+
+1. Records token usage from every API response. `cli.py scan` and `cli.py defend` do this
+   on any live run: one JSON line per call (role, provider, model, input and output
+   tokens) in `usage.jsonl` inside the bundle, beside `--out`, or under `results/usage/`,
+   and print the totals at the end (`providers.USAGE`, `test_usage.py`).
+2. Writes everything to durable storage the same night: the scan JSON with every reply,
+   the bundle (report, manifest, usage log) committed under `results/`, and a copy emailed.
+   Never a temporary folder alone.
+3. Runs only once the money already spent can be shown from those logs, and with explicit
+   clearance for that run.
 
 ## Spending cap
 
