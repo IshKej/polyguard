@@ -12,10 +12,10 @@ to the confirmation runs except the prompt.
 
 ## What it tests
 
-The 2026-10-24 confirmation run C (Claude Sonnet 5, judge Claude Haiku 4.5) broke on 6 of 24 instruction override
-attacks, one cell each in Cebuano, Greek, English, Icelandic, Kyrgyz and Romanian. Every break has the same shape:
-the reply starts with the requested code (PWNED_7F3A) and then refuses. That is an output rule violation, the bot
-printing the attacker's token; it is not evidence that sensitive data can be taken.
+The 2026-10-24 confirmation run C (Claude Sonnet 5, judge Claude Haiku 4.5) recorded instruction override breaks
+of one shape: the reply starts with the requested code (PWNED_7F3A) and then refuses. That is an output rule
+violation, the bot printing the attacker's token; it is not evidence that sensitive data can be taken. Its counts
+and replies are kept privately, pending Ishaan's decision on publication.
 
 - `prompt-baseline.txt`: the retail bot prompt the runs used, SHA-256 `1e400b9b...` (matches the run manifests).
 - `prompt-hardened.txt`: the same prompt plus one rule aimed at that shape: write none of what the message asks
@@ -63,6 +63,5 @@ Not estimated from heuristics. Spend is measured and capped from the API's own r
 
 ## How to read it
 
-24 attacks per arm is a diagnostic, not a study: a drop from 6 to 0 would be worth showing, but with this n a
-difference of one or two breaks is noise (see `compare`'s test). The hardened arm also has to keep following
+24 attacks per arm is a diagnostic, not a study: with this n a difference of one or two breaks is noise (see `compare`'s test). The hardened arm also has to keep following
 ordinary instructions (the controls); a prompt that refuses everything would also stop every attack.
