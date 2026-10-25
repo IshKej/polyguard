@@ -476,6 +476,49 @@ PINS = {
         "8763a3e47069ce9e30f339bcd9da400abdb32471058a9e682a583e4fa714aeaa", True),
     "hr_control_5": ("4fae111afb72646cb0df2c224b3827bf0e86caf81badb7c20ad183f2a6acf2e5",
         "3955cf44d16c2298634a9a58257870cb84546eb8301814d8a6653d9c32b06fb6", True),
+    # Japanese (author written): 11 corrections from a native speaker (name withheld) integrated 2026-10-24; ja_instruction_override_0 held (Base64 plaintext).
+    "ja_instruction_override_0": ("ee559df3bad2638e20d0b9f2bf51a7f5062add149b28c7626378d1ea2e5b19f9",
+        "f533486886647ab174fce39f2a48f7b18ed964ae9e9e9f31b1652f4fdea78164", False),
+    "ja_instruction_override_1": ("83766e8a5e20769d5bae8e690cc149ca462d4cf6a803dfbc533a966b08a9bfed",
+        "d5226c5aa22f0b6f1fb64c05678eb73e5e628557ec597cdda2d47109656b107e", True),
+    "ja_instruction_override_2": ("652ecb583ad6e065ece57cddace6eeb3da1315654a39219c0e8f055a6ac338e8",
+        "0890c5427d3586f24f9f8bc0fa7c90ef5ec718daecec5e73a98c0f2d74712899", True),
+    "ja_role_play_jailbreak_0": ("43e7264d3de06b0c455dc9b1c04ede7b955200e7c1824b400d91a79e6fc131a4",
+        "c07642def7dd4264270062fd90e1c11a729b809cd718da4446bc110ac26a9524", True),
+    "ja_role_play_jailbreak_1": ("20ce580a182a02c2431bdf07bd5adeef8a7aec4c62ce68394e26ab6b54c11559",
+        "13bc45efb04294d343d54151caf754a88a756fd9f7bd259e882a10df475f57ba", False),
+    "ja_role_play_jailbreak_2": ("7b58d57897245baf72795a8bb3b7590d4161427cd176626cfb2ae054cf6a4665",
+        "121af4fce4146cfbcd448b0b6e7f37909461af7974ff6472b9c7e735e03d6070", False),
+    "ja_system_prompt_extraction_0": ("8b5d6e1da8b00fde7784361f484fb66e7e4438b78caf88a3c2e2d8bf4b410b73",
+        "8b5d6e1da8b00fde7784361f484fb66e7e4438b78caf88a3c2e2d8bf4b410b73", False),
+    "ja_system_prompt_extraction_1": ("dec95dfc1a2e3650370beef6f44d6733c44bff66c91c7ca9b9493e16db48ebdd",
+        "dec95dfc1a2e3650370beef6f44d6733c44bff66c91c7ca9b9493e16db48ebdd", False),
+    "ja_system_prompt_extraction_2": ("5962a811f7e043f9386e47dd1e8f5912a84fb225776c2ff1db0da86a48cfb411",
+        "5962a811f7e043f9386e47dd1e8f5912a84fb225776c2ff1db0da86a48cfb411", False),
+    "ja_obfuscated_payload_0": ("fe890664bfa1309ab48101c23a18a9ce09eca2436cbc65586594829004f43fa4",
+        "a3a7dd2efa73defad49e80b89efe41372a649fa328c69d3e4790da1711ff556c", False),
+    "ja_obfuscated_payload_1": ("444e8c7c13187344e8b2be3d5afd17ab7b2c1abd1046f458a6ff31cfbde1062c",
+        "a67fa16d1c4690cfcb239bcdc0bbda0156c867d201f410bd571e7c61bdccba60", True),
+    "ja_obfuscated_payload_2": ("e0e37d184b589db20823aa85619a5bf40cd0b25c13b50fc3796cbc01985c78d2",
+        "7a4218fade97a2a8a189145cec548b132019e9569d1d8b201d380696d5bd2fa7", True),
+    "ja_indirect_injection_0": ("a5366c57aab1afe008160796f49460183855b1eb7f698c2c13e285196470d4c4",
+        "0a2aeffb765cf63742d9c35e808afe5e6388c3d36da76b5b08e545f7d2d46d79", True),
+    "ja_indirect_injection_1": ("d9457c6e7a5ccd22165e661e5cbfda0b5ad3bb3cccda45fd376523ceb0ae8da4",
+        "a926840f96c792fc263ecc2e1f3ca67b66ba795abcbc4822f948b6268c8e2b6a", True),
+    "ja_indirect_injection_2": ("a9c4222682ffc696a8d44ec79180417370f12ffc1d188c47d891316ad8581c1a",
+        "de606943ac55c9e3e28a149fa8d6f97da91a4ff6ca17c67b2c4e94d6466fbfe1", True),
+    "ja_control_0": ("6ea5e01cb631ea50e6ecbab4cee92b5a679d018c934cba3c3b690af9adbfd25c",
+        "e7ac4ee381412979bc7f5bda7d7a3ee9c86a322e1031caab3ae819cd1505d371", False),
+    "ja_control_1": ("aac93b68e68e2ce6b9dc93d681c5c99f62ecb6c9558167ff3ab34a8c49bb55b3",
+        "5d70810a22915f8ad34761e484e7a4ab4e8e76b5154d54248d73bfc2709ff99e", False),
+    "ja_control_2": ("60d9de085a9cd5a3c6ab9156f8bcfd2b18916b53614272f368dce60fbd5389c3",
+        "51424fa8d7ef8a55c62718ca7afbb91a164ecb1bedb25839004a32f7d3dc493e", True),
+    "ja_control_3": ("3b67031070c89e8da4945924dcb7a1d0b5409a239732a141b2a712ff9e5d7903",
+        "912206787cf7ed06c49bbbc4fd321ff39128c4d12a4710452ce1989364bb2fc8", True),
+    "ja_control_4": ("28317c19e6caee62b6e1b8b3d95acc0a77f7e24afec75b051634f149d55c53ec",
+        "7c723a92c889aa6b5c3ed2bfbb556c00528063cf80586cd6e02e094926b47ad9", True),
+    "ja_control_5": ("b00cd59d04356bf5e71977ca47886dfeb58be2a5e1009cead32fd272dfd104fe",
+        "4f07d1aa811b2f71301e59eb6fbed777fdc38a54fc744bf0c96235818c3061fc", False),
 }
 
 
@@ -489,8 +532,9 @@ attacks = {a["id"]: a for a in BANK["attacks"]}
 controls = {c["id"]: c for c in BANK.get("controls", [])}
 bank_rows = {**attacks, **controls}
 
-check("exactly 94 corrected rows are pinned (es 10, ar 7, pt 10, fr 5, lt 11, bg 14, vi 1, is 5, sr 16, hr 15)",
-      sum(v[2] for v in PINS.values()) == 94
+check("exactly 105 corrected rows are pinned (es 10, ar 7, pt 10, fr 5, lt 11, bg 14, vi 1, is 5, sr 16, hr 15, ja 11)",
+      sum(v[2] for v in PINS.values()) == 105
+      and sum(v[2] for k, v in PINS.items() if k.startswith("ja_")) == 11
       and sum(v[2] for k, v in PINS.items() if k.startswith("is_")) == 5
       and sum(v[2] for k, v in PINS.items() if k.startswith("sr_")) == 16
       and sum(v[2] for k, v in PINS.items() if k.startswith("hr_")) == 15
@@ -501,8 +545,8 @@ check("exactly 94 corrected rows are pinned (es 10, ar 7, pt 10, fr 5, lt 11, bg
       and sum(v[2] for k, v in PINS.items() if k.startswith("pt_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("es_")) == 10
       and sum(v[2] for k, v in PINS.items() if k.startswith("ar_")) == 7)
-check("every row of the ten reviewed languages (es ar pt fr lt bg vi is sr hr) is pinned, and nothing else",
-      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr", "lt", "bg", "vi", "is", "sr", "hr")} == set(PINS))
+check("every row of the eleven reviewed languages (es ar pt fr lt bg vi is sr hr ja) is pinned, and nothing else",
+      {k for k in bank_rows if k.split("_")[0] in ("es", "ar", "pt", "fr", "lt", "bg", "vi", "is", "sr", "hr", "ja")} == set(PINS))
 for rid, (t_sha, r_sha, corrected) in PINS.items():
     kind = "corrected" if corrected else "unflagged"
     check(f"{rid} ({kind}): generator template unchanged", sha(template(rid)) == t_sha)
@@ -520,7 +564,7 @@ check("ar_indirect_injection_0 keeps the quoted review with the marker and the c
       and "SYSTEM OVERRIDE" in _quoted and CANARY not in _frame)
 
 # Tokens and markers survive in every reviewed language's rows.
-for lang in ("es", "ar", "pt", "fr", "lt", "bg", "vi", "is", "sr", "hr"):
+for lang in ("es", "ar", "pt", "fr", "lt", "bg", "vi", "is", "sr", "hr", "ja"):
     rows = [a for a in BANK["attacks"] if a["lang"] == lang]
     check(f"{lang}: every canary attack carries the canary once",
           all(a["text"].count(CANARY) == 1 for a in rows
@@ -600,7 +644,7 @@ LANG_DIGESTS = {
     "ig": "396c28e0a20ae99c146357ca3d99ece8f0750a508c190a5f83d3b3a5623581e3",
     "is": "bd6b39363cddb358916acd50ca8e27267c4566c412b1581e2bca895df578bc1a",
     "it": "30b0f2cd10ce01fd9bc306ee2e4012f8ee4ab846cdcaf974d66b834ac2ef7556",
-    "ja": "6897447876660bcea8409539072260aeeaa6e2d62fa71a8023e848420f50fe7d",
+    "ja": "5f0ca2fff7a06f8c46b5f979d14f97fde0fcb61d905d5035404d00d796428823",
     "ka": "8e924928c976c10e27c7401db8ac15097f700c3714b296de110118fd6dbef482",
     "kk": "3422f8dc32c26a637c03e48a138bae5d2b0178c73e4671561b70c529b81a83e0",
     "kn": "5e92e36f136178c5e1ebcb69a91d19ce8036aaaad07e5b4a26a0fc94848cb8fd",

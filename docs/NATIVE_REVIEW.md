@@ -1,8 +1,9 @@
 # Native speaker review
 
-**Status as of 2026-10-14: native speaker feedback has been received and
+**Status as of 2026-10-24: native speaker feedback has been received and
 integrated for 5 of the 20 hand-authored languages, Spanish, Vietnamese, Arabic,
-Portuguese and French. The other 15 have had no native review.
+Portuguese and French, and in part for a sixth, Japanese (11 of 12 corrections,
+2026-10-24). The other 14 have had no native review.
 No machine translated language has been validated. Of the 53 added on
 2026-10-05, five have native speaker feedback integrated in part: Lithuanian (11
 of 15, 2026-10-14), Bulgarian (14 of 16, 2026-10-14), Icelandic (5 of 6), Serbian (16
@@ -176,10 +177,11 @@ credited.
 | Icelandic (machine translated) | Finnur Friðriksson, credited by name with his agreement | 2026-10-15 | All 21 rows: same meaning, reads as an instruction; naturalness 4 on 7 rows and 5 on 14; six wording suggestions | 5 integrated 2026-10-21 in `machine_translations/is.json`: `is_control_1`, `is_control_4`, `is_role_play_jailbreak_1`, `is_system_prompt_extraction_0`, `is_system_prompt_extraction_1`. Held: `is_instruction_override_0` (the plaintext of the three Base64 attacks). Integrated in part, not a validation |
 | Serbian (machine translated) | Marko P. Milovanović, credited by name with his agreement | 2026-10-16 | Rated with corrections, Serbian standard in Cyrillic. Raised two study design points: the translate into formal English task, and the Base64 rows | 16 integrated 2026-10-21 in `machine_translations/sr.json`: `sr_control_0`, `sr_control_1`, `sr_control_2`, `sr_control_3`, `sr_control_4`, `sr_control_5`, `sr_indirect_injection_0`, `sr_indirect_injection_2`, `sr_instruction_override_1`, `sr_instruction_override_2`, `sr_obfuscated_payload_2`, `sr_role_play_jailbreak_0`, `sr_role_play_jailbreak_1`, `sr_role_play_jailbreak_2`, `sr_system_prompt_extraction_0`, `sr_system_prompt_extraction_2`. Held: `sr_instruction_override_0` (Base64 plaintext) and `sr_indirect_injection_1` (the task stays translate into formal English in every language). Integrated in part, not a validation |
 | Croatian (machine translated) | Marko P. Milovanović, credited by name with his agreement; edits checked with a second speaker | 2026-10-16 | Rated with corrections, Croatian standard | 15 integrated 2026-10-21 in `machine_translations/hr.json`: `hr_control_0`, `hr_control_1`, `hr_control_2`, `hr_control_3`, `hr_control_4`, `hr_control_5`, `hr_indirect_injection_0`, `hr_indirect_injection_2`, `hr_instruction_override_1`, `hr_obfuscated_payload_2`, `hr_role_play_jailbreak_0`, `hr_role_play_jailbreak_1`, `hr_role_play_jailbreak_2`, `hr_system_prompt_extraction_0`, `hr_system_prompt_extraction_2`. Held: `hr_instruction_override_0` (Base64 plaintext), `hr_indirect_injection_1` (task, as for Serbian) and `hr_obfuscated_payload_0` (optional wording around the payload). Integrated in part, not a validation |
+| Japanese (written by the author) | Native speaker (name withheld) | 2026-10-23 | 21 rows: 9 ok, 10 awkward, 2 wrong (both controls). Note: how polite a message is depends on how close the user feels to the chatbot, and an attacker may sound friendlier (tentative) | 11 integrated 2026-10-24 in `generate_attack_bank.py`: `ja_control_2`, `ja_control_3`, `ja_control_4`, `ja_indirect_injection_0`, `ja_indirect_injection_1`, `ja_indirect_injection_2`, `ja_instruction_override_1`, `ja_instruction_override_2`, `ja_obfuscated_payload_1`, `ja_obfuscated_payload_2`, `ja_role_play_jailbreak_0`. Held: `ja_instruction_override_0` (the plaintext of the three Base64 attacks). `ja_control_3` keeps そのとおりに ("exactly as shown") with the polite request she named (書いてくださいますか), matching the English question. Integrated in part, not a validation |
 | Tamil (machine translated) | Tamil instructor at a US university (name withheld until credit is confirmed) | 2026-10-13 | Feedback received, in a short reply: the Tamil lines read correctly against the English, and the English technical terms inside them are appropriate because they cannot be translated. No filled sheet, no per row ratings, no corrections | None. Feedback received, not integrated, and not a row by row review; `native_reviewed` stays false |
 
 Spanish, Arabic, Portuguese, Vietnamese, French, Lithuanian, Bulgarian, Icelandic,
-Serbian and Croatian are logged, with the new bank fingerprints, in the deviation log
+Serbian, Croatian and Japanese are logged, with the new bank fingerprints, in the deviation log
 of `PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry there.
 
 ### Waiting
@@ -201,8 +203,8 @@ of `PREREGISTRATION.md`. Tamil changed nothing in the bank, so it has no entry t
   `sr_indirect_injection_1` and `hr_indirect_injection_1` keep the translate into formal
   English task, which is the same in every language. `hr_obfuscated_payload_0` keeps
   'niz', which the reviewer judged correct in Serbian.
-- **Japanese** (hand-authored). A reviewer asked on 2026-10-06 whether help was
-  still needed and the sheet was sent again that day. Nothing has come back.
+- **Japanese, one held row.** `ja_instruction_override_0` is the plaintext of the three
+  Japanese Base64 attacks and is kept, like the other languages' Base64 plaintexts.
 
 ## Arabic scope
 
@@ -215,8 +217,8 @@ The correct phrasing anywhere this project is described is:
 > Attack strings for 20 languages were written by the author and checked
 > automatically for script, encoding, length and uniqueness. Native speaker
 > feedback has been received and integrated for five of them, Spanish,
-> Vietnamese, Arabic, Portuguese (Brazilian) and French; the other 15 have had no
-> native review. The Arabic is Modern Standard Arabic, and its review
+> Vietnamese, Arabic, Portuguese (Brazilian) and French, and in part for a sixth,
+> Japanese; the other 14 have had no native review. The Arabic is Modern Standard Arabic, and its review
 > does not establish coverage of Arabic dialects. Languages added later are
 > machine-translated and checked by reverse translation: 53 so far, none validated
 > by a native speaker. For five, native speakers' corrections are integrated in

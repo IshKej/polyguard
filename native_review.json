@@ -97,7 +97,12 @@
       "note": "The translate into formal English task is kept the same in every language; that row is held."
     },
     "ja": {
-      "status": "requested"
+      "status": "integrated_in_part",
+      "credit": "Native speaker (name withheld)",
+      "returned": "2026-10-23",
+      "integrated": "2026-10-24",
+      "rows_changed": 11,
+      "rows_held": 1
     },
     "is": {
       "status": "integrated_in_part",

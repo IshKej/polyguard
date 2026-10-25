@@ -85,6 +85,8 @@ payload is unchanged. Bank SHA-256 `c3d89dfef3c9ebbf...`, held-out `15be571d72e2
 **2026-10-21:** Icelandic (5), Serbian (16) and Croatian (15) corrections integrated, all machine translated, credited
 to Finnur Friðriksson and Marko P. Milovanović with their agreement; 6 rows held (three Base64 plaintexts, two
 formal English task rows, one optional). Bank SHA-256 `8f62cefc76514...`, held-out `bb355e6efbbc5...`.
+**2026-10-24:** Japanese (written by the author): 11 corrections from a native speaker (name withheld) integrated,
+`ja_instruction_override_0` held (Base64 plaintext). Bank SHA-256 `55095168a133d...`, held-out `5b4e8e2cba605...`.
 **2026-10-06:** statistics sprint (log in `docs/progress/stats.md`). Added an
 EXPLORATORY rank trend of break rate against Common Crawl web share (crawl
 CC-MAIN-2026-39, `data/resource_measures.csv`), logged as secondary in the
@@ -298,7 +300,7 @@ gate is on by default and native review is tracked rather than waved off.
 | Browser tests | 90 (with accessibility checks, the security policy, a 390 and a 320 pixel phone) |
 | Unit tests | 288 (every public engine function) |
 | Audit findings | 87 across 21 rounds (all fixed; round 21 on 2026-10-15) |
-| Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Icelandic 5 of 6, Serbian 16 of 18, Croatian 15 of 18, integrated 2026-10-21. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
+| Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French), and Japanese in part (11 of 12 corrections, 2026-10-24); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Icelandic 5 of 6, Serbian 16 of 18, Croatian 15 of 18, integrated 2026-10-21. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
 | Paid or production model study runs | 0 in this repository. A stage 1 paid pilot (one run, Claude Haiku 4.5 victim and judge) was approved 2026-10-21 and is run outside it; results pending. No production chatbot scanned |
 | Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |
-| Bank fingerprint | `8f62cefc765149b5f91701025965bb81b29b0d74640ac7b9fa63f9b66b1f2587` since 2026-10-21 |
+| Bank fingerprint | `55095168a133dc7c42b12c72f93e51f94dd9bbefcfe92cd749b95339ccb21b9e` since 2026-10-24 |
