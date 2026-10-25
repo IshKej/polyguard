@@ -1,4 +1,9 @@
-# Hardening retest, staged 2026-10-25. PAUSED: no paid call until explicitly cleared.
+# Hardening retest, staged 2026-10-25
+
+**Status: performed on 2026-10-25 on this design (bank, prompts, languages, category, controls on, both
+arms in one session). Its results are recorded and kept privately, pending Ishaan's decision on
+publication; nothing about them is claimed in this repository. Any further run needs its own explicit
+clearance.**
 
 This branch is commit `e6e55de` (bank SHA-256 `8f62cefc765149b5f91701025965bb81b29b0d74640ac7b9fa63f9b66b1f2587`,
 the bank the October runs and the 2026-10-24 confirmation runs used) plus two prompt files. Nothing else changed,
@@ -35,10 +40,23 @@ Then commit the four outputs to this branch at once. Save them somewhere durable
 
 ## Cost
 
-Instinct's max-token bound for one 24-attack pass: about $0.15 without controls, about $0.44 with controls
-(Sonnet 5 at $2 / $10 per million tokens, Haiku 4.5 at $1 / $5, rate card effective 2026-08-31). Two arms with
-controls is therefore up to about $0.88. The remaining credit is unknown (the API has no balance endpoint); check
-it before running. Verify the input-token bound before any run.
+Not estimated from heuristics. Spend is measured and capped from the API's own records:
+
+- Every call's input and output tokens come from the API response and are written, one JSON
+  line per call, to `usage.jsonl` beside the results (`providers.USAGE`, ported to this branch
+  from main; `test_usage.py`). Totals are printed at the end of each scan.
+- The run goes through a guard that, before each call, reserves that call's worst case (its
+  input tokens plus `max_tokens` of output at the published price) against a fixed budget cap,
+  and stops before the cap rather than after it. The guard keeps its own running ledger. (The
+  runner used on 2026-10-25, `guarded_run.py`, is kept with that run's private results.)
+- Prices: `providers.PRICES_PER_MTOK` (Claude Sonnet 5 $2 / $10 and Claude Haiku 4.5 $1 / $5 per
+  million input / output tokens, rate card effective 2026-08-31). Re-check them before a run.
+- The remaining credit is not known from the API (it has no balance endpoint); past spend is
+  shown from the usage logs, never from estimates.
+- Before any live call, check the installed `anthropic` SDK against `requirements.lock`: on
+  2026-10-25 an unpinned 2.x SDK passed every victim call and failed every judge call. Main now
+  refuses to start a live scan when the SDK does not match the lock and fails the judge's
+  request-shape contract test.
 
 ## How to read it
 
