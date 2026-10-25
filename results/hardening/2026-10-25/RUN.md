@@ -7,7 +7,7 @@ clearance.**
 
 This branch is commit `e6e55de` (bank SHA-256 `8f62cefc765149b5f91701025965bb81b29b0d74640ac7b9fa63f9b66b1f2587`,
 the bank the October runs and the 2026-10-24 confirmation runs used) plus two prompt files and, since the run,
-main's per-call usage logging (no change to the bank, the judge or the scoring), so the instrument is identical
+main's per-call usage logging and SDK gate (no change to the bank, the judge or the scoring), so the instrument is identical
 to the confirmation runs except the prompt.
 
 ## What it tests
@@ -55,9 +55,11 @@ Not estimated from heuristics. Spend is measured and capped from the API's own r
 - The remaining credit is not known from the API (it has no balance endpoint); past spend is
   shown from the usage logs, never from estimates.
 - Before any live call, check the installed `anthropic` SDK against `requirements.lock`: on
-  2026-10-25 an unpinned 2.x SDK passed every victim call and failed every judge call. Main now
-  refuses to start a live scan when the SDK does not match the lock and fails the judge's
-  request-shape contract test.
+  2026-10-25 an unpinned 2.x SDK passed every victim call and failed every judge call. This
+  branch and main now refuse to start a live scan when the installed SDK does not match the
+  lock, or when it fails the request contract (`sdk_gate.py`: the judge's temperature and
+  output_config and each victim's request, sent to a server on 127.0.0.1, must arrive as
+  sent). On SDK 2.3.0 that contract fails exactly as the run did, at no cost.
 
 ## How to read it
 
