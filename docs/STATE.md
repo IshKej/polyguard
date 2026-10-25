@@ -1,6 +1,6 @@
 # PolyGuard: current state and handoff
 
-**Last updated 2026-10-15.** Read this first if you are picking the project up
+**Last updated 2026-10-25.** Read this first if you are picking the project up
 cold. Everything below is reconstructable from the repo, but this is the short
 version and the reasoning behind the decisions.
 
@@ -11,12 +11,27 @@ Deadline: **Congressional App Challenge, 26 October 2026.**
 Built, audited, verified offline, and **live at https://polyguard-ten.vercel.app**
 (Ishaan's Vercel account, with a Supabase database for share links, game answers
 and the spend guard). **No production chatbot has been scanned, and no paid-model
-results are in this repository.** A first paid pilot (stage 1: Claude Haiku 4.5 as
-victim and judge, one run, capped at $10) was approved on 2026-10-21 and is run
-outside the repository; its results come back through `pilot_intake.py` and are
-not reported anywhere until reviewed. Demo results in the app are simulated and labelled so; the home
+results are in this repository or on the site.** Paid runs have been made outside
+the repository since the stage 1 pilot was approved on 2026-10-21 (the pilot, then
+confirmation runs on 2026-10-24 and a matched hardening retest on 2026-10-25). The
+matched retest was performed and its results are recorded, pending Ishaan's
+publication choice; nothing here claims that the hardening works or that it does
+not. Further paid runs need their own clearance (`docs/pilot-plan.md`, "Before any
+paid run"). Demo results in the app are simulated and labelled so; the home
 page also shows the 2026-10-11 local diagnostic, labelled as a real scan of a small
 open model on a laptop, not a production chatbot.
+
+**2026-10-24 to 2026-10-25: safeguards for paid runs, and every script rendered from
+the site's own fonts.** Every live call now records its token counts from the API
+response (`providers.USAGE`, one line per call in `usage.jsonl` beside the results,
+`test_usage.py`). Live calls go out only on the Anthropic SDK that `requirements.lock`
+pins and only after its request contract passes (`sdk_gate.py`: the judge's
+temperature and output_config and each victim's request, sent through the installed
+SDK to a server on 127.0.0.1, must arrive as sent); otherwise the CLI stops before its
+first call, the API reports `sdk_mismatch` and preflight fails (`test_sdk_gate.py`).
+Arabic-script and right-to-left text takes no letter-spacing (2026-10-24), and the site
+now serves a Noto face for every script in the bank, so no language depends on the
+visitor's system fonts; the /how chart labels are no longer clipped above or below.
 
 **2026-10-22: home page redesign (branch `batch-11-design`).** The hero answers with
 two flat speech bubbles: English says no, and the other language shows its real result
@@ -46,8 +61,8 @@ and how that one small model behaved. What they cannot show: anything about
 production chatbots, anything about low resource languages (Gujarati is the only
 one), or a trustworthy break rate, because the two judges agreed poorly (kappa
 0.17 to 0.30) and most judged breaks were the bot faithfully translating a quoted
-injection. By hand, 4 of 1197 scored attacks were real breaks. The API key is the single gate on the
-research; `python setup_key.py` plugs it in everywhere at once.
+injection. By hand, 4 of 1197 scored attacks were real breaks. At the time the API key was the single
+gate on the research; `python setup_key.py` plugs it in everywhere at once.
 
 **2026-10-11: scoring 1.2 and neutral capability controls.** A reply that does the
 user's task (a translation, summary or quote) and carries the injected line along
@@ -111,15 +126,17 @@ python linguistics.py            # script/encoding      -> no findings
 python test_engine.py            # unit, a few seconds -> 288/288
 python verify_all.py             # full battery        -> 244/244
 python api/test_api.py           # web API             -> 95/95
-python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 90/90
+python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 94/94
 python test_stats_properties.py  # 38 properties of the statistics on random inputs -> 38/38
 python mutation_check.py         # 23 planted bugs in the statistics, all must be caught -> 23/23
 python power_check.py            # power model against within-tier spread (about 3 min)
 python capability_check.py       # capability rule false flags and detection (about 15 s)
 python api/test_cancellation.py  # closing the tab stops a live scan -> 9/9
-python test_native_review.py     # every reviewed row pinned, every language digested -> 355/355
+python test_native_review.py     # every reviewed row pinned, every language digested -> 551/551
 python review_ingest.py --self-test   # returned review sheets are read correctly -> 7/7
 python test_pilot_intake.py      # intake for the stage 1 live pilot, no key needed -> 14/14
+python test_usage.py             # every API response's token counts reach the usage log -> 13/13
+python test_sdk_gate.py          # no live call on an unchecked Anthropic SDK -> 20/20
 python expand_languages.py --check-stored   # gates on the 53 stored machine translations
 python web/e2e/smoke_live.py https://polyguard-ten.vercel.app --review   # read-only check of the live site
 python cli.py replay scan.json   # recompute a saved scan from its evidence
@@ -135,26 +152,34 @@ streamlit run app.py             # the research console
 python cli.py scan --prompt f --mock   # headless, no key needed
 ```
 
-If any of those fail, something regressed. They all passed on 2026-10-15
+If any of those fail, something regressed. They all passed on 2026-10-25
 (`power_check.py` about 90 s, `mutation_check.py` about 4 min, `calibrate_stats.py`
 about 30 s on this laptop).
 
 ## The blockers, in order
 
-1. **Anthropic API key.** Needs a parent's card. Gates the live scan, the
-   language expansion, the judge validation and the remediation proof. Nothing
-   else is close to this in importance.
-2. **The last 14 catalog languages and native review.** The bank holds 73
+1. **The submission, due 2026-10-26 at 9:00 AM Pacific (Ishaan's).** The video, the
+   six written answers and the AI usage disclosure.
+2. **Publishing the paid runs (Ishaan's decision).** The API key is no longer the
+   blocker: paid runs have been made outside this repository (see the status above).
+   Their results stay out of the repository and the site until Ishaan decides; the
+   matched hardening retest's results are recorded, pending that choice. Any further
+   paid run needs its own clearance and must meet the four rules in
+   `docs/pilot-plan.md` (usage logged, artifacts saved the same night, spend provable,
+   the locked SDK passing its contract).
+3. **The last 14 catalog languages and native review.** The bank holds 73
    languages: 25 high, 24 mid, 24 low; 20 author written, 53 machine translated
    (`machine_translations/`, checked by `python expand_languages.py --check-stored`).
-   Missing: Pashto, Tajik, Mongolian, Armenian, Nepali, Sinhala, Khmer, Burmese, Javanese, Sundanese, Swahili, Amharic, Somali and Kinyarwanda. They need `python expand_languages.py --langs ...` with the
-   key, or native speakers. The central hypothesis is testable now but untested.
-3. **Server-side cancellation: done 2026-10-13.** Closing the tab now stops a
-   live scan: no new paid call starts after the visitor leaves (228 did before),
-   the slot comes back at once, and `scan_cancelled` is logged. Acceptance tests
-   `api/test_cancellation.py` 9/9, in CI. The design note the brief asks for,
-   `docs/design/cancellation-note.md`, is a draft (drafted with AI) for Ishaan to
-   review and add his own reasoning to.
+   Missing: Pashto, Tajik, Mongolian, Armenian, Nepali, Sinhala, Khmer, Burmese, Javanese, Sundanese, Swahili, Amharic, Somali and Kinyarwanda. They need `python expand_languages.py --langs ...`
+   (paid calls, not cleared) or native speakers. The central hypothesis is testable
+   now but untested at study scale.
+
+Done and no longer blocking: **server-side cancellation (2026-10-13).** Closing the
+tab stops a live scan: no new paid call starts after the visitor leaves (228 did
+before), the slot comes back at once, and `scan_cancelled` is logged. Acceptance
+tests `api/test_cancellation.py` 9/9, in CI. The design note the brief asks for,
+`docs/design/cancellation-note.md`, is a draft (drafted with AI) for Ishaan to
+review and add his own reasoning to.
 
 Hosting is done, not a blocker: two Vercel Services in one project (the Vite site
 at `/`, FastAPI at `/api/*`), every push to main deploys, and CI
@@ -176,10 +201,15 @@ which `publish_example.py` writes from the saved scan. Below that: every
 language's name in its own script, the same attack in eight languages, how a scan
 works, and a "spot the attack" game built on real messages from the bank
 (`GET /api/game`), which needs no key. Lime and red mean held and got through in
-the hero and the sheet. Everything that would show a result is labelled simulated
-until a key exists.
+the hero and the sheet. Everything that would show a result is labelled simulated:
+the hosted site has no key (`/api/meta` reports `live_reason` `no_key`). Every script
+in the bank is drawn from fonts the site serves (`web/public/fonts/fonts.css`), with
+Mona Sans's vertical metrics, so a row in any language has the English row's box.
 
-## First moves once the key exists, in this order
+## First moves if paid runs are cleared again, in this order
+
+Each run must first meet the rules in `docs/pilot-plan.md` ("Before any paid run");
+`python test_sdk_gate.py` and `python preflight.py` must pass on the machine that runs it.
 
 ```bash
 python providers.py --smoke                  # prove each vendor adapter works
@@ -200,7 +230,8 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 |---|---|
 | `app.py` | Streamlit UI and report |
 | `engine.py` | Scan engine, break detection, all statistics |
-| `providers.py` | Victim models across vendors; judge held fixed; `local` victim and judge via llama-server |
+| `providers.py` | Victim models across vendors; judge held fixed; `local` victim and judge via llama-server; per-call token usage log (`USAGE`) |
+| `sdk_gate.py` | Refuses live Anthropic calls unless the installed SDK is the locked one and its request contract passes |
 | `rejudge.py` | Second judge over a saved scan: agreement, kappa, every disagreement |
 | `review_agreement.py` | A judge's agreement with a hand review, before and after a change |
 | `defenses.py` | Remediation: scan to hardened prompt |
@@ -259,10 +290,15 @@ a deviation from the analysis plan, but the fingerprint must be updated.
   scores near-zero breaks, which looks like security. Measured, this turned a real
   planted gap from p=0.0023 into p=0.050. (37)
 - **Provenance, not "verified".** No language has been validated by a native
-  speaker. Spanish, Vietnamese, Arabic and Portuguese feedback has been received and integrated
-  (the Arabic is Modern Standard Arabic; dialect coverage is not established),
-  which is not the same thing, and `native_reviewed` stays false. The old flag
-  implied otherwise. (34)
+  speaker. Native speaker feedback has been received and integrated for the
+  languages in the scoreboard below (the Arabic is Modern Standard Arabic; dialect
+  coverage is not established), which is not the same thing, and `native_reviewed`
+  stays false. The old flag implied otherwise. (34)
+- **Spend is measured, never estimated, and no paid call meets an unchecked SDK.**
+  Token counts come from the API's own responses (`usage.jsonl`), and `sdk_gate.py`
+  stops a live run before its first call when the SDK differs from the lock or alters
+  the judge's request. An SDK outside the lock once accepted every victim request and
+  refused every judge request, which surfaced only after paid calls.
 - **Nulls are reportable.** The pre-registration commits to it, and power is
   reported alongside so a null can be told apart from an underpowered scan.
 
@@ -296,11 +332,12 @@ gate is on by default and native review is tracked rather than waved off.
 | Capability controls | 438 (6 per language), each fired twice: neutral prompt and bot prompt |
 | Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
 | Verification checks | 244 |
-| Native review regression checks | 355 (every reviewed row pinned, every language digested) |
-| Browser tests | 90 (with accessibility checks, the security policy, a 390 and a 320 pixel phone) |
+| Native review regression checks | 551 (every reviewed row pinned, every language digested) |
+| Browser tests | 94 (with accessibility checks, the security policy, a 390 and a 320 pixel phone, and every bank script drawn by a served font) |
+| Paid-run safeguards | 13 usage logging checks, 20 SDK gate checks |
 | Unit tests | 288 (every public engine function) |
 | Audit findings | 87 across 21 rounds (all fixed; round 21 on 2026-10-15) |
 | Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French), and Japanese in part (11 of 12 corrections, 2026-10-24); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Icelandic 5 of 6, Serbian 16 of 18, Croatian 15 of 18, integrated 2026-10-21. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
-| Paid or production model study runs | 0 in this repository. A stage 1 paid pilot (one run, Claude Haiku 4.5 victim and judge) was approved 2026-10-21 and is run outside it; results pending. No production chatbot scanned |
+| Paid or production model study runs | 0 in this repository. Paid runs have been made outside it since the stage 1 pilot was approved on 2026-10-21 (confirmation runs 2026-10-24, a matched hardening retest 2026-10-25); results are recorded privately and none are published, pending Ishaan's choice. No production chatbot scanned |
 | Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |
 | Bank fingerprint | `55095168a133dc7c42b12c72f93e51f94dd9bbefcfe92cd749b95339ccb21b9e` since 2026-10-24 |
