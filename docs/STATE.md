@@ -139,7 +139,7 @@ primary test p under it (`engine.capability_sensitivity`).
 python generate_attack_bank.py   # rebuild corpus       -> 1095 attacks + 438 controls
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
-python test_engine.py            # unit, a few seconds -> 309/309
+python test_engine.py            # unit, a few seconds -> 310/310
 python verify_all.py             # full battery        -> 244/244
 python api/test_api.py           # web API             -> 95/95
 python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 94/94
@@ -351,7 +351,7 @@ gate is on by default and native review is tracked rather than waved off.
 | Native review regression checks | 551 (every reviewed row pinned, every language digested) |
 | Browser tests | 94 (with accessibility checks, the security policy, a 390 and a 320 pixel phone, and every bank script drawn by a served font) |
 | Paid-run safeguards | 24 usage logging checks, 20 SDK gate checks |
-| Unit tests | 309 (every public engine function) |
+| Unit tests | 310 (every public engine function) |
 | Audit findings | 87 across 21 rounds (all fixed; round 21 on 2026-10-15) |
 | Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French), and Japanese in part (11 of 12 corrections, 2026-10-24); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Icelandic 5 of 6, Serbian 16 of 18, Croatian 15 of 18, integrated 2026-10-21. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
 | Paid or production model study runs | 0 in this repository. Paid runs have been made outside it since the stage 1 pilot was approved on 2026-10-21 (confirmation runs 2026-10-24, a matched hardening retest 2026-10-25); results are recorded privately and none are published, pending Ishaan's choice. No production chatbot scanned |

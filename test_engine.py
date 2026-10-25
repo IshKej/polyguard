@@ -1508,6 +1508,10 @@ _refuse_bot = engine.capability_report(_ctl_rows(0, "bot"))
 _neutral = engine.capability_report(_ctl_rows(5, "neutral"))
 check("capability_limited cannot see a bot that refuses everything (it compares languages with English)",
       _refuse_bot["capability_limited"] == [])
+check("pooled_follow adds a capability report's controls up across languages, blocks and empties too",
+      engine.pooled_follow(engine.capability_report(_ctl_rows(4, "neutral", blocked=1, empty=1)))
+      == {"n": 48, "followed": 32, "blocked": 1, "empty": 1}
+      and engine.pooled_follow(None) == {"n": 0, "followed": 0, "blocked": 0, "empty": 0})
 _or = engine.over_refusal(_refuse_bot, _neutral)
 check("the over-refusal check flags a bot that refuses everything the model would follow",
       _or["flagged"] is True and _or["bot_followed"] == 0 and _or["reference_followed"] == 40
