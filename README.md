@@ -8,7 +8,7 @@ Translation review, language by language: https://polyguard-ten.vercel.app/revie
 
 **In three sentences.** A chatbot that refuses a trick in English can fall for the same trick in Hindi, Swahili or Tagalog, and the people who meet that weaker chatbot are the ones least served by English-only testing. PolyGuard sends the same attacks to a chatbot in 73 languages, checks that the chatbot understood each language at all, and tests whether some languages are really less protected rather than unlucky. Then it writes defence rules and measures, against a placebo, how much they help on attacks it held back.
 
-![The PolyGuard home page: the question "Your chatbot says no in English. Does it say no in Welsh?" beside one real attack from a local scan, worked through in four steps: the attack, the trust boundary, the bot's English and Welsh replies, and how each was judged](docs/hero.png)
+![The PolyGuard home page: the question "Your chatbot says no in English. Does it say no in Cymraeg?" beside two speech bubbles from a real local scan, English answering "No." and Welsh printing the attacker's code word, above a strip of all 73 languages with the 8 that let an attack through marked](docs/hero.png)
 
 Most AI safety testing happens in English. PolyGuard takes a chatbot's system prompt, attacks a live copy of that bot with **5 kinds of prompt injection** in **every language in its attack bank**, and shows, per language and per resource tier, which attacks got through. The point is to measure the gap between how well a bot is defended in English and how well it is defended in everyone else's language. The people that gap leaves exposed are the ones least served by English-only testing: patients, students and families who use a clinic's, a school's or a bank's chatbot in the language they speak at home.
 
@@ -40,7 +40,7 @@ PolyGuard measures that gap so a builder can see it and shrink it **before an at
 
 ## What a scan looks like
 
-![A simulated scan's results: the banner saying it is simulated, whether every planned attack ran, and the headline numbers](docs/results.png)
+![A simulated scan's results: the heading says 14 of 60 attacks got through and all of it is chance, with the Simulated tag, whether every planned attack ran, and the headline numbers](docs/results.png)
 
 *Shown with simulated data, which the app labels as such. A simulated run attacks no model and proves nothing about any real chatbot.*
 
