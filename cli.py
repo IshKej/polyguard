@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
 import sys
 from datetime import datetime, timezone
@@ -371,6 +372,36 @@ def read_prompt(args) -> str:
     return p.read_text(encoding="utf-8")
 
 
+def start_usage_log(args, kind: str) -> Path:
+    """Where this live run's token usage goes, decided before the first call: the
+    bundle folder, else beside --out, else results/usage/. POLYGUARD_USAGE_LOG wins
+    over all three. The file is written call by call, so it survives a crash."""
+    env = os.environ.get("POLYGUARD_USAGE_LOG")
+    if env:
+        path = Path(env)
+    elif getattr(args, "bundle", None):
+        path = Path(args.bundle) / "usage.jsonl"
+    elif getattr(args, "out", None):
+        path = Path(args.out).with_suffix(".usage.jsonl")
+    else:
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        path = Path("results") / "usage" / f"{kind}-{stamp}.usage.jsonl"
+    return providers.USAGE.start(path)
+
+
+def print_usage() -> None:
+    rows = providers.USAGE.totals()
+    if not rows:
+        return
+    print()
+    print("  token usage (from the API responses, not an estimate):")
+    for r in rows:
+        missing = f", {r['calls_without_usage']} without usage" if r["calls_without_usage"] else ""
+        print(f"    {r['role']:<7} {r['provider']}/{r['model']}: {r['calls']} calls, "
+              f"{r['input_tokens']:,} in + {r['output_tokens']:,} out{missing}")
+    print(f"    log: {providers.USAGE.path}")
+
+
 def cmd_scan(args) -> int:
     prompt = read_prompt(args)
     if not prompt.strip():
@@ -378,6 +409,7 @@ def cmd_scan(args) -> int:
 
     victim, client = None, None
     if not args.mock:
+        start_usage_log(args, "scan")
         try:
             client = providers.judge_client()
         except Exception as e:
@@ -462,6 +494,7 @@ def cmd_scan(args) -> int:
         print(f"  wrote {args.html}")
     if args.bundle:
         write_bundle(Path(args.bundle), payload, prompt, args)
+    print_usage()
     return exit_code
 
 
@@ -550,6 +583,7 @@ def cmd_defend(args) -> int:
 
     victim, client = None, None
     if not args.mock:
+        start_usage_log(args, "defend")
         client = providers.judge_client()
         if client is None:
             print("No ANTHROPIC_API_KEY found. Re-run with --mock to try the "
@@ -643,6 +677,7 @@ def cmd_defend(args) -> int:
         Path(args.out).write_text(json.dumps(payload, indent=2, ensure_ascii=False),
                                   encoding="utf-8", newline="\n")
         print(f"\n  wrote {args.out}")
+    print_usage()
     return 0
 
 
