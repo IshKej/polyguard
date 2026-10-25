@@ -33,15 +33,35 @@ TQ_AT_SCAN = ROOT / "results/local/2026-10-11/translation_quality-at-scan.json"
 HERO_PAIR = ("en_instruction_override_0", "cy_instruction_override_0")
 EVIDENCE = "https://github.com/IshKej/polyguard/tree/main/results/local/2026-10-11"
 
-FONT = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
-        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-        '<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900'
-        '&display=swap" rel="stylesheet">')
-EXTRA_CSS = ("<style>.back{display:flex;align-items:center;justify-content:space-between;gap:1rem;"
-             "flex-wrap:wrap;margin:0 0 1.5rem}.back a{font-weight:600}"
-             ".status{display:inline-block;border:1.5px solid var(--ink);padding:.15rem .5rem;"
-             "font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}"
-             ".summary ul{margin:.6rem 0 0;padding-left:1.1rem}.summary li{margin:.35rem 0}</style>")
+# The site's own fonts, served from the site (web/public/fonts), like every other page.
+FONT = ('<link rel="preload" href="/fonts/mona-sans-latin.woff2" as="font" type="font/woff2" crossorigin>'
+        '<link rel="preload" href="/fonts/gloock-latin.woff2" as="font" type="font/woff2" crossorigin>'
+        '<link rel="stylesheet" href="/fonts/fonts.css">')
+# The site's look around the report: an ink bar with the wordmark and the way back,
+# the highlighter status tag, the site's display weight on the headings and an ink
+# footer. The report inside (report_html.build_report) is untouched, numbers and
+# labels included.
+EXTRA_CSS = ("<style>"
+             "body{padding-top:0}"
+             ".site{background:var(--ink);color:var(--bg);margin:0 -1.25rem 3rem;padding:1rem 1.25rem}"
+             ".site .in{max-width:880px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;"
+             "gap:1rem;flex-wrap:wrap}"
+             ".site a{color:var(--bg)}"
+             ".wm{display:inline-flex;flex-direction:column;line-height:.82;text-decoration:none}"
+             ".wm .s{font-family:Gloock,Georgia,serif;font-size:1.45rem;letter-spacing:-.01em}"
+             ".wm .h{font-weight:800;font-stretch:104%;text-transform:uppercase;font-size:1.45rem;letter-spacing:-.01em}"
+             ".site .right{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap}"
+             ".site .right a{font-weight:600;font-size:.9375rem;text-underline-offset:4px}"
+             ".status{display:inline-block;background:var(--hi);color:var(--ink);padding:.3rem .55rem;border-radius:3px;"
+             "font-size:.75rem;font-weight:800;font-stretch:104%;letter-spacing:.02em;text-transform:uppercase}"
+             "h1,h2{font-weight:760}"
+             ".mark{display:none}"
+             ".summary ul{margin:.6rem 0 0;padding-left:1.1rem}.summary li{margin:.35rem 0}"
+             "footer{background:var(--ink);color:var(--bg);border-top:0;margin:4.5rem -1.25rem -4rem;"
+             "padding:2rem 1.25rem 2.5rem}"
+             "footer a{color:var(--bg)}"
+             "@media print{.site,footer{background:none;color:inherit}.site a,footer a{color:inherit}}"
+             "</style>")
 
 
 def summary(scan: dict) -> str:
@@ -74,9 +94,11 @@ def build() -> str:
     body_anchor = "<body><main class=wrap>"
     assert page.count(head_anchor) == 1 and page.count(body_anchor) == 1
     page = page.replace(head_anchor, FONT + "<title>PolyGuard: a real local scan, 2026-10-11</title>" + EXTRA_CSS)
-    back = ('<nav class="back" aria-label="Site"><a href="/">Back to PolyGuard</a>'
-            '<span class="status">Real local diagnostic</span></nav>')
-    return page.replace(body_anchor, body_anchor + back + summary(scan))
+    back = ('<header class="site"><nav class="in" aria-label="Site">'
+            '<a class="wm" href="/" aria-label="PolyGuard home"><span class="s">Poly</span><span class="h">Guard</span></a>'
+            '<span class="right"><span class="status">Real local diagnostic</span>'
+            '<a href="/">Back to PolyGuard</a></span></nav></header>')
+    return page.replace("<body><main class=wrap>", "<body>" + back + "<main class=wrap>" + summary(scan))
 
 
 def reviewer_verdicts() -> dict[str, str]:
