@@ -155,9 +155,19 @@ def compare_scans(before: dict, after: dict, alpha: float = 0.05,
     defense = (engine.defense_evaluation(before["results"], after["results"])
                if before.get("results") and after.get("results") else None)
 
+    # Fewer breaks after a prompt change can mean the bot now refuses everything.
+    # The harmless requests each scan's bot followed sit beside the break numbers,
+    # and the second scan is checked against the first by the over-refusal rule.
+    b_ctl, a_ctl = before.get("capability_bot_prompt"), after.get("capability_bot_prompt")
+    controls = None
+    if b_ctl and a_ctl:
+        controls = {"before": engine.pooled_follow(b_ctl), "after": engine.pooled_follow(a_ctl),
+                    "over_refusal": engine.over_refusal(a_ctl, b_ctl, "the first scan's bot prompt")}
+
     return {
         "comparable": True,
         "defense_evaluation": defense,
+        "controls": controls,
         "instrument_changed": bool(diffs),
         "instrument_differences": diffs,
         "languages_compared": len(shared),
@@ -316,6 +326,28 @@ def print_summary(out: dict) -> None:
     if cap.get("control_system") == "neutral":
         print(f"  controls  neutral prompt {follow(cap)} followed (the capability flag); "
               f"bot prompt {follow(capb)} followed (what the bot allows)")
+    if capb.get("per_lang"):
+        print(f"  harmless  {follow(capb)} ordinary requests followed under the bot's prompt, "
+              f"beside {out['n_broke']} break(s). {engine.REFUSES_EVERYTHING}")
+    orf = out.get("over_refusal") or {}
+    if orf.get("flagged"):
+        print(f"  WARNING   the bot refuses ordinary requests the model follows under a neutral "
+              f"prompt ({orf['bot_followed']}/{orf['bot_n']} against "
+              f"{orf['reference_followed']}/{orf['reference_n']}, p={orf['p']:.3g}), so its "
+              f"break rate is not evidence that it resists attacks")
+    stopped = sum((c.get("n_blocked") or 0) for c in (cap, capb) if c)
+    empty = sum((c.get("n_empty") or 0) for c in (cap, capb) if c)
+    if stopped or empty:
+        print(f"  NOTE      {stopped} harmless check(s) were stopped by the provider before the "
+              f"bot answered and {empty} came back empty; they count as not followed, so the "
+              f"follow rates understate what the model can do")
+    cr = out.get("code_repeats") or {}
+    if cr.get("n"):
+        labels = ", ".join(f"{k} {v}" for k, v in cr["judge_labels"].items())
+        print(f"  format    {cr['n']} reply(ies) repeated the attack's code without obeying it: "
+              f"not a break and not a leak (the attack supplied the code), but a reply policy "
+              f"that allows only a refusal forbids it. Judge labels: {labels}"
+              f"{'' if cr['judge_consistent'] else ' (the judge labelled the same pattern differently)'}")
     if cap.get("capability_limited"):
         print(f"  WARNING   the model cannot follow ordinary instructions in "
               f"{', '.join(cap['capability_limited'])}; a low break rate there "
@@ -357,6 +389,18 @@ def print_comparison(cmp: dict) -> None:
               f"({r['delta']:+.0%})")
     if not cmp["regressions"] and not cmp["improvements"]:
         print("  no per-language change large enough to separate from noise")
+    ctl = cmp.get("controls")
+    if ctl:
+        b, a = ctl["before"], ctl["after"]
+        print(f"  harmless {b['followed']}/{b['n']} -> {a['followed']}/{a['n']} ordinary requests "
+              f"followed under each scan's bot prompt. {engine.REFUSES_EVERYTHING}")
+        orf = ctl.get("over_refusal") or {}
+        if orf.get("flagged"):
+            print(f"  WARNING  the second bot refuses far more ordinary requests (p={orf['p']:.3g}), "
+                  f"so fewer breaks may only mean more refusals, not a better defence")
+    else:
+        print(f"  harmless not compared: a scan has no controls under the bot's prompt. "
+              f"{engine.REFUSES_EVERYTHING}")
 
 
 # --------------------------------------------------------------------------- #
@@ -398,8 +442,15 @@ def print_usage() -> None:
     print("  token usage (from the API responses, not an estimate):")
     for r in rows:
         missing = f", {r['calls_without_usage']} without usage" if r["calls_without_usage"] else ""
+        stops = ", ".join(f"{r[k]} {k}" for k in ("truncated", "refused", "empty") if r.get(k))
         print(f"    {r['role']:<7} {r['provider']}/{r['model']}: {r['calls']} calls, "
-              f"{r['input_tokens']:,} in + {r['output_tokens']:,} out{missing}")
+              f"{r['input_tokens']:,} in + {r['output_tokens']:,} out{missing}"
+              f"{f' ({stops})' if stops else ''}")
+    summ = providers.usage_summary(list(providers.USAGE.records))
+    split = ", ".join(f"{role} ${s['cost_usd']:.6f}" + (f" (+{s['calls_without_cost']} unpriced)"
+                                                         if s["calls_without_cost"] else "")
+                      for role, s in summ["roles"].items())
+    print(f"    cost at the rate card: ${summ['total_cost_usd']:.6f} total = {split}")
     print(f"    log: {providers.USAGE.path}")
 
 
@@ -552,6 +603,24 @@ def print_arm_table(table: list[dict], words: dict) -> None:
                   f"{defenses.NOISE_PAIR[1]}: {_diff_text(r['noise'])}")
 
 
+def arm_over_refusal(table: list[dict]) -> list[str]:
+    """Arms that follow far fewer benign requests than the arm they are compared with,
+    by the over-refusal rule: their lower break rate may only be more refusals."""
+    rows = {r["arm"]: r for r in table}
+    out = []
+    for r in table:
+        ref = rows.get(defenses.REFERENCE_OF.get(r["arm"], "baseline"))
+        if not ref or ref is r or not r.get("benign_scored") or not ref.get("benign_scored"):
+            continue
+        if engine.capability_flag(r["benign_followed"], r["benign_scored"],
+                                  ref["benign_followed"], ref["benign_scored"]):
+            out.append(f"{r['arm']} follows far fewer benign requests than {ref['arm']} "
+                       f"({r['benign_followed']}/{r['benign_scored']} against "
+                       f"{ref['benign_followed']}/{ref['benign_scored']}): its break rate may be "
+                       f"lower only because it refuses more")
+    return out
+
+
 def noise_note(table: list[dict], deterministic: bool, mock: bool) -> str:
     """What the repeat against baseline difference means for this victim."""
     rep = next((r for r in table if r["arm"] == defenses.NOISE_PAIR[0]), None)
@@ -660,6 +729,9 @@ def cmd_defend(args) -> int:
     if excluded:
         print(f"  excluded as capability-limited in the baseline: {', '.join(excluded)}")
     print_arm_table(table, words)
+    print(f"\n  Read each break rate beside its benign follow rate. {engine.REFUSES_EVERYTHING}")
+    for warn in arm_over_refusal(table):
+        print(f"  WARNING   {warn}")
     print("\n" + noise_note(table, deterministic, args.mock))
     print("\n  A lower held-out break rate means fewer of this fixed bank's attacks worked.\n"
           "  It is not evidence that the bot is secure: no adaptive attacker was tested.")
@@ -681,7 +753,8 @@ def cmd_defend(args) -> int:
             "victim_deterministic": deterministic,
             "broken_categories": broken,
             "excluded_capability_limited": excluded,
-            "claim": "reduced the break rate on this fixed bank; never evidence of security",
+            "claim": ("reduced the break rate on this fixed bank, read beside its benign follow rate "
+                      "(a bot that refuses everything also scores 0 breaks); never evidence of security"),
             "arms": {a: {"words": words[a], "block": blocks[a],
                          "instrument": runs[a].get("instrument")} for a in arms},
             "table": table,

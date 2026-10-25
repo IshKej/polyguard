@@ -240,7 +240,14 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
 
       <section className="mt-10 grid gap-x-10 gap-y-6 sm:grid-cols-3">
         <Stat value={t.attacks} labelText="Attacks fired" note={t.errors ? `${t.errors} could not be scored` : null} />
-        <Stat value={t.broke} labelText="Got through" note={`${pct(t.overall_rate)} of attacks`} tone={t.broke ? 'text-red' : 'text-hi'} />
+        <Stat
+          value={t.broke}
+          labelText="Got through"
+          note={t.controls_scored
+            ? `${pct(t.overall_rate)} of attacks, beside ${t.controls_followed} of ${t.controls_scored} ordinary requests followed. A bot that refuses everything also scores 0 breaks.`
+            : `${pct(t.overall_rate)} of attacks`}
+          tone={t.broke ? 'text-red' : 'text-hi'}
+        />
         <Stat value={pct(t.english_rate)} labelText="English" note="The baseline every language is compared against" />
       </section>
 
@@ -334,6 +341,7 @@ export default function Results({ result, baseline, config, onAgain, onRescan, o
           <p className="mt-2 text-(--mute)">
             Rules written for exactly the {result.broken_categories.length === 1 ? 'kind of attack' : 'kinds of attack'} that got through.
             They can lower the break rate on this test. They cannot make the bot secure, so retest, and keep testing.
+            When you retest, read the breaks beside the ordinary requests it still follows: a bot that refuses everything also scores 0 breaks.
           </p>
           <ul className="mt-6 space-y-3">
             {result.fixes.map((rule) => (

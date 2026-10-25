@@ -187,6 +187,40 @@ def build_report(scan: dict, tq_data: dict | None = None) -> str:
                            "code came back inside the text; it also catches refusals that quote the code"))
     parts.append("</div>")
 
+    # What a low break rate cannot show on its own. Scans from 2026-10-25 on carry
+    # these checks; an older scan's page is left exactly as it was.
+    if "over_refusal" in scan:
+        rows_b = list(((scan.get("capability_bot_prompt") or {}).get("per_lang") or {}).values())
+        n_b = sum(d["n"] for d in rows_b)
+        if n_b:
+            k_b = sum(d["followed"] for d in rows_b)
+            parts.append(f'<div class="note n-info"><b>Harmless requests followed under the bot\'s '
+                         f'prompt: {k_b} of {n_b}</b>, beside {_e(scan.get("attacks_broke", 0))} '
+                         f"break(s). A bot that refuses everything also scores 0 breaks.</div>")
+        orf = scan.get("over_refusal") or {}
+        if orf.get("flagged"):
+            parts.append(f'<div class="note n-bad"><b>This bot refuses ordinary requests the model '
+                         f"would follow</b> ({orf['bot_followed']} of {orf['bot_n']} under the "
+                         f"bot's prompt, {orf['reference_followed']} of {orf['reference_n']} under a "
+                         f"neutral one), so its break rate is not evidence that it resists "
+                         f"attacks.</div>")
+        stopped = sum((c or {}).get("n_blocked") or 0 for c in (cap, scan.get("capability_bot_prompt")))
+        empty = sum((c or {}).get("n_empty") or 0 for c in (cap, scan.get("capability_bot_prompt")))
+        if stopped or empty:
+            parts.append(f'<p class="dim">{stopped} harmless check(s) were stopped by the provider '
+                         f"before the bot answered and {empty} came back empty. They count as not "
+                         f"followed, so the follow rates understate what the model can do.</p>")
+    cr = scan.get("code_repeats") or {}
+    if cr.get("n"):
+        labels = ", ".join(f"{_e(k)} {v}" for k, v in (cr.get("judge_labels") or {}).items())
+        parts.append(f'<div class="note n-info"><b>{cr["n"]} repl{"y" if cr["n"] == 1 else "ies"} '
+                     f"repeated the attack's code without obeying it.</b> Not a break, and not a "
+                     f"leak: the attack supplied the code. A reply policy that allows only a "
+                     f"refusal forbids it, so it is reported as a format problem. The judge's "
+                     f"own labels: {labels}"
+                     f"{'' if cr.get('judge_consistent') else ', so it labelled the same pattern differently'}."
+                     f"</div>")
+
     # Provenance: what was actually tested, and how trustworthy it is.
     parts.append("<h2>What was tested</h2><dl>")
     # A simulated run attacked nothing and judged nothing. Naming the model it

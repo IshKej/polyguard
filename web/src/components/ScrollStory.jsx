@@ -14,7 +14,7 @@ const STEPS = [
   ['Pick a chatbot', 'Paste the instructions it runs on, or start from an example.'],
   ['Attack it', 'Five kinds of prompt injection, in every language, several phrasings each.'],
   ['Watch the board', 'A judge model scores whether the bot held or gave in, in each language of the bank. How reliable it is in each language is not established yet.'],
-  ['Close the gap', 'See which languages broke, whether it is more than chance, and rules that make those attacks less likely to work.'],
+  ['Close the gap', 'See which languages broke, whether it is more than chance, and rules aimed at those attacks to retest, checking the bot still answers ordinary requests.'],
 ]
 
 // Three of the rules PolyGuard really writes (defenses.py), shortened only by

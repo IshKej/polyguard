@@ -40,6 +40,7 @@ from __future__ import annotations
 import functools
 import hashlib
 import json
+import math
 import os
 import random
 import socket
@@ -531,7 +532,13 @@ def local_chat(base_url: str, model: str, system_prompt: str, user_text: str,
         body["response_format"] = response_format
     resp = _local_request(base_url, "/v1/chat/completions", body)
     u = resp.get("usage") if isinstance(resp, dict) else None
-    USAGE.record(role, "local", model, (u or {}).get("prompt_tokens"), (u or {}).get("completion_tokens"))
+    try:
+        first = (resp.get("choices") or [{}])[0] or {}
+    except (AttributeError, IndexError, TypeError):
+        first = {}
+    USAGE.record(role, "local", model, (u or {}).get("prompt_tokens"), (u or {}).get("completion_tokens"),
+                 stop_reason=first.get("finish_reason"),
+                 empty=not ((first.get("message") or {}).get("content") or "").strip())
     try:
         choice = resp["choices"][0]
     except (KeyError, IndexError, TypeError):
@@ -648,14 +655,19 @@ class UsageLog:
 
     def totals(self) -> list[dict]:
         """Calls and tokens per role and model, in first-seen order. A call whose
-        response carried no usage counts as a call with unknown tokens."""
+        response carried no usage counts as a call with unknown tokens. Truncated,
+        refused and empty replies are counted apart (see usage_summary)."""
         out: dict[tuple, dict] = {}
         with self._lock:
             for r in self.records:
                 k = (r["role"], r["provider"], r["model"])
                 s = out.setdefault(k, {"role": k[0], "provider": k[1], "model": k[2], "calls": 0,
-                                       "input_tokens": 0, "output_tokens": 0, "calls_without_usage": 0})
+                                       "input_tokens": 0, "output_tokens": 0, "calls_without_usage": 0,
+                                       "truncated": 0, "refused": 0, "empty": 0})
                 s["calls"] += 1
+                s["truncated"] += r.get("stop_reason") in TRUNCATION_STOPS
+                s["refused"] += r.get("stop_reason") in REFUSAL_STOPS
+                s["empty"] += bool(r.get("empty"))
                 if r["input_tokens"] is None or r["output_tokens"] is None:
                     s["calls_without_usage"] += 1
                 else:
@@ -666,6 +678,72 @@ class UsageLog:
 
 USAGE = UsageLog()
 
+# Why a reply stopped, across providers. A truncation is the reply hitting its
+# token cap; a refusal is the provider's own stop. Neither is the same thing as an
+# empty reply, so all three are counted separately.
+TRUNCATION_STOPS = {"max_tokens", "length", "MAX_TOKENS"}
+REFUSAL_STOPS = {"refusal", "content_filter", "SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST"}
+UNLABELLED = "unlabelled"
+
+
+class CostSplitError(AssertionError):
+    """A per-role cost split that does not add up to the total it splits."""
+
+
+def call_cost(rec: dict) -> float | None:
+    """One call's cost in dollars: the record's own `cost_usd` when it has one (a log
+    that recorded what was billed), else its tokens at PRICES_PER_MTOK. A local model
+    costs nothing. None when the cost cannot be known (no usage, or an unpriced model)."""
+    billed = rec.get("cost_usd")
+    if billed is not None:
+        return float(billed)
+    if rec.get("provider") == "local":
+        return 0.0
+    price = PRICES_PER_MTOK.get(rec.get("model"))
+    if price is None or rec.get("input_tokens") is None or rec.get("output_tokens") is None:
+        return None
+    return (rec["input_tokens"] * price[0] + rec["output_tokens"] * price[1]) / 1_000_000
+
+
+def usage_summary(records: list[dict], tolerance: float = 1e-9) -> dict:
+    """
+    Cost, truncations, refusals and empty replies per role, from a usage log.
+
+    The total is summed straight from every call, independently of the split, and
+    the split must add up to it within `tolerance` or CostSplitError is raised: a
+    hand-made split once added up to more than the money spent. A call with no role
+    is reported as "unlabelled", never guessed into a role; the record's own label
+    (if any) is kept under `original_roles` so its provenance survives.
+    """
+    roles: dict[str, dict] = {}
+    # The total, in its own pass over every call, so a record the split drops or
+    # double counts makes the two disagree.
+    total = math.fsum(c for c in (call_cost(r) for r in records) if c is not None)
+    for r in records:
+        raw = r.get("role")
+        role = raw if raw and raw != "?" else UNLABELLED
+        s = roles.setdefault(role, {"calls": 0, "cost_usd": 0.0, "calls_without_cost": 0,
+                                    "truncated": 0, "refused": 0, "empty": 0, "original_roles": []})
+        if role == UNLABELLED and raw not in s["original_roles"]:
+            s["original_roles"].append(raw)
+        s["calls"] += 1
+        c = call_cost(r)
+        if c is None:
+            s["calls_without_cost"] += 1
+        else:
+            s["cost_usd"] += c
+        s["truncated"] += r.get("stop_reason") in TRUNCATION_STOPS
+        s["refused"] += r.get("stop_reason") in REFUSAL_STOPS
+        s["empty"] += bool(r.get("empty"))
+    split = math.fsum(s["cost_usd"] for s in roles.values())
+    if abs(split - total) > tolerance:
+        raise CostSplitError(f"the role split adds up to ${split:.6f} but the calls total ${total:.6f}")
+    for s in roles.values():
+        if not s["original_roles"]:
+            del s["original_roles"]
+    return {"roles": roles, "total_cost_usd": total, "split_sum_usd": split,
+            "calls": sum(s["calls"] for s in roles.values())}
+
 
 class _MeteredMessages:
     def __init__(self, inner, role: str):
@@ -674,10 +752,13 @@ class _MeteredMessages:
     def create(self, **kwargs):
         resp = self._inner.create(**kwargs)
         u = getattr(resp, "usage", None)
+        text = "".join(getattr(b, "text", "") or "" for b in (getattr(resp, "content", None) or [])
+                       if getattr(b, "type", None) == "text")
         USAGE.record(self._role, "anthropic", kwargs.get("model"),
                      getattr(u, "input_tokens", None), getattr(u, "output_tokens", None),
                      cache_creation_input_tokens=getattr(u, "cache_creation_input_tokens", None),
-                     cache_read_input_tokens=getattr(u, "cache_read_input_tokens", None))
+                     cache_read_input_tokens=getattr(u, "cache_read_input_tokens", None),
+                     stop_reason=getattr(resp, "stop_reason", None), empty=not text.strip())
         return resp
 
     def __getattr__(self, name):
@@ -740,9 +821,11 @@ class VictimClient:
             kwargs["temperature"] = 0
         resp = self._client.chat.completions.create(**kwargs)
         u = getattr(resp, "usage", None)
-        USAGE.record("victim", self.spec.provider, self.spec.model_id,
-                     getattr(u, "prompt_tokens", None), getattr(u, "completion_tokens", None))
         choice = resp.choices[0]
+        USAGE.record("victim", self.spec.provider, self.spec.model_id,
+                     getattr(u, "prompt_tokens", None), getattr(u, "completion_tokens", None),
+                     stop_reason=getattr(choice, "finish_reason", None),
+                     empty=not (getattr(getattr(choice, "message", None), "content", None) or "").strip())
         if getattr(choice, "finish_reason", None) == "content_filter":
             return BLOCKED_SENTINEL
         return choice.message.content or ""
@@ -770,14 +853,18 @@ class VictimClient:
         resp = self._client.models.generate_content(
             model=self.spec.model_id, contents=user_text, config=cfg)
         u = getattr(resp, "usage_metadata", None)
-        USAGE.record("victim", "google", self.spec.model_id,
-                     getattr(u, "prompt_token_count", None), getattr(u, "candidates_token_count", None))
         # A safety block yields no candidate text. That is the model declining,
         # which is a non-break, so it must not surface as a scan error.
         try:
             text = resp.text
         except Exception:
             text = None
+        cands = getattr(resp, "candidates", None) or []
+        finish = getattr(cands[0], "finish_reason", None) if cands else None
+        USAGE.record("victim", "google", self.spec.model_id,
+                     getattr(u, "prompt_token_count", None), getattr(u, "candidates_token_count", None),
+                     stop_reason=None if finish is None else str(getattr(finish, "name", finish)),
+                     empty=not (text or "").strip())
         return text if text else BLOCKED_SENTINEL
 
 

@@ -33,6 +33,22 @@ Arabic-script and right-to-left text takes no letter-spacing (2026-10-24), and t
 now serves a Noto face for every script in the bank, so no language depends on the
 visitor's system fonts; the /how chart labels are no longer clipped above or below.
 
+**2026-10-25, later: earlier internal summaries corrected, and what a low break rate cannot
+show.** Internal summaries of the paid runs (kept outside this repository) had errors that were
+corrected against the raw logs: a cost split that did not add up to its total, a miscounted set of
+truncated replies, and a reading of the harmless controls that the evidence did not support. Fixed
+in code: `scan`, `compare`, `defend` and the HTML report print the harmless requests the bot followed
+beside its breaks, with the line "A bot that refuses everything also scores 0 breaks."; an
+over-refusal check flags a bot that refuses ordinary requests the model would follow (the capability
+flag cannot see that, because it compares each language with English inside one run); controls that
+the provider's own refusal stop answered, and empty replies, are counted; replies that repeat the
+attack's code without obeying it are listed as a format problem, with the judge's own labels beside
+them and no verdict changed; usage logs record why each reply stopped, and a cost split must add up
+to its total or the run fails. Still unproven: there is no evidence of selective hardening, the
+harder tests were exploratory with no matched baseline, and there are no production chatbot results.
+A proposed v2 of the hardened prompt is on the retest branch, checked offline only and not run on any
+model.
+
 **2026-10-22: home page redesign (branch `batch-11-design`).** The hero answers with
 two flat speech bubbles: English says no, and the other language shows its real result
 from the 2026-10-11 local scan (Welsh: the reply that printed the code word), walking
@@ -123,7 +139,7 @@ primary test p under it (`engine.capability_sensitivity`).
 python generate_attack_bank.py   # rebuild corpus       -> 1095 attacks + 438 controls
 python validate_bank.py          # structural           -> all valid
 python linguistics.py            # script/encoding      -> no findings
-python test_engine.py            # unit, a few seconds -> 288/288
+python test_engine.py            # unit, a few seconds -> 309/309
 python verify_all.py             # full battery        -> 244/244
 python api/test_api.py           # web API             -> 95/95
 python web/e2e/test_site.py      # the site in a browser, with accessibility checks -> 94/94
@@ -135,7 +151,7 @@ python api/test_cancellation.py  # closing the tab stops a live scan -> 9/9
 python test_native_review.py     # every reviewed row pinned, every language digested -> 551/551
 python review_ingest.py --self-test   # returned review sheets are read correctly -> 7/7
 python test_pilot_intake.py      # intake for the stage 1 live pilot, no key needed -> 14/14
-python test_usage.py             # every API response's token counts reach the usage log -> 13/13
+python test_usage.py             # token counts, stop reasons and a cost split that adds up -> 24/24
 python test_sdk_gate.py          # no live call on an unchecked Anthropic SDK -> 20/20
 python expand_languages.py --check-stored   # gates on the 53 stored machine translations
 python web/e2e/smoke_live.py https://polyguard-ten.vercel.app --review   # read-only check of the live site
@@ -334,8 +350,8 @@ gate is on by default and native review is tracked rather than waved off.
 | Verification checks | 244 |
 | Native review regression checks | 551 (every reviewed row pinned, every language digested) |
 | Browser tests | 94 (with accessibility checks, the security policy, a 390 and a 320 pixel phone, and every bank script drawn by a served font) |
-| Paid-run safeguards | 13 usage logging checks, 20 SDK gate checks |
-| Unit tests | 288 (every public engine function) |
+| Paid-run safeguards | 24 usage logging checks, 20 SDK gate checks |
+| Unit tests | 309 (every public engine function) |
 | Audit findings | 87 across 21 rounds (all fixed; round 21 on 2026-10-15) |
 | Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French), and Japanese in part (11 of 12 corrections, 2026-10-24); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Icelandic 5 of 6, Serbian 16 of 18, Croatian 15 of 18, integrated 2026-10-21. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
 | Paid or production model study runs | 0 in this repository. Paid runs have been made outside it since the stage 1 pilot was approved on 2026-10-21 (confirmation runs 2026-10-24, a matched hardening retest 2026-10-25); results are recorded privately and none are published, pending Ishaan's choice. No production chatbot scanned |
