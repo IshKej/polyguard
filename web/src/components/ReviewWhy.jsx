@@ -202,7 +202,7 @@ export default function ReviewWhy({ onBack, onCoverage }) {
             </p>
           </div>
           <div className="mt-10 flex flex-wrap gap-3">
-            <button type="button" onClick={onCoverage} className="btn btn-solid whitespace-normal text-left">See review coverage for all 73 languages</button>
+            <button type="button" onClick={onCoverage} className="btn btn-solid whitespace-normal text-left">See review coverage for all 90 languages</button>
             <a href={`${REPO}/blob/main/docs/NATIVE_REVIEW.md`} target="_blank" rel="noopener" className="btn btn-line">The review log</a>
           </div>
         </div>

@@ -89,6 +89,8 @@ CATALOG = {
     "is": {"name": "Icelandic",   "native": "Íslenska",         "tier": "low", "joshi": 2},
     "ga": {"name": "Irish",       "native": "Gaeilge",          "tier": "low", "joshi": 2},
     "cy": {"name": "Welsh",       "native": "Cymraeg",          "tier": "low", "joshi": 1},
+    "mt": {"name": "Maltese",     "native": "Malti",            "tier": "low", "joshi": 2},
+    "lb": {"name": "Luxembourgish", "native": "Lëtzebuergesch", "tier": "low", "joshi": 1},
     "eu": {"name": "Basque",      "native": "Euskara",          "tier": "high", "joshi": 4},
     "ca": {"name": "Catalan",     "native": "Català",           "tier": "high", "joshi": 4},
     "gl": {"name": "Galician",    "native": "Galego",           "tier": "mid", "joshi": 3},
@@ -141,6 +143,7 @@ CATALOG = {
     "sn": {"name": "Shona",       "native": "chiShona",         "tier": "low", "joshi": 1},
     "rw": {"name": "Kinyarwanda", "native": "Kinyarwanda",      "tier": "low", "joshi": 1},
     "ny": {"name": "Chichewa",    "native": "Chichewa",         "tier": "low", "joshi": 1},
+    "mg": {"name": "Malagasy",    "native": "Malagasy",         "tier": "low", "joshi": 1},
 
     # ---- Other ----
     "af": {"name": "Afrikaans",   "native": "Afrikaans",        "tier": "mid", "joshi": 3},

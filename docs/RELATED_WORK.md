@@ -106,7 +106,7 @@ Four things, none of them "we found the gap":
 
 **1. Resource-tier breadth as the independent variable.** The studies above
 mostly work in one language pair, one language family, or up to eight languages.
-PolyGuard targets an **87-language catalog deliberately stratified into high,
+PolyGuard targets a **90-language catalog deliberately stratified into high,
 mid and low resource tiers**, so the resource level is a graded variable across a
 wide sample rather than a binary English-versus-other comparison.
 

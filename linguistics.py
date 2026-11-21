@@ -80,7 +80,7 @@ EXPECTED = {
     **{c: {"Latin"} for c in (
         "en es tl vi fr pt de it pl tr id nl sv no da fi cs sk hu ro hr sl lt lv "
         "et sq is ga cy eu ca gl az uz ms jv su ceb sw ha yo ig zu xh so sn rw ny "
-        "af ht").split()},
+        "af ht mt lb mg").split()},
     **{c: {"Cyrillic"} for c in "ru uk bg mk ky tg mn".split()},
     "sr": {"Cyrillic", "Latin"},
     "kk": {"Cyrillic", "Latin"},

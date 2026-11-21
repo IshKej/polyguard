@@ -23,8 +23,8 @@ this note restates it and says plainly what has been run and what has not.
 
 ## Attack categories
 
-Five categories, three phrasings each, in every language of the bank (73 today,
-1,095 attacks): instruction override, role-play jailbreak, system prompt
+Five categories, three phrasings each, in every language of the bank (90 today,
+1,350 attacks): instruction override, role-play jailbreak, system prompt
 extraction, an instruction hidden in Base64, and an instruction hidden inside
 content the bot is asked to process (indirect injection). The third phrasing of
 every category is held out: it never helps choose a defence and is the only

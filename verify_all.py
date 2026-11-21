@@ -193,8 +193,8 @@ ck("10. language metadata complete",
        for m in bank["languages"].values()))
 
 # 11. catalog integrity
-ck("11. catalog 87 / 20 authored, all authored in bank",
-   len(cat.CATALOG) == 87 and len(cat.AUTHORED) == 20
+ck("11. catalog 90 / 20 authored, all authored in bank",
+   len(cat.CATALOG) == 90 and len(cat.AUTHORED) == 20
    and all(c in bank["languages"] for c in cat.AUTHORED))
 
 # 12-13. refusal quoting canary is NOT a break, across scripts
@@ -541,7 +541,7 @@ if _prereg.exists():
        and "max_gap_permutation_test" in _pre)
     ck("59c. pre-registration states a null result is reportable",
        "null result is a publishable result" in _pre and "falsif" in _pre.lower())
-    # Not a hard failure: the bank is meant to grow to 87 languages. But a changed
+    # Not a hard failure: the bank is meant to grow to the full catalog. But a changed
     # bank must be a recorded, pre-planned change, so surface it loudly.
     if _bank_hash not in _pre:
         print(f"   NOTE: attack_bank.json hash {_bank_hash[:16]}... is not the one in "
@@ -1284,7 +1284,7 @@ ck("97g. the file's class counts match Joshi et al. Table 1",
 _dist = {t: sum(1 for m in cat.CATALOG.values() if m["tier"] == t)
          for t in ("high", "mid", "low")}
 ck("97e. all three tiers are large enough to compare",
-   min(_dist.values()) >= 20 and sum(_dist.values()) == 87)
+   min(_dist.values()) >= 20 and sum(_dist.values()) == 90)
 
 # 98. Documentation must not contradict the code. Eleven rounds of instrument
 # changes left stale numbers in three files and five test fixtures asserting a

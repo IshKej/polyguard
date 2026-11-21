@@ -323,9 +323,19 @@ def main() -> int:
             # --- the language count before, without and after /api/meta -------------------
             want = json.loads((ROOT / "web" / "src" / "bank-counts.json").read_text(encoding="utf-8"))["languages"]
 
+            # Two kinds of count share the home page. The hero sentence states the bank
+            # ("sends the same attacks in N languages") and must match bank-counts.json.
+            # Everything else that says "N languages" describes the 2026-10-11 local scan,
+            # which ran on the bank as it was then, and must match that scan instead.
+            scanned = len(json.loads((ROOT / "web" / "src" / "local-example.json").read_text(encoding="utf-8"))["languages"])
+
             def hero_counts(p2):
                 text = p2.locator("main").inner_text()
-                return re.findall(r"(\d+) languages", text)
+                bank_claims = re.findall(r"sends the same attacks in (\d+) languages", text)
+                rest = re.sub(r"sends the same attacks in \d+ languages", "", text)
+                if any(n != str(scanned) for n in re.findall(r"(\d+) languages", rest)):
+                    return []
+                return bank_claims
 
             for label in ("delayed", "failed"):
                 c2 = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
@@ -469,7 +479,7 @@ def main() -> int:
                 shown = Counter(cells.nth(i).get_attribute("data-status") for i in range(cells.count()))
                 wanted = Counter(l["status"] for l in rd["languages"])
                 check(f"{width}px /review/coverage maps every language with its status from the data ({cells.count()})",
-                      cells.count() == len(rd["languages"]) == 73 and shown == wanted)
+                      cells.count() == len(rd["languages"]) == 90 and shown == wanted)
                 credits = {x.strip() for x in r5.locator("[data-credit]:visible").all_inner_texts()}
                 html = r5.content()
                 check(f"{width}px coverage credits: the withheld string or a credit the reviewer accepted, and no email address",

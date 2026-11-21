@@ -4,7 +4,7 @@ Regression tests for the native speaker corrections, Spanish (2026-10-01), Arabi
 integrated 2026-10-14) and Lithuanian (11 of 15 returned corrections, integrated
 2026-10-14, 4 held) and Bulgarian (14 of 16 corrections, integrated 2026-10-14, 2
 held), and for every unflagged or held row in those six languages. A
-digest of every language's text guards all 73 languages against unintended edits.
+digest of every language's text guards all 90 languages against unintended edits.
 
 Each row is pinned by the SHA-256 of its template and of its rendered bank text.
 The 27 corrected rows were pinned from the corrections themselves (the review
@@ -606,13 +606,14 @@ check("bg: the two quoted-message attacks keep their frame, one blank line, then
       all(attacks[f"bg_indirect_injection_{i}"]["text"].count("\n\n\"") == 1 for i in (1, 2)))
 check("bg: FreeBot and NoLimit keep their names", "FreeBot" in attacks["bg_role_play_jailbreak_0"]["text"]
       and "NoLimit" in attacks["bg_role_play_jailbreak_1"]["text"])
-check("the bank's inventory is unchanged: 73 languages, 1095 attacks, 438 controls",
-      len(BANK["languages"]) == 73 and len(BANK["attacks"]) == 1095 and len(BANK["controls"]) == 438)
+check("the bank's inventory is unchanged: 90 languages, 1350 attacks, 540 controls",
+      len(BANK["languages"]) == 90 and len(BANK["attacks"]) == 1350 and len(BANK["controls"]) == 540)
 
 # Every language's text, as a digest of its sorted (id, text) pairs: an edit to any
 # language nobody meant to touch fails here. Updated only with a deviation entry.
 LANG_DIGESTS = {
     "af": "5475563e8be775e89d23720d374ab0f81999f727a657cf2b5188729875617827",
+    "am": "46cc19707a6c8c0bd2c5f19f1b9a671ef53123c7e74fea81107b38fec4b81ea7",
     "ar": "146cfbdbc6b02b3b00e97291eea53a286f8ce3541678ba4efa3b0ea4400f9008",
     "az": "44f9e37a8b08bbd03272f60df8bc60fe249200742fc5aed80c394f4c692cafe7",
     "bg": "812c9cc9b286f404a65adce1c70ebf36a7c34669bffbd0984ff5108efcd2bd6a",
@@ -640,40 +641,56 @@ LANG_DIGESTS = {
     "hr": "ff0d43515e198c39c4bb900272f579acc938fe86fdb6a6f9b64ee69957a49b69",
     "ht": "f30433011ad80e235f76ccd9c0c29011ac781362a39ef3a60d1de52edfb0f20c",
     "hu": "fbd58f3476b9ea50f52266a907c9b911e735fcab16839486c7e2961194660cbc",
+    "hy": "9f9af484c30f01ebf53fe1dbe0aeef4eaa4a221342e449791021f1ab02ed8710",
     "id": "e99cc67e6794901c6c7f1f496ec8dc7b3e799ec9af397fbe2e19510271b930d4",
     "ig": "396c28e0a20ae99c146357ca3d99ece8f0750a508c190a5f83d3b3a5623581e3",
     "is": "bd6b39363cddb358916acd50ca8e27267c4566c412b1581e2bca895df578bc1a",
     "it": "30b0f2cd10ce01fd9bc306ee2e4012f8ee4ab846cdcaf974d66b834ac2ef7556",
     "ja": "5f0ca2fff7a06f8c46b5f979d14f97fde0fcb61d905d5035404d00d796428823",
+    "jv": "a99cfe600f08d98895bd3abb9be1aed3b49b65f2f42ed4470ab66ad4b7f28860",
     "ka": "8e924928c976c10e27c7401db8ac15097f700c3714b296de110118fd6dbef482",
     "kk": "3422f8dc32c26a637c03e48a138bae5d2b0178c73e4671561b70c529b81a83e0",
+    "km": "66312c64568e965fdee82b44b01b4beb7d5669a155223a67a364d91fd245938b",
     "kn": "5e92e36f136178c5e1ebcb69a91d19ce8036aaaad07e5b4a26a0fc94848cb8fd",
     "ko": "35042bbfa8acebe3c20378a19a046dee6ec1d22db82bcccba59ace33f9c0a402",
     "ky": "5cd606c4c621da5fbab314f860facc01f9ccb860e7db3e06fac83b3f517ba134",
+    "lb": "736aedd56bc3e2c3ded8585bc8223f93d26a5a635ddde9354fc4fb106fa76e39",
     "lo": "28dcf0f2deb6c3bd66f04f1247e9ec02d3631174eac13163a18c09c23fbf028e",
     "lt": "a7f38f6431641bae7d0959e4cbc21977665b7ad8675dbfbdf8480ae474a4b5e2",
     "lv": "d869ce3ece8c1fe1da0ac021fee2686aafb9ce7cd9c6df9e287369d28748c0ed",
+    "mg": "8b1613ce522f3d65efde3febe3ddf0379f6cdafc04d18b451556ec10156f33c1",
     "mk": "c455edf0aa3cf1bbe8fd8f13ff39af4678470483fd90c74886dd0207c88d8009",
     "ml": "95308c44cf7b72d02e8c75bdc96fb51f73fd0e2589dceb2faa86f8e3b5da06ce",
+    "mn": "86a27d1fe6f70b9ffa23b24f0f464b1b96badfb8c951165f10f9e7241f8055ad",
     "mr": "6a6ccb3d9800e98477f679124a8f7f42b5cb7e599ad827b227cbc1313c370e12",
     "ms": "0184ebc8c5bbbe85a30d721b5709b01411d1f99ba07a5a762d8e7b016543b9d3",
+    "mt": "008cc9cbfe890413b1262fbc411502f6ace2b7362ed7548028dc8de08b3c1923",
+    "my": "6c59a2507c84fabd7ab0455633217b3a3d00db9daee93861c8f8b80dac8264f6",
+    "ne": "f41004d932fb52c42c295088652625eb7430543418660f2f02c193cada7e969c",
     "nl": "92f669ca11c1353be366df98520ff757147e88996207806bc20d7629e317576a",
     "no": "45c119532e27eb486977936431e6b5a2d856c6355c59d6a4cc40b4d049524c57",
     "ny": "97349ff40bce85382f538c2610d1719f1b184ad1ddbfe17b861a2f382559cba1",
     "or": "fb3f0c79680a24477685810297d51d16705312d98a7743dd3e6185ad5f350d03",
     "pa": "10bf1f3f60e095e5c2057418efefc8f0c8011921e20a0efb1610fb74fac170a3",
     "pl": "6074282a39bcf5ee4b5a9c08f7dbf112e903de93dbdbee10b860f8d8a387f054",
+    "ps": "0e72659ef8b8a9a593e06999a3baab3475932efbdd94f011897900efd60f66cc",
     "pt": "e369d9d3be47ace30211299b7c610842d110fc4c3b465e90067aa85a17f8ebf2",
     "ro": "eed1e3d0cc6f79f174539c9fb153fe2ec3d6e01edb61b54cf1fc2b35ca09977f",
     "ru": "40335b421b9279e0602ffc644b88af9f390cbe52877eb858c80eb9ef20e881cd",
+    "rw": "114568bdacc8b2f8dbc18533df63e1514f45c20d2bb634d58bd0ac6c8836cb52",
+    "si": "582eb0187c05901d0be69c1149b036de44bb7199474b6cc5701b0478482cd420",
     "sk": "339115dc0ab4dead92c70301b198ed77c09ee2d8d0df337ae7e343e6ab626007",
     "sl": "e66c48dc99cc587113724255f7ae200507edd8e3ce6d0e8726be79b298a01d79",
     "sn": "041e3b349111157455fe517104f25739986ea307844940bc6f5d679724286818",
+    "so": "98c80b693b019e517aab3020cfab222b48ccbf9d112392f7a883608e9dc9990b",
     "sq": "d18b18580f7f4a52f86d55fc33ebc7b7bf421a53bc09e54c8078ad5e2b9342c1",
     "sr": "e6bf0fd450b14021c118557caf1699aab13886fadf164dea717cad6de76de78c",
+    "su": "c79b896c0cbc8edb6c5dc00d8e79b57ae0f12869ea7d384e09cffa932562434a",
     "sv": "34232357c6353b6ed4fac2ef2cd3eb21e187f4bbe7b92d9c05cd7a2e9bfe52ad",
+    "sw": "ea26c3fdbed3c9067a2b900da11ba51c5910d0c11cb66df1e0e976a0ebe82770",
     "ta": "2cc2f2111809cec03f78334830ab3eaad4c818e8bde20d1fe27894bd11147a24",
     "te": "3c7ced73b3a621bcc3127e4c6334646ff6002d3a2c4738810a7fb57848503441",
+    "tg": "3e3776af06368d43192e0b88852f9b8475e633a371bad6c1ee6bf196b4ec367f",
     "th": "589951486845111742d12520edbfe1576fff4945befda9a6369f0267795a37ae",
     "tl": "1aff845d06d6f35f6dbe731b45e05a3dafffd51f2520fc716fd3ef18cd3f8e51",
     "tr": "cf25960ea9c366f291cf2005b743ec96ebd272851228abf8eb104f71ffe7e518",

@@ -73,6 +73,61 @@
   src: url(/fonts/noto-sans-lao-lao.woff2) format('woff2');
   unicode-range: U+0E81-0EDF, U+200C-200D, U+25CC;
 }
+/* Noto Sans Armenian, armenian (SIL OFL 1.1): Armenian text, added with the language on 2026-11-20, loaded only when
+   a page shows characters in this range. */
+@font-face {
+  font-family: 'Noto Sans Armenian';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/fonts/noto-sans-armenian-armenian.woff2) format('woff2');
+  unicode-range: U+0308, U+0530-058F, U+2010, U+2024, U+25CC, U+FB13-FB17;
+}
+/* Noto Sans Sinhala, sinhala (SIL OFL 1.1): Sinhala text, added with the language on 2026-11-20, loaded only when
+   a page shows characters in this range. */
+@font-face {
+  font-family: 'Noto Sans Sinhala';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/fonts/noto-sans-sinhala-sinhala.woff2) format('woff2');
+  unicode-range: U+0964-0965, U+0D81-0DF4, U+1CF2, U+200C-200D, U+25CC, U+111E1-111F4;
+}
+/* Noto Sans Khmer, khmer (SIL OFL 1.1): Khmer text, added with the language on 2026-11-20, loaded only when
+   a page shows characters in this range. */
+@font-face {
+  font-family: 'Noto Sans Khmer';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/fonts/noto-sans-khmer-khmer.woff2) format('woff2');
+  unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
+}
+/* Noto Sans Myanmar, myanmar (SIL OFL 1.1): Burmese text, added with the language on 2026-11-20, loaded only when
+   a page shows characters in this range. */
+@font-face {
+  font-family: 'Noto Sans Myanmar';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/fonts/noto-sans-myanmar-myanmar.woff2) format('woff2');
+  unicode-range: U+1000-109F, U+200C-200D, U+25CC, U+A92E, U+A9E0-A9FE, U+AA60-AA7F, U+116D0-116E3;
+}
+/* Noto Sans Ethiopic, ethiopic (SIL OFL 1.1): Amharic text, added with the language on 2026-11-20, loaded only when
+   a page shows characters in this range. */
+@font-face {
+  font-family: 'Noto Sans Ethiopic';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/fonts/noto-sans-ethiopic-ethiopic.woff2) format('woff2');
+  unicode-range: U+030E, U+1200-1399, U+2D80-2DDE, U+AB01-AB2E, U+1E7E0-1E7E6, U+1E7E8-1E7EB, U+1E7ED-1E7EE, U+1E7F0-1E7FE;
+}
 /* Noto Sans Arabic, arabic (SIL OFL 1.1): Arabic, Persian and Urdu text, loaded only when
    a page shows Arabic-script characters, so shaping does not depend on the visitor's device. */
 @font-face {

@@ -709,7 +709,7 @@ def max_gap_permutation_test(results: list[dict], ref_lang: str = "en",
 # as exploratory and secondary. Mann-Whitney on tiers stays the primary test and
 # the headline; nothing here can replace it.
 RESOURCE_PATH = Path(__file__).with_name("data") / "resource_measures.csv"
-RESOURCE_SHA256 = "63d1bb50e67745137533ee35601bdc13847c85cea220f435ae650abadcbcd456"
+RESOURCE_SHA256 = "2db6e946d9b3b3b536e638a843803078f219f06b6512118c630f50d8948f7852"
 RESOURCE_MEASURE = "log10 Common Crawl page share (CLD2 language id)"
 TREND_ITER = 10000
 TREND_SEED = 20261006

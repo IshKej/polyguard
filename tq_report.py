@@ -81,6 +81,7 @@ GLOTLID_LABELS: dict[str, tuple[str, ...]] = {
     "ig": ("ibo_Latn",), "zu": ("zul_Latn",), "xh": ("xho_Latn",),
     "so": ("som_Latn",), "sn": ("sna_Latn",), "rw": ("kin_Latn",),
     "ny": ("nya_Latn",), "af": ("afr_Latn",), "ht": ("hat_Latn",),
+    "mt": ("mlt_Latn",), "lb": ("ltz_Latn",), "mg": ("plt_Latn",),
 }
 
 # Close relatives that a language identifier confuses on short text, declared before

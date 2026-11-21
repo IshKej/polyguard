@@ -303,6 +303,20 @@
    "note": null
   },
   {
+   "code": "am",
+   "name": "Amharic",
+   "native": "አማርኛ",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
    "code": "az",
    "name": "Azerbaijani",
    "native": "Azərbaycan",
@@ -569,6 +583,20 @@
    "note": null
   },
   {
+   "code": "hy",
+   "name": "Armenian",
+   "native": "Հայերեն",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
    "code": "ig",
    "name": "Igbo",
    "native": "Igbo",
@@ -594,6 +622,20 @@
    "integrated": "2026-10-21",
    "rows_changed": 5,
    "rows_held": 1,
+   "note": null
+  },
+  {
+   "code": "jv",
+   "name": "Javanese",
+   "native": "Basa Jawa",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
    "note": null
   },
   {
@@ -625,6 +667,20 @@
    "note": null
   },
   {
+   "code": "km",
+   "name": "Khmer",
+   "native": "ខ្មែរ",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
    "code": "kn",
    "name": "Kannada",
    "native": "ಕನ್ನಡ",
@@ -642,6 +698,20 @@
    "code": "ky",
    "name": "Kyrgyz",
    "native": "Кыргыз",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "lb",
+   "name": "Luxembourgish",
+   "native": "Lëtzebuergesch",
    "tier": "low",
    "provenance": "machine",
    "status": "none",
@@ -695,6 +765,20 @@
    "note": null
   },
   {
+   "code": "mg",
+   "name": "Malagasy",
+   "native": "Malagasy",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
    "code": "mk",
    "name": "Macedonian",
    "native": "Македонски",
@@ -712,6 +796,20 @@
    "code": "ml",
    "name": "Malayalam",
    "native": "മലയാളം",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "mn",
+   "name": "Mongolian",
+   "native": "Монгол",
    "tier": "low",
    "provenance": "machine",
    "status": "none",
@@ -741,6 +839,48 @@
    "name": "Malay",
    "native": "Bahasa Melayu",
    "tier": "mid",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "mt",
+   "name": "Maltese",
+   "native": "Malti",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "my",
+   "name": "Burmese",
+   "native": "မြန်မာ",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "ne",
+   "name": "Nepali",
+   "native": "नेपाली",
+   "tier": "low",
    "provenance": "machine",
    "status": "none",
    "credit": null,
@@ -821,10 +961,52 @@
    "note": null
   },
   {
+   "code": "ps",
+   "name": "Pashto",
+   "native": "پښتو",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
    "code": "ro",
    "name": "Romanian",
    "native": "Română",
    "tier": "mid",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "rw",
+   "name": "Kinyarwanda",
+   "native": "Kinyarwanda",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "si",
+   "name": "Sinhala",
+   "native": "සිංහල",
+   "tier": "low",
    "provenance": "machine",
    "status": "none",
    "credit": null,
@@ -877,6 +1059,20 @@
    "note": null
   },
   {
+   "code": "so",
+   "name": "Somali",
+   "native": "Soomaali",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
    "code": "sq",
    "name": "Albanian",
    "native": "Shqip",
@@ -905,10 +1101,38 @@
    "note": "The translate into formal English task is kept the same in every language; that row is held."
   },
   {
+   "code": "su",
+   "name": "Sundanese",
+   "native": "Basa Sunda",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
    "code": "sv",
    "name": "Swedish",
    "native": "Svenska",
    "tier": "high",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "sw",
+   "name": "Swahili",
+   "native": "Kiswahili",
+   "tier": "low",
    "provenance": "machine",
    "status": "none",
    "credit": null,
@@ -936,6 +1160,20 @@
    "code": "te",
    "name": "Telugu",
    "native": "తెలుగు",
+   "tier": "low",
+   "provenance": "machine",
+   "status": "none",
+   "credit": null,
+   "returned": null,
+   "integrated": null,
+   "rows_changed": null,
+   "rows_held": null,
+   "note": null
+  },
+  {
+   "code": "tg",
+   "name": "Tajik",
+   "native": "Тоҷикӣ",
    "tier": "low",
    "provenance": "machine",
    "status": "none",
@@ -2107,16 +2345,16 @@
   }
  ],
  "scores_first_built": "2026-10-06",
- "scores_rebuilt": "2026-10-24",
+ "scores_rebuilt": "2026-11-20",
  "machine": {
-  "n": 53,
+  "n": 70,
   "lowest_mean": 0.7351,
-  "median_mean": 0.8861,
+  "median_mean": 0.8853,
   "flagged": [
    "Yoruba"
   ],
-  "flag_threshold": 0.5487
+  "flag_threshold": 0.5453
  },
  "before_bank": "4e2ba320c932823e046d2113af44ee2ca5e4042cf3d75f1ea8abd15117cdf1f8",
- "after_bank": "55095168a133dc7c42b12c72f93e51f94dd9bbefcfe92cd749b95339ccb21b9e"
+ "after_bank": "8767444815878aef08623a41aa678e3784256e58a78f7ef159bb8c73135e8b51"
 }

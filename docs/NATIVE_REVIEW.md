@@ -84,7 +84,7 @@ may be the tool, and a high score is not evidence that the translation is good. 
 language may be called verified, validated or human-checked because of these scores.
 
 **What they found.** All 53 machine translations cleared the gross failure bar except
-one. Yoruba is flagged: two of its controls are no closer to their English original
+one. (The 17 added on 2026-11-20 were scored with the same models and none is flagged; that is the same automated proxy, not a review.) Yoruba is flagged: two of its controls are no closer to their English original
 than an unrelated English sentence is, and its mean similarity (0.74) is the lowest in
 the bank. Removing the Yoruba tone marks raises those two strings well above the
 threshold, so the flag cannot say whether the translation or the tool is at fault.
@@ -158,7 +158,7 @@ not the same as where it is easiest to find a speaker.
 
 ## Review log
 
-The site shows this log as a map of all 73 languages at `/review/coverage`, and what
+The site shows this log as a map of all 90 languages at `/review/coverage`, and what
 review did to the automated score at `/review`. Both are generated from
 `native_review.json` and the score history by `review_scores.py`.
 

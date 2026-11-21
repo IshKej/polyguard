@@ -1,10 +1,10 @@
 {
  "schema": 1,
  "what": "Automated translation quality proxy per bank language. Two offline signals that catch gross failures (wrong language, meaning drift). Not a validation: neither tool measures fluency, register, or whether a native speaker would read an attack as an instruction.",
- "generated_on": "2026-10-24",
- "bank_sha256": "55095168a133dc7c42b12c72f93e51f94dd9bbefcfe92cd749b95339ccb21b9e",
- "n_languages": 73,
- "n_machine": 53,
+ "generated_on": "2026-11-20",
+ "bank_sha256": "8767444815878aef08623a41aa678e3784256e58a78f7ef159bb8c73135e8b51",
+ "n_languages": 90,
+ "n_machine": 70,
  "preparation": "linguistics.strip_fixed_tokens with the canary and control token (removes both, Base64 blobs and SYSTEM OVERRIDE), then whitespace collapsed. Applied to translations and English seeds.",
  "models": {
   "glotlid": {
@@ -59,13 +59,13 @@
   "declared_before_scoring": "docs/progress/translation-quality.md"
  },
  "threshold": {
-  "sim_T": 0.5487,
-  "wrong_pairs_n": 25920,
+  "sim_T": 0.5453,
+  "wrong_pairs_n": 32040,
   "wrong_pairs_max": 0.6484,
-  "wrong_pairs_p50": 0.313,
-  "correct_pairs_n": 1512,
-  "correct_pairs_p01": 0.6806,
-  "correct_pairs_p50": 0.8963
+  "wrong_pairs_p50": 0.3112,
+  "correct_pairs_n": 1869,
+  "correct_pairs_p01": 0.6828,
+  "correct_pairs_p50": 0.8932
  },
  "lid_labels": {
   "en": [
@@ -131,6 +131,9 @@
   "af": [
    "afr_Latn"
   ],
+  "am": [
+   "amh_Ethi"
+  ],
   "az": [
    "azj_Latn"
   ],
@@ -188,11 +191,17 @@
   "hu": [
    "hun_Latn"
   ],
+  "hy": [
+   "hye_Armn"
+  ],
   "ig": [
    "ibo_Latn"
   ],
   "is": [
    "isl_Latn"
+  ],
+  "jv": [
+   "jav_Latn"
   ],
   "ka": [
    "kat_Geor"
@@ -200,11 +209,17 @@
   "kk": [
    "kaz_Cyrl"
   ],
+  "km": [
+   "khm_Khmr"
+  ],
   "kn": [
    "kan_Knda"
   ],
   "ky": [
    "kir_Cyrl"
+  ],
+  "lb": [
+   "ltz_Latn"
   ],
   "lo": [
    "lao_Laoo"
@@ -215,17 +230,32 @@
   "lv": [
    "lvs_Latn"
   ],
+  "mg": [
+   "plt_Latn"
+  ],
   "mk": [
    "mkd_Cyrl"
   ],
   "ml": [
    "mal_Mlym"
   ],
+  "mn": [
+   "khk_Cyrl"
+  ],
   "mr": [
    "mar_Deva"
   ],
   "ms": [
    "zsm_Latn"
+  ],
+  "mt": [
+   "mlt_Latn"
+  ],
+  "my": [
+   "mya_Mymr"
+  ],
+  "ne": [
+   "npi_Deva"
   ],
   "nl": [
    "nld_Latn"
@@ -243,8 +273,17 @@
   "pa": [
    "pan_Guru"
   ],
+  "ps": [
+   "pbt_Arab"
+  ],
   "ro": [
    "ron_Latn"
+  ],
+  "rw": [
+   "kin_Latn"
+  ],
+  "si": [
+   "sin_Sinh"
   ],
   "sk": [
    "slk_Latn"
@@ -255,6 +294,9 @@
   "sn": [
    "sna_Latn"
   ],
+  "so": [
+   "som_Latn"
+  ],
   "sq": [
    "als_Latn"
   ],
@@ -262,14 +304,23 @@
    "srp_Cyrl",
    "srp_Latn"
   ],
+  "su": [
+   "sun_Latn"
+  ],
   "sv": [
    "swe_Latn"
+  ],
+  "sw": [
+   "swh_Latn"
   ],
   "ta": [
    "tam_Taml"
   ],
   "te": [
    "tel_Telu"
+  ],
+  "tg": [
+   "tgk_Cyrl"
   ],
   "th": [
    "tha_Thai"
@@ -868,6 +919,30 @@
    "flags": [],
    "notes": []
   },
+  "am": {
+   "name": "Amharic",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "6495cf99c335f96c165015a751a023f2f05f666b066b0ec4a320a4e35a8805a9",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9973,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8817,
+    "min": 0.8215,
+    "mean_wrong": 0.2978,
+    "margin": 0.5839,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
   "az": {
    "name": "Azerbaijani",
    "provenance": "machine",
@@ -1341,6 +1416,30 @@
    "flags": [],
    "notes": []
   },
+  "hy": {
+   "name": "Armenian",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "14fad40575622afef80580e44c44449a0b34f2183e359937a728fe1ee68659d4",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.861,
+    "min": 0.7889,
+    "mean_wrong": 0.3021,
+    "margin": 0.5589,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
   "ig": {
    "name": "Igbo",
    "provenance": "machine",
@@ -1382,6 +1481,30 @@
     "min": 0.7468,
     "mean_wrong": 0.3289,
     "margin": 0.5326,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "jv": {
+   "name": "Javanese",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "cb328595643526b8ca705eb8ac705219d469c13cbfffaa923b73b66afa292cbb",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9941,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8963,
+    "min": 0.815,
+    "mean_wrong": 0.3061,
+    "margin": 0.5903,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []
@@ -1437,6 +1560,30 @@
    "flags": [],
    "notes": []
   },
+  "km": {
+   "name": "Khmer",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "d0ef9fe4dc62a839bdb6310b11494b62a4bc0f30a1a4d01327f9a1cd083967ab",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8842,
+    "min": 0.7754,
+    "mean_wrong": 0.3086,
+    "margin": 0.5756,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
   "kn": {
    "name": "Kannada",
    "provenance": "machine",
@@ -1478,6 +1625,36 @@
     "min": 0.7851,
     "mean_wrong": 0.3054,
     "margin": 0.5659,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "lb": {
+   "name": "Luxembourgish",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "0da48c8b27d6559b8a9338fa3389bfa2e975f42d3083689541f6d1110de0724f",
+   "lid": {
+    "share": 0.9524,
+    "share_close": 0.9524,
+    "mean_p_top": 0.9765,
+    "misses": [
+     {
+      "id": "lb_control_5",
+      "label": "swe_Latn",
+      "p": 0.529
+     }
+    ]
+   },
+   "sim": {
+    "mean": 0.8751,
+    "min": 0.7914,
+    "mean_wrong": 0.3005,
+    "margin": 0.5746,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []
@@ -1557,6 +1734,30 @@
    "flags": [],
    "notes": []
   },
+  "mg": {
+   "name": "Malagasy",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "142e99221341cf4588a788cba969c375e7b88b48d9e6f0c17acca8a224b767b1",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9926,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8135,
+    "min": 0.6702,
+    "mean_wrong": 0.2799,
+    "margin": 0.5336,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
   "mk": {
    "name": "Macedonian",
    "provenance": "machine",
@@ -1598,6 +1799,30 @@
     "min": 0.8097,
     "mean_wrong": 0.3056,
     "margin": 0.5799,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "mn": {
+   "name": "Mongolian",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "8c41dd0ab5724c6f09052b7ad1c10bb13b4914322c2a9dbca8a7502747f25838",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.999,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8754,
+    "min": 0.7241,
+    "mean_wrong": 0.2961,
+    "margin": 0.5793,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []
@@ -1662,6 +1887,78 @@
     "min": 0.8038,
     "mean_wrong": 0.3162,
     "margin": 0.5971,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "mt": {
+   "name": "Maltese",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "75ca926e4a7c30591cda64a2245e042631a2e49ea88f555b4d3eccb8cd3f80ac",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8871,
+    "min": 0.8075,
+    "mean_wrong": 0.3288,
+    "margin": 0.5583,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "my": {
+   "name": "Burmese",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "004d7101451f2894afc1f8d940df71a5a0519e9d5e8b48377d646ef479db4822",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.993,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8881,
+    "min": 0.749,
+    "mean_wrong": 0.3104,
+    "margin": 0.5777,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "ne": {
+   "name": "Nepali",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "404872d0efeb1696920367644a41c5b61b74eda882f15499a7ed6d3178108e55",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9916,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8951,
+    "min": 0.8305,
+    "mean_wrong": 0.3126,
+    "margin": 0.5825,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []
@@ -1789,6 +2086,30 @@
    "flags": [],
    "notes": []
   },
+  "ps": {
+   "name": "Pashto",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "696832674d4cb23559b270509e01ac3c6f4fbb5dee8fc0a1eb8c8f98a89f20b0",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8508,
+    "min": 0.7022,
+    "mean_wrong": 0.2943,
+    "margin": 0.5565,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
   "ro": {
    "name": "Romanian",
    "provenance": "machine",
@@ -1806,6 +2127,54 @@
     "min": 0.8034,
     "mean_wrong": 0.3175,
     "margin": 0.5678,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "rw": {
+   "name": "Kinyarwanda",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "be4ea9408f8cea303e7ece6846ea154c474fbce2528cde7c332066b68373e31a",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.8957,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8409,
+    "min": 0.7706,
+    "mean_wrong": 0.2957,
+    "margin": 0.5452,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "si": {
+   "name": "Sinhala",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "8f5314b304369ebb0da845c1cf18577092dad4ed3b3a2aeb877ba88fffefb79c",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8919,
+    "min": 0.7973,
+    "mean_wrong": 0.3105,
+    "margin": 0.5813,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []
@@ -1885,6 +2254,30 @@
    "flags": [],
    "notes": []
   },
+  "so": {
+   "name": "Somali",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "b65142384bef1c6df04b67c6cae9e83918ed4c95efdeee70c6fe473ef1d33708",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 1.0,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8535,
+    "min": 0.7713,
+    "mean_wrong": 0.3079,
+    "margin": 0.5455,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
   "sq": {
    "name": "Albanian",
    "provenance": "machine",
@@ -1939,6 +2332,30 @@
    "flags": [],
    "notes": []
   },
+  "su": {
+   "name": "Sundanese",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "9322b129ae3a28be1bad8a7414dec03d445b6e8239f3582a4d05400a706132bd",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9983,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8949,
+    "min": 0.8168,
+    "mean_wrong": 0.3165,
+    "margin": 0.5784,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
   "sv": {
    "name": "Swedish",
    "provenance": "machine",
@@ -1956,6 +2373,30 @@
     "min": 0.8114,
     "mean_wrong": 0.3304,
     "margin": 0.5688,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "sw": {
+   "name": "Swahili",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "71b0346f86a013613e730dd19d45652acffd42c391dba76491fcea55be775c92",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9298,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8778,
+    "min": 0.7893,
+    "mean_wrong": 0.3158,
+    "margin": 0.562,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []
@@ -2004,6 +2445,30 @@
     "min": 0.8074,
     "mean_wrong": 0.3009,
     "margin": 0.5819,
+    "retrieval": 1.0,
+    "n_at_or_below_T": 0,
+    "at_or_below_T": []
+   },
+   "flags": [],
+   "notes": []
+  },
+  "tg": {
+   "name": "Tajik",
+   "provenance": "machine",
+   "tier": "low",
+   "n_strings": 21,
+   "text_sha256": "08998b9b6d75333e5041198ba0ec48401700197ab8d2aa7e90d0437eb0208d0e",
+   "lid": {
+    "share": 1.0,
+    "share_close": 1.0,
+    "mean_p_top": 0.9999,
+    "misses": []
+   },
+   "sim": {
+    "mean": 0.8851,
+    "min": 0.7353,
+    "mean_wrong": 0.3148,
+    "margin": 0.5703,
     "retrieval": 1.0,
     "n_at_or_below_T": 0,
     "at_or_below_T": []

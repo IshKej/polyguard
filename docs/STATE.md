@@ -154,7 +154,7 @@ python review_ingest.py --self-test   # returned review sheets are read correctl
 python test_pilot_intake.py      # intake for the stage 1 live pilot, no key needed -> 14/14
 python test_usage.py             # token counts, stop reasons and a cost split that adds up -> 24/24
 python test_sdk_gate.py          # no live call on an unchecked Anthropic SDK -> 20/20
-python expand_languages.py --check-stored   # gates on the 53 stored machine translations
+python expand_languages.py --check-stored   # gates on the 70 stored machine translations
 python web/e2e/smoke_live.py https://polyguard-ten.vercel.app --review   # read-only check of the live site
 python cli.py replay scan.json   # recompute a saved scan from its evidence
 python judge_eval.py             # judge gold set       -> heuristic bias measured
@@ -184,11 +184,10 @@ about 30 s on this laptop).
    paid run needs its own clearance and must meet the four rules in
    `docs/pilot-plan.md` (usage logged, artifacts saved the same night, spend provable,
    the locked SDK passing its contract).
-3. **The last 14 catalog languages and native review.** The bank holds 73
-   languages: 25 high, 24 mid, 24 low; 20 author written, 53 machine translated
+3. **Native review, and scanning the newest languages.** The bank holds all 90
+   catalog languages: 25 high, 24 mid, 41 low; 20 author written, 70 machine translated
    (`machine_translations/`, checked by `python expand_languages.py --check-stored`).
-   Missing: Pashto, Tajik, Mongolian, Armenian, Nepali, Sinhala, Khmer, Burmese, Javanese, Sundanese, Swahili, Amharic, Somali and Kinyarwanda. They need `python expand_languages.py --langs ...`
-   (paid calls, not cleared) or native speakers. The central hypothesis is testable
+   The 17 added on 2026-11-20 (Pashto, Tajik, Mongolian, Armenian, Nepali, Sinhala, Khmer, Burmese, Javanese, Sundanese, Swahili, Amharic, Somali, Kinyarwanda, Maltese, Luxembourgish and Malagasy; the last three were added to the catalog that day) were written by an Anthropic model in a subscription chat session, with no API calls. None of them has been scanned or read by a native speaker. The central hypothesis is testable
    now but untested at study scale.
 
 Done and no longer blocking: **server-side cancellation (2026-10-13).** Closing the
@@ -254,7 +253,7 @@ a deviation from the analysis plan, but the fingerprint must be updated.
 | `defenses.py` | Remediation: scan to hardened prompt |
 | `generate_attack_bank.py` | Builds the 20 author-written languages + controls |
 | `expand_languages.py` | Machine-translates the other 67, with a verification gate |
-| `languages_catalog.py` | 87-language catalog with resource tiers |
+| `languages_catalog.py` | 90-language catalog with resource tiers |
 | `linguistics.py` | Offline script/encoding/length/duplication validation |
 | `judge_eval.py` | Scores the compliance judge against a gold set |
 | `calibrate_stats.py` | Proves each statistical test controls its error rate |
@@ -345,9 +344,9 @@ gate is on by default and native review is tracked rather than waved off.
 
 | | |
 |---|---|
-| Attacks | 1095 (73 languages x 5 categories x 3 phrasings) |
-| Capability controls | 438 (6 per language), each fired twice: neutral prompt and bot prompt |
-| Languages in bank | 73 of a planned 87 (25 high, 24 mid, 24 low; 53 machine translated) |
+| Attacks | 1350 (90 languages x 5 categories x 3 phrasings) |
+| Capability controls | 540 (6 per language), each fired twice: neutral prompt and bot prompt |
+| Languages in bank | 90, the whole catalog (25 high, 24 mid, 41 low; 70 machine translated, 17 of them added 2026-11-20, not yet scanned or reviewed) |
 | Verification checks | 244 |
 | Native review regression checks | 551 (every reviewed row pinned, every language digested) |
 | Browser tests | 94 (with accessibility checks, the security policy, a 390 and a 320 pixel phone, and every bank script drawn by a served font) |
@@ -357,4 +356,4 @@ gate is on by default and native review is tracked rather than waved off.
 | Native speaker feedback integrated | 5 of 20 (Spanish, Vietnamese, Arabic, Portuguese, French), and Japanese in part (11 of 12 corrections, 2026-10-24); none validated. Lithuanian (machine translated): 11 of 15 returned revisions integrated 2026-10-14, 4 held. Bulgarian (machine translated): 14 of 16 corrections integrated 2026-10-14, 2 held. Icelandic 5 of 6, Serbian 16 of 18, Croatian 15 of 18, integrated 2026-10-21. Tamil (machine translated): general feedback received 2026-10-13, no corrections, not integrated |
 | Paid or production model study runs | 0 in this repository. Paid runs have been made outside it since the stage 1 pilot was approved on 2026-10-21 (confirmation runs 2026-10-24, a matched hardening retest 2026-10-25); results are recorded privately and none are published, pending Ishaan's choice. No production chatbot scanned |
 | Local diagnostic and example scans (counted separately, not study data) | 2026-10-06: four example bots on the 20 language bank; 2026-10-11: the retail bot on all 73 languages, reanalysed 2026-10-12 (`results/local/`) |
-| Bank fingerprint | `55095168a133dc7c42b12c72f93e51f94dd9bbefcfe92cd749b95339ccb21b9e` since 2026-10-24 |
+| Bank fingerprint | `8767444815878aef08623a41aa678e3784256e58a78f7ef159bb8c73135e8b51` since 2026-11-20 (`55095168...` from 2026-10-24) |

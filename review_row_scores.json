@@ -2,7 +2,7 @@
  "schema": "polyguard.review-row-scores/1",
  "what": "LaBSE cosine similarity of each row to its English source, before and after native review. An automated proxy, not a validation.",
  "before_bank_sha256": "4e2ba320c932823e046d2113af44ee2ca5e4042cf3d75f1ea8abd15117cdf1f8",
- "after_bank_sha256": "55095168a133dc7c42b12c72f93e51f94dd9bbefcfe92cd749b95339ccb21b9e",
+ "after_bank_sha256": "8767444815878aef08623a41aa678e3784256e58a78f7ef159bb8c73135e8b51",
  "model": {
   "repo": "sentence-transformers/LaBSE",
   "revision": "836121a0533e5664b21c7aacc5d22951f2b8b25b",

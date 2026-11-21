@@ -35,7 +35,8 @@
     "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Gurmukhi", "Noto Sans Gujarati",
     "Noto Sans Oriya", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Kannada",
     "Noto Sans Malayalam", "Noto Sans Thai", "Noto Sans Georgian", "Noto Sans SC",
-    "Noto Sans JP", "Noto Sans KR";
+    "Noto Sans JP", "Noto Sans KR", "Noto Sans Armenian", "Noto Sans Sinhala",
+    "Noto Sans Khmer", "Noto Sans Myanmar", "Noto Sans Ethiopic";
   --font-display: "Mona Sans", var(--font-scripts), "Arial Black", sans-serif;
   --font-serif: "Gloock", Georgia, serif;
   --font-sans: "Mona Sans", var(--font-scripts), system-ui, sans-serif;

@@ -361,7 +361,7 @@ check("a tier rate of exactly 0 or 1 cannot spread and does not crash the simula
 # --- EXPLORATORY resource trend test ---
 _res = engine.load_resource_measures()
 from languages_catalog import CATALOG as _CATALOG
-check("the resource table covers all 87 catalog languages from one named crawl, unmodified",
+check("the resource table covers all 90 catalog languages from one named crawl, unmodified",
       set(_res["share"]) == set(_CATALOG) and _res["crawl_id"] == "CC-MAIN-2026-39"
       and _res["sha256"] == engine.RESOURCE_SHA256)
 _trend_stub = {"by_lang": {c: {"rate": r} for c, r in
