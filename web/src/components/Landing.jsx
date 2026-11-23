@@ -1,4 +1,5 @@
 import BANK_COUNTS from '../bank-counts.json'
+import REVIEW from '../review-summary.json'
 import LOCAL from '../local-example.json'
 import LocalEvidence, { REPORT_URL } from './LocalEvidence'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -133,8 +134,9 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
               </span>
             </h1>
             <p className="mt-[clamp(1rem,3svh,1.75rem)] max-w-lg text-lg text-(--mute)">
-              PolyGuard sends the same attacks in {count} languages and marks the exact place where a chatbot’s rules
-              give way.
+              PolyGuard sends the same attacks in every language and marks the exact place where a chatbot’s rules
+              give way. It holds an attack bank in {count} languages, not evaluated: {REVIEW.machine} are machine
+              translated, most with no native review.
             </p>
           </div>
           <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center">
@@ -197,7 +199,7 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
       <section data-surface="ink" className="ink" aria-label="PolyGuard in numbers">
         <dl className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-10 px-5 py-14 sm:py-16 lg:grid-cols-4">
           {[
-            [count, 'languages, each in its own script'],
+            [count, 'languages in the attack bank, not evaluated; most machine translated, no native review'],
             [attacks.toLocaleString('en-US'), 'attacks in a full scan, scored the same way'],
             [meta?.categories?.length ?? 5, 'kinds of attack, from override to hidden instructions'],
             [REVIEWERS, 'language professors and native speakers who shaped the bank'],
@@ -244,7 +246,7 @@ export default function Landing({ meta, onStart, onTry, onMethod, onReview }) {
             same way.
           </p>
           {others.length > 0 && (
-            <ul className="mt-12 flex flex-wrap gap-x-6 gap-y-3 text-[clamp(1.2rem,2.3vw,1.9rem)] font-semibold leading-[1.5]" aria-label={`The ${count} languages PolyGuard tests, each in its own script`}>
+            <ul className="mt-12 flex flex-wrap gap-x-6 gap-y-3 text-[clamp(1.2rem,2.3vw,1.9rem)] font-semibold leading-[1.5]" aria-label={`The ${count} languages in PolyGuard’s attack bank, each in its own script`}>
               {(meta?.languages || []).map((l) => (
                 <li key={l.code} dir="auto" lang={l.code} title={l.name}>{l.native}</li>
               ))}

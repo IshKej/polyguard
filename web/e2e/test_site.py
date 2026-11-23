@@ -324,15 +324,15 @@ def main() -> int:
             want = json.loads((ROOT / "web" / "src" / "bank-counts.json").read_text(encoding="utf-8"))["languages"]
 
             # Two kinds of count share the home page. The hero sentence states the bank
-            # ("sends the same attacks in N languages") and must match bank-counts.json.
+            # ("an attack bank in N languages, not evaluated") and must match bank-counts.json.
             # Everything else that says "N languages" describes the 2026-10-11 local scan,
             # which ran on the bank as it was then, and must match that scan instead.
             scanned = len(json.loads((ROOT / "web" / "src" / "local-example.json").read_text(encoding="utf-8"))["languages"])
 
             def hero_counts(p2):
                 text = p2.locator("main").inner_text()
-                bank_claims = re.findall(r"sends the same attacks in (\d+) languages", text)
-                rest = re.sub(r"sends the same attacks in \d+ languages", "", text)
+                bank_claims = re.findall(r"attack bank in (\d+) languages, not evaluated", text)
+                rest = re.sub(r"attack bank in \d+ languages, not evaluated", "", text)
                 if any(n != str(scanned) for n in re.findall(r"(\d+) languages", rest)):
                     return []
                 return bank_claims
