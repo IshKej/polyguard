@@ -6,7 +6,7 @@
 
 Translation review, language by language: https://polyguard-ten.vercel.app/review/coverage, and what native review did to the automated translation score: https://polyguard-ten.vercel.app/review
 
-**In three sentences.** A chatbot that refuses a trick in English can fall for the same trick in Hindi, Swahili or Tagalog, and the people who meet that weaker chatbot are the ones least served by English-only testing. PolyGuard sends the same attacks to a chatbot in 90 languages, checks that the chatbot understood each language at all, and tests whether some languages are really less protected rather than unlucky. Then it writes defence rules and measures, against a placebo, how much they help on attacks it held back.
+**In three sentences.** A chatbot that refuses a trick in English can fall for the same trick in Hindi, Swahili or Tagalog, and the people who meet that weaker chatbot are the ones least served by English-only testing. PolyGuard sends the same attacks to a chatbot in every language of its attack bank (90 languages, not evaluated: most are machine translated with no native review), checks that the chatbot understood each language at all, and tests whether some languages are really less protected rather than unlucky. Then it writes defence rules and measures, against a placebo, how much they help on attacks it held back.
 
 ![The PolyGuard home page: the question "Your chatbot says no in English. Does it say no in Cymraeg?" beside two speech bubbles from a real local scan, English answering "No." and Welsh printing the attacker's code word, above a strip of all 73 languages with the 8 that let an attack through marked](docs/hero.png)
 
